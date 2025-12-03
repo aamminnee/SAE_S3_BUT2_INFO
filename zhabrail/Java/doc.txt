@@ -1,0 +1,36 @@
+**1. Architecture du projet**
+
+lego-pipeline/
+├── bin/                    # fichiers .class compilés
+├── c/                      # code source C
+├── images_customers/       # images des clients
+├── images_results/         # resultat final
+├── images_conversion/      # images converties
+├── matching/               # fichiers texte générés
+├── paving/                 # fichiers de pavage générés
+├── src/main/java
+│   └── fr/univ_eiffel/lego/
+│       ├── image/
+│       │   ├── conversion/      # ImageConversionTest.java
+│       │   ├── text/            # ImageToText.java
+│       │   ├── legoPaving/      # LegoPavingTest.java
+│       │── paving/runner/   	 # PavingRunner.java
+├── Pipeline.sh              # script Bash orchestrant tout
+├── README.md                # description et usage
+└── doc.pdf                  # documentation détaillée
+
+
+**2. Choix d’implémentation**
+Java pour la majorité des étapes : pour sa portabilité et sa capacité à manipuler les images et les fichiers.
+
+C pour le pavage : pour des performances optimales dans le traitement des matrices de pixels et le calcul d’optimisation du pavage.
+
+ProcessBuilder : permet à Java d’exécuter le programme C et de récupérer ses résultats via fichiers texte.
+
+Fichiers intermédiaires : utilisés pour passer les données entre les étapes, avec des noms standardisés (matching/, paving/).
+
+
+**3. Limitations**
+- Seul pavage 1x1 implémenté
+- N'a pas implémenté la gestion du stock et commande à l'usine
+

@@ -1,0 +1,76 @@
+Rapport SAE - Pavage de grille LEGO
+
+Fonctionnement du pavage : 
+
+Avant l'exécustion des algorithme, le programme charge : 
+ - L'image depuis image.txt
+ - La liste des briques depuis pieces.txt
+
+Chaque fichier algo.c contient une fonction qui réaliser un pavage complet de l'image
+
+Ces fonctions produisent toutes un pavage rsous la forme d'une structure ResultatPavage. Cette structure contenant :
+ - le nombre total de briques posées
+ - le prix total
+ - la somme des erreurs de couleur
+ - le nombre de rupture stock
+ - les lignes décrivant chaque brique posée (ex : 1x1/000000 1 2 0)
+
+Ensuite avec la fonction ecrire_resultat(), on écrit dans un fichier de sortie le pavage
+
+
+Algorithme existants :
+
+ - Algorithme 1x1 : 
+    Algorithme réalisé dans la version 1
+    Cet algorithme pose uniquement des pièces de taille 1x1
+
+ - Algorithme 2x1 glouton : 
+    Algorithme réalisé dans la version 2
+    Cet algorithme pose des pièces de taille 2x1 si possible sinon des pièces 1x1
+
+
+ Algorithme implémenté : 
+
+ - Gestion des stocks, sans changement de forme (1x1):
+    
+    Objectif : 
+
+        Pouvoir gérer les ruptures de stock en remplaçant une brique indisponible par une autre de même taille mais de couleur la plus proche possible.
+
+    Méthode : 
+
+        Pour chaque pixel, on choisit la brique 1x1 dont la couleur est la plus proche.
+        Si cette brique est en rupture de stock, on incrémente le compteur de rupture et on cherche une autre brique 1x1 la plus proche en couleur 
+        
+        
+
+ - Gestion des stocks, avec changement de forme (2x1): 
+
+    Objectif : 
+
+        Pouvoir gérer les ruptures de stock en remplaçant une brique par 2 briques plus petites mais de même couleur
+
+    Méthode : 
+
+        On utilise la même méthode que le matching glouton pour détecter les cases qui peuvent recevoir une brique 2x1
+        Si une brique 2x1 est disponible, elle est posée normalement
+        Sinon on remplace la brique 2x1 par deux briques 1x1 de même couleur, on incrémente comme même la rupture
+        
+
+
+ - Pièces 4x2 et 2x2 : 
+
+    Objectif : 
+
+        Placer une pièce 2x2
+        Fusionner les pièces 2x2 adjacentes en 4x2
+        Fusionner les pièces 1x1 restantes en 2x1
+
+    Méthode :
+
+        Pour chaque pixel, on regarde si un carré de 2x2 pixels peut être formé avec les pixels voisins
+        On vérifie que les 4 pixels ont la même couleur
+        Ensuite on regarde si deux pièces 2x2 peuvent être fusionnés
+        De même pour les pièces 1x1, on regarde si on peut les fusionner pour former une pièces 2x1
+        
+

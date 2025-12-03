@@ -1,0 +1,59 @@
+SAE Pavage de grille LEGO - Version 3
+
+Ce programme lit une image et une liste de pièces LEGO, et génère plusieurs pavage.
+
+1. Fichiers inclus :
+
+- strucutres.h : Contient les structures
+- fonctions.c : Contient les fonctions utiles
+- algo1x1.c : Contient le pavage 1x1
+- algoGreedyMatching.c : Contient le pavage 2x1 glouton
+- algoStockAmeliore.c : Contient le pavage 1x1 avec la gestion des stocks
+- algoStockForme.c : Contient le pavage 2x1 glouton avec la gestion des stocks et changement de forme
+- algo2x2.c : Contient le pavage 2x2
+- algo4x2.c : Contient le pavage 4x2
+- main.c : Contient la fonction main
+- pieces.txt : Contient les pièces LEGO
+- image.txt : fichier de l'image à lire
+- sortie.txt : Chaque algorithme possède un fichier de sortie
+- Makefile : pour compilier et exécuter facilement le programme
+
+2. Format des fichiers d'entrée :
+
+image.txt :
+
+La première ligne contient la largeur et hauteur de l'image
+Les lignes suivantes contiennent les pixels au format héxadécimal RRGGBB séparés par des espaces et des sauts de ligne
+
+pieces.txt : 
+
+La premère ligne contient le nombre de formes, le nombre de couleur et le nombre de pièces
+Les lignes 2 à 5 sont les formes des briques
+Les lignes 6 à 9 sont les couleurs des briques
+Les lignes suivantes sont les pièces de LEGO écrit sous la forme : forme/couleur prix stock
+
+3. Compilation :
+
+Pour compiler le programme, utiliser le Makefile :
+
+make
+
+4. Execution : 
+
+Pour lancer le programme après compilation : 
+
+make run 
+
+Il exécutera automatiquement en prenant en compte les fichiers.
+
+5. Sortie : 
+
+Les fichiers de sortie seront dans le dossier testMatching
+La première ligne contient le nombre de brique placée, le prix total, l'erreur de couleur totale et la rupture de stock total des briques.
+Les lignes suivantes contients le pavage écrit sous la forme : forme/couleur coordonée_x coordonée_y rotation
+
+6. Nettoyage :
+
+Pour supprimer l'exécutable compilé : 
+
+make clean

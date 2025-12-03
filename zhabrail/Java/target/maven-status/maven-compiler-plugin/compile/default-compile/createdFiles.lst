@@ -1,0 +1,17 @@
+fr/univ_eiffel/lego/image/conversion/BicubicRescaler.class
+fr/univ_eiffel/lego/image/text/ImageToText.class
+fr/univ_eiffel/lego/image/legoPaving/LegoPaving.class
+fr/univ_eiffel/lego/image/legoPaving/LegoPavingLoader.class
+fr/univ_eiffel/lego/image/conversion/NearestNeighborRescaler.class
+fr/univ_eiffel/lego/image/conversion/ImageRescaler.class
+fr/univ_eiffel/lego/image/conversion/RescalingStrategy.class
+fr/univ_eiffel/lego/image/conversion/RescalerFactory$RescalingMethod.class
+fr/univ_eiffel/lego/image/legoPaving/LegoPavingTest.class
+fr/univ_eiffel/lego/image/legoPaving/LegoBrick.class
+fr/univ_eiffel/lego/image/conversion/BilinearRescaler.class
+fr/univ_eiffel/lego/image/conversion/ProgressiveRescalingStrategy.class
+fr/univ_eiffel/lego/image/conversion/AutoRescaler.class
+fr/univ_eiffel/lego/image/conversion/Lanczos3Rescaler.class
+fr/univ_eiffel/lego/image/conversion/RescalerFactory.class
+fr/univ_eiffel/lego/image/conversion/ImageConversionTest.class
+fr/univ_eiffel/lego/paving/runner/PavingRunner.class

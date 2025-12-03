@@ -1,0 +1,16 @@
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/text/ImageToText.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/paving/runner/PavingRunner.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/legoPaving/LegoBrick.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/BicubicRescaler.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/legoPaving/LegoPavingTest.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/ImageRescaler.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/BilinearRescaler.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/RescalingStrategy.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/Lanczos3Rescaler.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/legoPaving/LegoPaving.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/ProgressiveRescalingStrategy.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/RescalerFactory.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/ImageConversionTest.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/AutoRescaler.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/conversion/NearestNeighborRescaler.java
+/home/zabiozabi/eclipse-workspace/SAE_Lego_Mosaic/src/main/java/fr/univ_eiffel/lego/image/legoPaving/LegoPavingLoader.java
