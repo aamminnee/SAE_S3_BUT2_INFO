@@ -8,6 +8,7 @@
 #include "dependance/image.h"
 #include "dependance/solution_1x1.h"
 #include "dependance/matching.h"
+#include "dependance/solution.h"
 
 
 void greedyInsert(Matching* M, int u, Image* I) {

@@ -11,6 +11,7 @@ void execute_all(char * dir) {
     execute_2x2(dir);
     execute_all_brique(dir);
     execute_rentabilite(dir);
+    execute_v4_AMINE(dir);
 }
 
 void execute_1x1(char * dir) {  
@@ -107,6 +108,22 @@ void execute_rentabilite(char * dir) {
     printf("\nExécution de l'algo avec els formes arbitraire (rentabilité)...\n");
     Solution S = run_algo_forme_rentable(&I, &B);
     print_sol(&S, "output", "pavage_forme_arbitraire_rentable.txt", &B);
+    // Libération mémoire
+    freeSolution(S);
+    freeImage(I);
+    freeBrique(B);
+}
+
+void execute_v4_AMINE(char * dir) {  
+    // Charger l'image et la liste de briques
+    Image I;
+    BriqueList B;
+    load_image(dir, &I);
+    load_brique(dir, &B);
+    // =================== Algo v4 stock ===================
+    printf("\nExécution de la version 4 algo gestion de stock...\n");
+    Solution S = run_algo_v4_stock(&I, &B);
+    print_sol(&S, "output", "pavage_v4_stock.txt", &B);
     // Libération mémoire
     freeSolution(S);
     freeImage(I);

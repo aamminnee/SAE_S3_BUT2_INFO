@@ -7,6 +7,7 @@
 #include "dependance/util.h"
 #include "dependance/image.h"
 #include "dependance/brique.h"
+#include "dependance/solution.h"
 
 #define MAX_COLORS_LOCAL 275
 
@@ -103,8 +104,7 @@ Solution run_algo_rectfusion(Image* I, BriqueList* B) {
                     if (x + ww - 1 >= I->W || y + hh - 1 >= I->H) continue;
                     if (!rect_is_uncovered(x, y, ww, hh, I, covered)) continue;
                     if (!rect_has_uniform_closest(x, y, ww, hh, I, closestColor, targetCol)) continue;
-                    int shapeId = lookupShape(B, w, h);
-                    int shapeUsed = -1;
+                    
                     int briIndex = -1;
                     int lookupShapeId = lookupShape(B, ww, hh);
                     if (lookupShapeId != -1) {

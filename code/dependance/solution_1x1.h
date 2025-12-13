@@ -1,5 +1,5 @@
-#ifndef SOLUTION_H
-#define SOLUTION_H
+#ifndef SOLUTION_1X1_H
+#define SOLUTION_1X1_H
 
 #include "structure.h"
 

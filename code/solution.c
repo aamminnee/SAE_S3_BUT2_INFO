@@ -25,6 +25,7 @@ void init_sol(Solution* sol, Image* I) {
 }
 
 void push_sol(Solution* sol, int iBrique, int x, int y, int rot, Image* I, BriqueList* B) {
+    (void)I; // on ignore le paramètre I pour éviter le warning car il n'est pas utilisé ici
     sol->array[sol->length].iBrique = iBrique;
     sol->array[sol->length].x = x;
     sol->array[sol->length].y = y;

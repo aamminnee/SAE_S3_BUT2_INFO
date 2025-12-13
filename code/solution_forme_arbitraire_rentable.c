@@ -51,7 +51,7 @@ Solution run_algo_forme_rentable(Image* I, BriqueList* B) {
         int iBrique = R[rb].iBrique;
         int w = R[rb].w;
         int h = R[rb].h;
-        int shape = R[rb].shape;
+        // int shape = R[rb].shape; // variable inutilisée supprimée
         for (int y = 0; y < I->H; y++) {
             for (int x = 0; x < I->W; x++) {
                 for (int rot = 0; rot < 2; rot++) {

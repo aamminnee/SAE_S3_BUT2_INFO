@@ -4,6 +4,8 @@
 #include "dependance/util.h"
 #include "dependance/structure.h"
 #include "dependance/image.h" 
+// ajout de l'include brique pour la fonction getBriqueWithColor
+#include "dependance/brique.h" 
 
 FILE* open_with_dir(char* dir, char* name, char* mode) {
     char filename[256];
