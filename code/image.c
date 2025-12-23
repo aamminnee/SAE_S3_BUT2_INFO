@@ -18,7 +18,7 @@ int colError(RGB c1, RGB c2) {
 }
 
 void load_image(char* dir, Image* I) {
-    FILE* fptr = open_with_dir(dir, "image_test.txt", "r");
+    FILE* fptr = open_with_dir(dir, "image.txt", "r");
     fscanf(fptr, "%d %d", &I->W, &I->H);
     I->rgb = malloc(I->W * I->H * sizeof(RGB));
     for (int j=0;j<I->H;j++) {
