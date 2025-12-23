@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <limits.h>
 #include "dependance/solution_v4_stock.h"
-#include "dependance/solution_1x1.h"
-#include "dependance/matching.h"
 #include "dependance/util.h"
 #include "dependance/image.h"
 #include "dependance/brique.h"

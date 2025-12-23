@@ -5,7 +5,6 @@
 #include <assert.h>
 
 #include "dependance/structure.h"
-#include "dependance/matching.h"
 #include "dependance/util.h"
 #include "dependance/image.h"
 #include "dependance/brique.h"
