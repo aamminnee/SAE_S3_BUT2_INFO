@@ -8,35 +8,21 @@ BIN=$(OBJ_DIR)/pavage
 SRC=$(SRC_DIR)/main.c \
     $(SRC_DIR)/image.c \
     $(SRC_DIR)/brique.c \
-    $(SRC_DIR)/solution_1x1.c \
     $(SRC_DIR)/util.c \
-    $(SRC_DIR)/matching.c \
-    $(SRC_DIR)/solution_greedy_1x2.c \
-    $(SRC_DIR)/solution_greedy_1x2_stock.c \
-    $(SRC_DIR)/solution_2x2.c \
-    $(SRC_DIR)/solution_rectfusion.c \
-    $(SRC_DIR)/solution_forme_arbitraire_rentable.c \
-    $(SRC_DIR)/solution.c
+    $(SRC_DIR)/solution.c \
+    $(SRC_DIR)/solution_v4_stock.c \
+    $(SRC_DIR)/solution_v4_forme_libre.c
 
 OBJ=$(OBJ_DIR)/main.o \
     $(OBJ_DIR)/image.o \
     $(OBJ_DIR)/brique.o \
-    $(OBJ_DIR)/solution_1x1.o \
     $(OBJ_DIR)/util.o \
-    $(OBJ_DIR)/matching.o \
-    $(OBJ_DIR)/solution_greedy_1x2.o \
-    $(OBJ_DIR)/solution_greedy_1x2_stock.o \
-    $(OBJ_DIR)/solution_2x2.o \
-    $(OBJ_DIR)/solution_rectfusion.o \
-    $(OBJ_DIR)/solution_forme_arbitraire_rentable.o \
-    $(OBJ_DIR)/solution.o
+    $(OBJ_DIR)/solution.o \
+    $(OBJ_DIR)/solution_v4_stock.o \
+    $(OBJ_DIR)/solution_v4_forme_libre.o
 
-OUT=$(DEST_FILE)/pavage_1x1.txt \
-    $(DEST_FILE)/pavage_greedy_1x2.txt \
-    $(DEST_FILE)/pavage_greedy_1x2_stock.txt \
-    $(DEST_FILE)/pavage_2x2.txt \
-    $(DEST_FILE)/pavage_rectfusion.txt \
-    $(DEST_FILE)/pavage_forme_arbitraire_rentable.txt
+OUT=$(DEST_FILE)/pavage_v4_stock.txt \
+    $(DEST_FILE)/pavage_v4_forme_libre.txt
 
 # variable pour choisir quel algo (ou quels algos) exécuter
 ARGO ?= all

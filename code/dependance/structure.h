@@ -45,28 +45,15 @@ typedef struct {
     SolItem* array;
 } Solution;
 
-typedef struct {
-    int u1; 
-    int u2; 
-} Pair;
-
-typedef struct {
-    int nPair;  
-    Pair* array;  
-} Matching;
-
 typedef struct { 
     int w; 
     int h; 
 } ShapeWH;
 
 typedef struct {
-    int iBrique;
-    float rentable;
-    int shape;
-    int w, h;
-    int col;
-    int price;
-    int surface;
-} BriqueRent;
+    int w;
+    int h;
+    int aire;
+} Dimension;
+
 #endif
