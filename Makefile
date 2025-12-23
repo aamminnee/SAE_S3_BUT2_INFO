@@ -11,7 +11,9 @@ SRC=$(SRC_DIR)/main.c \
     $(SRC_DIR)/util.c \
     $(SRC_DIR)/solution.c \
     $(SRC_DIR)/solution_v4_stock.c \
-    $(SRC_DIR)/solution_v4_forme_libre.c
+    $(SRC_DIR)/solution_v4_forme_libre.c \
+    $(SRC_DIR)/solution_v4_rupture.c \
+    $(SRC_DIR)/solution_v4_cheap.c   
 
 OBJ=$(OBJ_DIR)/main.o \
     $(OBJ_DIR)/image.o \
@@ -19,10 +21,14 @@ OBJ=$(OBJ_DIR)/main.o \
     $(OBJ_DIR)/util.o \
     $(OBJ_DIR)/solution.o \
     $(OBJ_DIR)/solution_v4_stock.o \
-    $(OBJ_DIR)/solution_v4_forme_libre.o
+    $(OBJ_DIR)/solution_v4_forme_libre.o \
+    $(OBJ_DIR)/solution_v4_rupture.o \
+    $(OBJ_DIR)/solution_v4_cheap.o
 
 OUT=$(DEST_FILE)/pavage_v4_stock.txt \
-    $(DEST_FILE)/pavage_v4_forme_libre.txt
+    $(DEST_FILE)/pavage_v4_forme_libre.txt \
+    $(DEST_FILE)/pavage_v4_rupture.txt \
+    $(DEST_FILE)/pavage_v4_rentable.txt
 
 # variable pour choisir quel algo (ou quels algos) exécuter
 ARGO ?= all
