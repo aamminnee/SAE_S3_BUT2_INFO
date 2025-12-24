@@ -18,10 +18,12 @@ fr/univ_eiffel/legotools/factory/StockManager$1.class
 fr/univ_eiffel/legotools/factory/api/ApiSender.class
 fr/univ_eiffel/legotools/factory/api/AccountRefiller.class
 fr/univ_eiffel/legotools/model/LegoBrick.class
+fr/univ_eiffel/legotools/scripts/GenerationItem.class
 fr/univ_eiffel/legotools/image/BilinearStrategy.class
 fr/univ_eiffel/legotools/factory/api/AccountRefiller$Challenge.class
-fr/univ_eiffel/legotools/factory/impl/PoWPaymentStrategy$ChallengeAnswer.class
 fr/univ_eiffel/legotools/factory/StockManager.class
+fr/univ_eiffel/legotools/factory/impl/PoWPaymentStrategy$ChallengeAnswer.class
+fr/univ_eiffel/legotools/image/LanczosStrategy.class
 fr/univ_eiffel/legotools/factory/impl/HttpRestFactory$1.class
 fr/univ_eiffel/legotools/factory/impl/PoWPaymentStrategy$Challenge.class
 fr/univ_eiffel/legotools/factory/api/PaymentStrategy.class

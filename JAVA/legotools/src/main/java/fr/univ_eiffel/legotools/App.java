@@ -92,6 +92,7 @@ public class App {
             case "bicubic" -> processor.setStrategy(new BicubicStrategy());
             case "stepwise" -> processor.setStrategy(new StepwiseStrategy(List.of(new BilinearStrategy()), 3));
             case "neighbor" -> processor.setStrategy(new NearestNeighborStrategy());
+            case "lanczos" -> processor.setStrategy(new LanczosStrategy());
             default -> System.out.println("Stratégie inconnue, utilisation de NearestNeighbor.");
         }
         processor.processImage(input, output, w, h);
