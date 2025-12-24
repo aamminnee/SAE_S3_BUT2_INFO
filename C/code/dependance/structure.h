@@ -27,7 +27,7 @@ typedef struct {
     RGB* col;
     int* bCol;
     int* bShape;
-    int* bPrix;
+    float* bPrix;
     int* bStock;
 } BriqueList;
 
@@ -40,7 +40,7 @@ typedef struct {
 typedef struct {
     int length;
     int totalError;
-    int cost;
+    float cost;
     int stock;
     SolItem* array;
 } Solution;

@@ -25,7 +25,7 @@ void load_brique(char* dir, BriqueList* B) {
         fscanf(fptr, "%02x%02x%02x", &B->col[i].R, &B->col[i].G, &B->col[i].B);
     }
     for (int i=0; i<B->nBrique; i++) { 
-        fscanf(fptr, "%d/%d %d %d", &B->bShape[i], &B->bCol[i],
+        fscanf(fptr, "%d/%d %f %d", &B->bShape[i], &B->bCol[i],
                                    &B->bPrix[i], &B->bStock[i]);
     }
     fclose(fptr);

@@ -40,13 +40,13 @@ void print_sol(Solution* sol, char* dir, char* name, BriqueList* B) {
     if (!sol) { 
         return;
     }
-    printf("%s/%s %d %d %d %d\n", dir, name, sol->length, sol->cost, sol->totalError, sol->stock); 
+    printf("%s/%s %d %.2f %d %d\n", dir, name, sol->length, sol->cost, sol->totalError, sol->stock); 
     FILE* fptr = open_with_dir(dir, name, "w"); 
     if (!fptr) { 
         perror("open_with_dir"); 
         return; 
     } 
-    fprintf(fptr, "%d %d %d %d\n", sol->length, sol->cost, sol->totalError, sol->stock);
+    fprintf(fptr, "%d %.2f %d %d\n", sol->length, sol->cost, sol->totalError, sol->stock);
     for (int i = 0; i < sol->length; i++) { 
         int ib = sol->array[i].iBrique; 
         int shape = (ib >= 0) ? B->bShape[ib] : 0; 
