@@ -1,0 +1,23 @@
+<footer>
+    <div class="footer-content">
+        <p>&copy; 2025 [nom site web]. All rights reserved.</p>
+        <nav>
+            <ul>
+                <li>Github: <a href="https://github.com/aamminnee/SAE_S3_BUT2_INFO">SAE</a></li>
+            </ul>
+        </nav>
+    </div>
+        <script>
+        // wait for the dom to fully load before running the script
+        document.addEventListener("DOMContentLoaded", function() {
+            // select all button-like elements and apply a random lego color class
+            const buttons = document.querySelectorAll('button, .btn, input[type="submit"], .cta-button, a.button');            
+            const colors = ['btn-lego-red', 'btn-lego-blue', 'btn-lego-yellow', 'btn-lego-green'];
+            buttons.forEach(btn => {
+                btn.classList.remove(...colors);
+                const randomIndex = Math.floor(Math.random() * colors.length);
+                btn.classList.add(colors[randomIndex]);
+            });
+        });
+        </script>
+</footer>

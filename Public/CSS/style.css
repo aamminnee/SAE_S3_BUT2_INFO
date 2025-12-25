@@ -1,0 +1,267 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
+
+:root {
+    --lego-red:    #d92d28;
+    --lego-red-d:  #b31e1a;
+    --lego-blue:   #0055bf;
+    --lego-blue-d: #003f8f;
+    --lego-yellow: #fecb00;
+    --lego-yellow-d: #dcb000;
+    --lego-green:  #23b14d;
+    --lego-green-d: #1b8a3b;
+    --neutral-white: #ffffff;
+    --neutral-grey:  #f4f4f4;
+    --text-dark:     #333333;
+    --shadow-card: 0 8px 16px rgba(0, 0, 0, 0.15);
+    --radius-std: 12px;
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+}
+
+body {
+    font-family: 'Nunito', sans-serif;
+    color: var(--text-dark);
+    line-height: 1.6;
+    background-color: var(--neutral-grey);
+    background-image: linear-gradient(rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.85)), url('../../images/fond.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    padding-top: 120px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fredoka', sans-serif;
+    color: var(--lego-red);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+h2 {
+    color: var(--lego-blue);
+    border-bottom: 3px solid var(--lego-yellow);
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+a {
+    text-decoration: none;
+    color: var(--lego-blue);
+    font-weight: 700;
+    transition: color 0.3s ease;
+}
+
+a:hover { 
+    color: var(--lego-red); 
+}
+
+.container, .content-wrapper, main {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--neutral-white);
+    border-radius: var(--radius-std);
+    box-shadow: var(--shadow-card);
+    border: 2px solid #eee;
+    border-bottom: 6px solid var(--lego-blue);
+}
+
+button, .btn, input[type="submit"], .cta-button {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px; 
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.1s ease;
+    display: inline-block;
+    text-decoration: none;
+    margin: 5px;
+    position: relative;
+    top: 0;
+    background-color: #ddd;
+    color: #555;
+    box-shadow: 0 5px 0 #bbb;
+}
+
+button:active, .btn:active, input[type="submit"]:active {
+    top: 5px !important; 
+    box-shadow: 0 0 0 !important; 
+    transform: none !important;
+}
+
+.btn-lego-red {
+    background-color: var(--lego-red) !important;
+    background-image: none !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 5px 0 var(--lego-red-d) !important;
+}
+
+.btn-lego-red:hover {
+    background-color: #e63e39 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 var(--lego-red-d) !important;
+}
+
+.btn-lego-blue {
+    background-color: var(--lego-blue) !important;
+    background-image: none !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 5px 0 var(--lego-blue-d) !important;
+}
+
+.btn-lego-blue:hover {
+    background-color: #1e6ecf !important;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 var(--lego-blue-d) !important;
+}
+
+.btn-lego-yellow {
+    background-color: var(--lego-yellow) !important;
+    background-image: none !important;
+    border: none !important;
+    color: var(--text-dark) !important; 
+    box-shadow: 0 5px 0 var(--lego-yellow-d) !important;
+}
+
+.btn-lego-yellow:hover {
+    background-color: #ffdb4d !important;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 var(--lego-yellow-d) !important;
+}
+
+.btn-lego-green {
+    background-color: var(--lego-green) !important;
+    background-image: none !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 5px 0 var(--lego-green-d) !important;
+}
+
+.btn-lego-green:hover {
+    background-color: #2ecc71 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 var(--lego-green-d) !important;
+}
+
+form { 
+    margin-top: 20px; 
+}
+
+input[type="text"], input[type="email"], input[type="password"], 
+input[type="number"], input[type="file"], textarea, select {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 10px 0 20px 0;
+    display: inline-block;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #fafafa;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--lego-blue);
+    box-shadow: 0 0 0 3px rgba(0, 85, 191, 0.2);
+    background-color: #fff;
+}
+
+label { 
+    font-weight: 700; 
+    color: var(--text-dark); 
+    margin-bottom: 5px; 
+    display: block; 
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.95em;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+thead tr { 
+    background-color: var(--lego-blue); 
+    color: #ffffff; 
+    text-align: left; 
+}
+
+th, td { 
+    padding: 12px 15px; 
+}
+
+tbody tr { 
+    border-bottom: 1px solid #ddd; 
+}
+
+tbody tr:nth-of-type(even) { 
+    background-color: #f3f3f3; 
+}
+
+tbody tr:last-of-type { 
+    border-bottom: 2px solid var(--lego-blue); 
+}
+
+.alert, .error, .success { 
+    padding: 15px; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    font-weight: bold; 
+    text-align: center; 
+}
+
+.error { 
+    background-color: #ffe6e6; 
+    color: var(--lego-red); 
+    border-left: 5px solid var(--lego-red); 
+}
+
+.success { 
+    background-color: #e6ffea; 
+    color: #2e7d32; 
+    border-left: 5px solid #2e7d32; 
+}
+
+@media (max-width: 768px) {
+
+    .container { 
+        width: 95%; 
+        margin: 20px auto; 
+        padding: 15px; 
+    }
+    
+}
+
+@media (min-width: 1600px) {
+
+    .container, .content-wrapper, main {
+        max-width: 1800px;
+        padding: 40px;
+    }
+
+    html {
+        font-size: 18px; 
+    }
+
+    #drop-zone {
+        padding: 150px 40px;
+    }
+}
