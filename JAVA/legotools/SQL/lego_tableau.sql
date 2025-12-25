@@ -20,17 +20,44 @@ SET time_zone = "+00:00";
 --
 -- Base de données : `lego_tableau`
 --
-
 DELIMITER $$
---
--- Procédures
---
-CREATE DEFINER=`root`@`localhost` PROCEDURE `check_mosaic_stock` (IN `p_id_Mosaic` INT, OUT `p_is_available` BOOLEAN)   BEGIN
-    DECLARE v_missing_items INT$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `create_all_tables` ()   BEGIN
-    -- D'abord les tables indépendantes
-    CALL create_save_customer_table()$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `check_mosaic_stock`(
+    IN p_id_Mosaic INT,
+    OUT p_is_available BOOLEAN
+)
+BEGIN
+    DECLARE v_missing_items INT;
+    SELECT COUNT(*) INTO v_missing_items
+    FROM MosaicComposition mc
+    JOIN View_StockStatus vss ON mc.id_Item = vss.id_Item
+    WHERE mc.id_Mosaic = p_id_Mosaic
+    AND vss.current_stock < mc.quantity_needed;
+
+    IF v_missing_items = 0 THEN SET p_is_available = TRUE; ELSE SET p_is_available = FALSE; END IF;
+    IF (SELECT COUNT(*) FROM MosaicComposition WHERE id_Mosaic = p_id_Mosaic) = 0 THEN SET p_is_available = FALSE; END IF;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `create_all_tables`()
+BEGIN
+    CALL create_save_customer_table();
+    CALL create_colors_table();
+    CALL create_shapes_table();
+    CALL create_item_table();
+    CALL create_image_table();
+    CALL create_mosaic_table();
+    CALL create_customer_image_table();
+    CALL create_customer_table();
+    CALL create_bank_details_table();
+    CALL create_customer_order_table();
+    CALL create_order_item_table();
+    CALL create_invoice_table();
+    CALL create_stockentry();
+    CALL create_factory_order_table();
+    CALL create_mosaic_composition_table();
+END$$
+
+-- 3. Le reste de vos procédures (déjà correctes dans l'export)
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_bank_details_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS BankDetails (
@@ -41,7 +68,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_bank_details_table` ()   BEG
         card_number VARCHAR(16) NOT NULL,
         expire_at DATE NOT NULL,
         cvc VARCHAR(3) NOT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_colors_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS `Colors` (
@@ -49,13 +77,15 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_colors_table` ()   BEGIN
       `name` varchar(28) DEFAULT NULL,
       `hex_color` varchar(6) DEFAULT NULL,
       `is_trans` varchar(5) DEFAULT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_customer_image_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS CustomerImage (
         id_Image INT AUTO_INCREMENT PRIMARY KEY,
         upload_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_customer_order_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS CustomerOrder (
@@ -69,7 +99,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_customer_order_table` ()   B
         FOREIGN KEY (id_Customer) REFERENCES Customer(id_Customer),
         FOREIGN KEY (id_Image) REFERENCES CustomerImage(id_Image),
         FOREIGN KEY (id_Mosaic) REFERENCES Mosaic(id_Mosaic)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_customer_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS Customer (
@@ -78,7 +109,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_customer_table` ()   BEGIN
         phone CHAR(10),
         id_SaveCustomer INT,
         FOREIGN KEY (id_SaveCustomer) REFERENCES SaveCustomer(id_SaveCustomer)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_factory_order_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS FactoryOrder (
@@ -88,13 +120,15 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_factory_order_table` ()   BE
         price DECIMAL(10,2) NOT NULL,
         order_date DATE NOT NULL DEFAULT (CURRENT_DATE),
         FOREIGN KEY (id_Item) REFERENCES Item(id_Item)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_image_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS Image (
         id_Image INT AUTO_INCREMENT PRIMARY KEY,
         filename VARCHAR(255) NOT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_invoice_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS Invoice (
@@ -110,7 +144,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_invoice_table` ()   BEGIN
         FOREIGN KEY (id_Order) REFERENCES CustomerOrder(id_Order),
         FOREIGN KEY (id_Bank_Details) REFERENCES BankDetails(id_Bank_Details),
         FOREIGN KEY (id_SaveCustomer) REFERENCES SaveCustomer(id_SaveCustomer)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_item_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS Item (
@@ -122,7 +157,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_item_table` ()   BEGIN
         KEY `color_id` (`color_id`),
         CONSTRAINT `pieces_ibfk_1` FOREIGN KEY (`shape_id`) REFERENCES `Shapes` (`id`) ON UPDATE CASCADE,
         CONSTRAINT `pieces_ibfk_2` FOREIGN KEY (`color_id`) REFERENCES `Colors` (`id`) ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_mosaic_composition_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS MosaicComposition (
@@ -132,14 +168,16 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_mosaic_composition_table` ()
         PRIMARY KEY (id_Mosaic, id_Item),
         FOREIGN KEY (id_Mosaic) REFERENCES Mosaic(id_Mosaic),
         FOREIGN KEY (id_Item) REFERENCES Item(id_Item)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_mosaic_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS Mosaic (
         id_Mosaic INT AUTO_INCREMENT PRIMARY KEY,
         pattern_type VARCHAR(50) NOT NULL,
         generation_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_order_item_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS OrderItem (
@@ -150,7 +188,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_order_item_table` ()   BEGIN
         PRIMARY KEY (id_Order, id_Item),
         FOREIGN KEY (id_Order) REFERENCES CustomerOrder(id_Order),
         FOREIGN KEY (id_Item) REFERENCES Item(id_Item)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_save_customer_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS SaveCustomer (
@@ -161,7 +200,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_save_customer_table` ()   BE
         adress VARCHAR(255),
         postal_code VARCHAR(20), 
         city VARCHAR(255)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_shapes_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS `Shapes` (
@@ -171,7 +211,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_shapes_table` ()   BEGIN
       `hole` int(11) DEFAULT NULL,
       `name` varchar(50) NOT NULL,
       UNIQUE KEY `width` (`width`,`length`,`hole`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_stockentry` ()   BEGIN
     CREATE TABLE IF NOT EXISTS StockEntry (
@@ -181,7 +222,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `create_stockentry` ()   BEGIN
         quantity INT NOT NULL,
         PRIMARY KEY (id_Stock),
         CONSTRAINT fk_stock_item FOREIGN KEY (id_Item) REFERENCES Item(id_Item)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci$$
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_all_items_stock` ()   BEGIN
     SELECT 
@@ -194,38 +236,39 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `get_all_items_stock` ()   BEGIN
     JOIN Shapes s ON i.shape_id = s.id
     JOIN Colors c ON i.color_id = c.id
     LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_in FROM StockEntry GROUP BY id_Item) entries ON i.id_Item = entries.id_Item
-    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_out FROM OrderItem GROUP BY id_Item) sales ON i.id_Item = sales.id_Item$$
+    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_out FROM OrderItem GROUP BY id_Item) sales ON i.id_Item = sales.id_Item;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_export_colors` ()   BEGIN
     SELECT id, hex_color 
     FROM Colors 
-    ORDER BY id$$
+    ORDER BY id;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_export_items_stock` ()   BEGIN
     SELECT 
         i.shape_id,
         i.color_id,
         i.price,
-        -- Calcul du stock : (Total Entrées) - (Total Sorties)
         CAST((IFNULL(entries.total_in, 0) - IFNULL(sales.total_out, 0)) AS SIGNED) AS current_stock
     FROM Item i
-    -- Jointure pour les entrées de stock
     LEFT JOIN (
         SELECT id_Item, SUM(quantity) AS total_in 
         FROM StockEntry 
         GROUP BY id_Item
     ) entries ON i.id_Item = entries.id_Item
-    -- Jointure pour les ventes (sorties)
     LEFT JOIN (
         SELECT id_Item, SUM(quantity) AS total_out 
         FROM OrderItem 
         GROUP BY id_Item
-    ) sales ON i.id_Item = sales.id_Item$$
+    ) sales ON i.id_Item = sales.id_Item;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_export_shapes` ()   BEGIN
     SELECT id, width, length 
     FROM Shapes 
-    ORDER BY id$$
+    ORDER BY id;
+END$$
 
 DELIMITER ;
 
@@ -616,17 +659,7 @@ CREATE TABLE `FactoryOrder` (
   `order_date` date NOT NULL DEFAULT curdate()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Déclencheurs `FactoryOrder`
---
-DELIMITER $$
-CREATE TRIGGER `prevent_factory_order_delete` BEFORE DELETE ON `FactoryOrder` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (FactoryOrder).'$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `prevent_factory_order_update` BEFORE UPDATE ON `FactoryOrder` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (FactoryOrder).'$$
-DELIMITER ;
+
 
 -- --------------------------------------------------------
 
@@ -665,21 +698,7 @@ INSERT INTO `Invoice` (`id_Invoice`, `invoice_number`, `issue_date`, `total_amou
 (1, 'FACT-20251224-001', '2025-12-24 12:27:48', 150.00, 1, '2025-11-28 10:00:00', 'Paid', 1, 1),
 (2, 'FACT-20251224-002', '2025-12-24 12:27:48', 50.00, 2, '2025-11-29 14:30:00', 'Paid', NULL, 2);
 
---
--- Déclencheurs `Invoice`
---
-DELIMITER $$
-CREATE TRIGGER `before_invoice_insert` BEFORE INSERT ON `Invoice` FOR EACH ROW BEGIN
-    DECLARE v_id_SaveCustomer INT$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `prevent_invoice_delete` BEFORE DELETE ON `Invoice` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (Invoice).'$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `prevent_invoice_update` BEFORE UPDATE ON `Invoice` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (Invoice).'$$
-DELIMITER ;
+
 
 -- --------------------------------------------------------
 
@@ -11769,18 +11788,6 @@ INSERT INTO `OrderItem` (`id_Order`, `id_Item`, `quantity`, `unit_price_snapshot
 (2, 2, 100, 0.15),
 (3, 7, 1, 1.20);
 
---
--- Déclencheurs `OrderItem`
---
-DELIMITER $$
-CREATE TRIGGER `prevent_orderitem_delete` BEFORE DELETE ON `OrderItem` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (OrderItem).'$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `prevent_orderitem_update` BEFORE UPDATE ON `OrderItem` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (OrderItem).'$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -11804,18 +11811,6 @@ CREATE TABLE `SaveCustomer` (
 INSERT INTO `SaveCustomer` (`id_SaveCustomer`, `first_name`, `last_name`, `email`, `adress`, `postal_code`, `city`) VALUES
 (1, 'Jean', 'Admin', 'admin@sae.fr', '12 Rue du Test', '75000', 'Paris'),
 (2, 'Sophie', 'Martin', 'sophie@client.fr', '45 Avenue des Champs', '69000', 'Lyon');
-
---
--- Déclencheurs `SaveCustomer`
---
-DELIMITER $$
-CREATE TRIGGER `prevent_savecustomer_delete` BEFORE DELETE ON `SaveCustomer` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (SaveCustomer).'$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `prevent_savecustomer_update` BEFORE UPDATE ON `SaveCustomer` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (SaveCustomer).'$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -11922,9 +11917,72 @@ DROP TABLE IF EXISTS `View_StockStatus`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `View_StockStatus`  AS SELECT `i`.`id_Item` AS `id_Item`, concat(`s`.`name`,' ',`c`.`name`) AS `name`, ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0) AS `current_stock`, CASE WHEN ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0) < 10 THEN 'OUI' ELSE 'NON' END AS `alert_status` FROM ((((`Item` `i` join `Shapes` `s` on(`i`.`shape_id` = `s`.`id`)) join `Colors` `c` on(`i`.`color_id` = `c`.`id`)) left join (select `StockEntry`.`id_Item` AS `id_Item`,sum(`StockEntry`.`quantity`) AS `total_in` from `StockEntry` group by `StockEntry`.`id_Item`) `entries` on(`i`.`id_Item` = `entries`.`id_Item`)) left join (select `OrderItem`.`id_Item` AS `id_Item`,sum(`OrderItem`.`quantity`) AS `total_out` from `OrderItem` group by `OrderItem`.`id_Item`) `sales` on(`i`.`id_Item` = `sales`.`id_Item`)) ;
 
---
--- Index pour les tables déchargées
---
+DELIMITER $$
+
+-- FactoryOrder
+DROP TRIGGER IF EXISTS `prevent_factory_order_delete`$$
+CREATE TRIGGER `prevent_factory_order_delete` BEFORE DELETE ON `FactoryOrder` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (FactoryOrder).';
+END$$
+DROP TRIGGER IF EXISTS `prevent_factory_order_update`$$
+CREATE TRIGGER `prevent_factory_order_update` BEFORE UPDATE ON `FactoryOrder` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (FactoryOrder).';
+END$$
+
+-- OrderItem
+DROP TRIGGER IF EXISTS `prevent_orderitem_delete`$$
+CREATE TRIGGER `prevent_orderitem_delete` BEFORE DELETE ON `OrderItem` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (OrderItem).';
+END$$
+DROP TRIGGER IF EXISTS `prevent_orderitem_update`$$
+CREATE TRIGGER `prevent_orderitem_update` BEFORE UPDATE ON `OrderItem` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (OrderItem).';
+END$$
+
+-- SaveCustomer
+DROP TRIGGER IF EXISTS `prevent_savecustomer_delete`$$
+CREATE TRIGGER `prevent_savecustomer_delete` BEFORE DELETE ON `SaveCustomer` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (SaveCustomer).';
+END$$
+DROP TRIGGER IF EXISTS `prevent_savecustomer_update`$$
+CREATE TRIGGER `prevent_savecustomer_update` BEFORE UPDATE ON `SaveCustomer` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (SaveCustomer).';
+END$$
+
+-- Invoice (Trigger Complet et FIXE POUR COLLATION)
+DROP TRIGGER IF EXISTS `before_invoice_insert`$$
+CREATE TRIGGER `before_invoice_insert` BEFORE INSERT ON `Invoice` FOR EACH ROW BEGIN
+    DECLARE v_id_SaveCustomer INT;
+    -- FIX COLLATION: On force le charset des variables pour matcher la table
+    DECLARE v_today_prefix VARCHAR(20) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+    DECLARE v_max_invoice VARCHAR(50) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+    DECLARE v_next_seq INT DEFAULT 1;
+
+    -- Récupération client
+    SELECT c.id_SaveCustomer INTO v_id_SaveCustomer
+    FROM CustomerOrder co
+    JOIN Customer c ON co.id_Customer = c.id_Customer
+    WHERE co.id_Order = NEW.id_Order LIMIT 1; 
+    SET NEW.id_SaveCustomer = v_id_SaveCustomer;
+
+    -- Numérotation
+    SET v_today_prefix = CONCAT('FACT-', DATE_FORMAT(NOW(), '%Y%m%d'), '-');
+    SELECT invoice_number INTO v_max_invoice FROM Invoice WHERE invoice_number LIKE CONCAT(v_today_prefix, '%') ORDER BY id_Invoice DESC LIMIT 1;
+    IF v_max_invoice IS NOT NULL THEN SET v_next_seq = CAST(SUBSTRING_INDEX(v_max_invoice, '-', -1) AS UNSIGNED) + 1; END IF;
+    SET NEW.invoice_number = CONCAT(v_today_prefix, LPAD(v_next_seq, 3, '0'));
+END$$
+
+DROP TRIGGER IF EXISTS `prevent_invoice_delete`$$
+CREATE TRIGGER `prevent_invoice_delete` BEFORE DELETE ON `Invoice` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (Invoice).';
+END$$
+DROP TRIGGER IF EXISTS `prevent_invoice_update`$$
+CREATE TRIGGER `prevent_invoice_update` BEFORE UPDATE ON `Invoice` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (Invoice).';
+END$$
+
+DELIMITER ;
+
 
 --
 -- Index pour la table `BankDetails`

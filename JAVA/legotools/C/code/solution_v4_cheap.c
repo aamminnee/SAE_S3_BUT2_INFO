@@ -10,7 +10,7 @@
 #include "dependance/solution_v4_cheap.h"
 
 // Seuil de tolérance pour considérer qu'un pixel appartient à la "famille"
-#define TOLERANCE_FAMILLE 3500
+#define TOLERANCE_FAMILLE 1500
 
 // Seuil strict pour l'homogénéité de la zone sur l'image
 #define TOLERANCE_HOMOGENEITE 2500
