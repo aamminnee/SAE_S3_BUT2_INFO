@@ -5,7 +5,7 @@ use App\Core\Model;
 
 class TokensModel extends Model
 {
-    protected $table = 'tokens';
+    protected $table = 'Tokens';
 
     // crée un token pour un utilisateur
     public function generateToken($user_id, $type)

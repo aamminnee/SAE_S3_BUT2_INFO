@@ -95,7 +95,7 @@ class UserController extends Controller {
                 $_SESSION['mode']     = $mode;
                 
                 // redirection vers la page d'accueil des images
-                header("Location: $baseUrl/images"); 
+                header("Location: $baseUrl/index.php"); 
                 exit;
             } else {
                 $message = $this->t('login_error', "Incorrect username or password.");

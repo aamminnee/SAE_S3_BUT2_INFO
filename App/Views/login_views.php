@@ -17,8 +17,9 @@
         </div>
 
         <div class="captcha-group">
-            <div class="captcha-box">ABCD</div> 
-            <input type="hidden" name="captcha_token" value="ABCD">
+            <canvas id="captcha-canvas" width="200" height="60" style="background-color: #f0f0f0; border-radius: 5px; cursor: pointer;"></canvas>
+            <button id="captcha-refresh" type="button" style="border:none; background-color: #000; cursor:pointer; font-size:1.2em; border-radius: 5px;">↻</button>
+            <input type="hidden" id="captcha_token" name="captcha_token" value="">
             <input type="text" name="captcha" placeholder="<?= $trans['placeholder_captcha'] ?? 'Recopier le code' ?>" required>
         </div>
         
@@ -33,3 +34,5 @@
         <a href="<?= $_ENV['BASE_URL'] ?>/user/resetPassword"><?= $trans['link_forgot_pass'] ?? 'Mot de passe oublié ?' ?></a>
     </p>
 </div>
+
+<script src="<?= $_ENV['BASE_URL'] ?>/JS/captcha.js"></script>

@@ -1,6 +1,3 @@
-// simple client-side captcha
-// generates a random code, renders it on a canvas, fills hidden token input
-
 document.addEventListener('DOMContentLoaded', function () {
   // configuration
   const LENGTH = 6;

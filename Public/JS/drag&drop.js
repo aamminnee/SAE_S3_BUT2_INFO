@@ -1,160 +1,116 @@
-// class to handle drag & drop, paste, and file selection
-class DragDropController {
-    constructor(isValidUser) {
-        // dom elements
-        this.dropZone = document.getElementById("drop-zone");
-        this.fileInput = document.getElementById("fileInput");
-        this.fileLabel = document.getElementById("fileLabel");
-        this.message = document.getElementById("message");
-        this.continueButton = document.getElementById("continueButton");
-        this.preview = document.getElementById("preview");
+// SAE_S3_BUT2_INFO/Public/JS/drag&drop.js
 
-        // internal state
-        this.selectedFile = null;
-        this.isValidUser = isValidUser;
+// sélection des éléments du dom
+const dropArea = document.getElementById('drop-zone');
+const input = document.getElementById('file-upload');
+const form = dropArea ? dropArea.closest('form') : null;
 
-        // ensure correct context for asynchronous callbacks
-        this.showError = this.showError.bind(this);
-        this.uploadFile = this.uploadFile.bind(this);
-        this.handleFile = this.handleFile.bind(this);
+// Vérification de sécurité
+if (!dropArea || !input) {
+    console.error("Erreur: La zone de drop ou l'input n'a pas été trouvé dans le HTML.");
+} else {
 
-        // setup events
-        this.setupEvents();
+    // prévention des comportements par défaut
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
 
-    // setup all event listeners
-    setupEvents() {
-        if (!this.dropZone || !this.fileInput || !this.message || !this.continueButton) {
-            console.error("missing one or more required dom elements.");
+    // Styles CSS au survol
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+    });
+
+    // 1. GESTION DU DROP (Glisser-Déposer)
+    dropArea.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files; // Récupère les fichiers physiques
+        
+        console.log("Fichiers détectés au drop:", files.length);
+
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    }, false);
+
+    // 2. GESTION DU COPIER-COLLER (Ctrl+V)
+    window.addEventListener('paste', (e) => {
+        // On cherche dans le presse-papier
+        if (e.clipboardData && e.clipboardData.files.length > 0) {
+            e.preventDefault(); // Empêche de coller le fichier comme du texte ailleurs
+            console.log("Fichier détecté au collage (Paste)");
+            handleFiles(e.clipboardData.files);
+        }
+    });
+
+    // 3. GESTION DU CLIC CLASSIQUE
+    dropArea.addEventListener('click', () => {
+        input.click();
+    });
+
+    input.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            handleFiles(this.files);
+        }
+    });
+}
+
+// FONCTION PRINCIPALE
+function handleFiles(files) {
+    if (files.length > 0) {
+        const file = files[0]; // On ne prend QUE le premier fichier
+        
+        // Vérification que c'est une image
+        if (!file.type.startsWith('image/')) {
+            alert("Erreur : Le fichier n'est pas une image valide.");
             return;
         }
 
-        // drag & drop events
-        this.dropZone.addEventListener("dragover", e => { 
-            e.preventDefault(); 
-            this.dropZone.classList.add("dragover"); 
-        });
-        this.dropZone.addEventListener("dragleave", () => this.dropZone.classList.remove("dragover"));
-        this.dropZone.addEventListener("drop", e => {
-            e.preventDefault(); 
-            this.dropZone.classList.remove("dragover");
-            const file = e.dataTransfer.files[0]; 
-            if (file) this.handleFile(file);
-        });
+        // --- PARTIE CRITIQUE : Mise à jour de l'input form ---
+        // On crée une nouvelle liste de fichiers contenant UNIQUEMENT l'image choisie
+        // Cela garantit que l'envoi du formulaire ne contient qu'un seul fichier propre.
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        input.files = dataTransfer.files; 
 
-        // paste events
-        document.addEventListener("paste", e => {
-            const items = e.clipboardData.items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].kind === "file") {
-                    this.handleFile(items[i].getAsFile()); 
-                    break;
-                }
-            }
-        });
+        console.log("Input mis à jour avec le fichier :", input.files[0].name);
 
-        // file input change
-        this.fileInput.addEventListener("change", e => { 
-            const file = e.target.files[0]; 
-            if (file) this.handleFile(file); 
-        });
-
-        // continue button click
-        this.continueButton.addEventListener("click", () => {
-            console.log("selectedFile before upload:", this.selectedFile);
-            if (!this.selectedFile) { 
-                this.showError('no image selected.'); 
-                return; 
-            }
-            if (!this.isValidUser) { 
-                this.showError('you must be logged in and validated to upload an image.'); 
-                return; 
-            }
-            this.uploadFile();
-        });
-    }
-
-    // handle a selected file
-    handleFile(file) {
-        const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-        const maxSize = 2 * 1024 * 1024; // 2mb
-
-        this.message.textContent = ""; 
-        this.message.style.color = "black";
-
-        if (!allowedTypes.includes(file.type)) { 
-            this.showError('unsupported file type. allowed: jpg, png, webp.'); 
-            return; 
-        }
-        if (file.size > maxSize) { 
-            this.showError('image too large (>2mb).'); 
-            return; 
-        }
-
-        const img = new Image();
-        img.onload = () => {
-            if (img.width < 512 || img.height < 512) { 
-                this.showError('image too small (min 512x512).'); 
-                return; 
-            }
-
-            // file is valid
-            this.selectedFile = file;
-            this.message.textContent = "image successfully loaded, click continue.";
-            this.message.style.color = "green";
-            this.continueButton.style.display = "inline-block";
-
-            // display preview
-            this.dropZone.innerHTML = "";
-            img.style.width = "100%";
-            img.style.height = "100%";
-            img.style.objectFit = "contain";
-            img.style.borderRadius = "8px";
-            this.dropZone.appendChild(img);
-        };
-        img.src = URL.createObjectURL(file);
-    }
-
-    // show an error message
-    showError(msg) {
-        console.log("showError called", {
-            message: this.message,
-            preview: this.preview,
-            continueButton: this.continueButton
-        });
-        this.message.textContent = msg;
-        this.message.style.color = "red";
-        this.continueButton.style.display = "none";
-        this.preview.style.display = "none";
-        this.selectedFile = null;
-    }
-
-
-    // upload file to server
-    uploadFile() {
-        const formData = new FormData();
-        formData.append("image_input", this.selectedFile);
-        formData.append("upload", true);
-
-        this.message.textContent = "uploading..."; 
-        this.message.style.color = "orange";
-
-        fetch("../control/images_control.php", { method: "POST", body: formData })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                window.location.href = "crop_images_views.php?img=" + encodeURIComponent(data.file);
-            } else {
-                this.showError("error: " + data.message);
-            }
-        })
-        .catch(err => {
-            this.showError("error: " + err.message);
-        });
+        // Affichage
+        previewFile(file);
     }
 }
 
-// initialize controller on dom ready
-document.addEventListener("DOMContentLoaded", () => { 
-    new DragDropController(isValidUser); 
-});
+function previewFile(file) {
+    const reader = new FileReader();
+    
+    reader.readAsDataURL(file);
+    reader.onloadend = function() {
+        const img = document.createElement('img');
+        img.src = reader.result;
+        
+        // Styles de l'image
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '300px';
+        img.style.borderRadius = '8px';
+        img.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        img.style.objectFit = 'contain'; // Assure que l'image ne soit pas déformée
+        
+        dropArea.innerHTML = ''; 
+        dropArea.appendChild(img);
+        
+        const changeText = document.createElement('p');
+        changeText.textContent = "Cliquez ou collez (Ctrl+V) pour changer l'image";
+        changeText.style.marginTop = '10px';
+        changeText.style.fontSize = '0.9rem';
+        changeText.style.color = '#64748b';
+        dropArea.appendChild(changeText);
+    }
+}
