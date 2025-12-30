@@ -2,84 +2,138 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\TranslationModel;
 use App\Models\ImagesModel;
 
 class CropImagesController extends Controller
 {
-    private $model;
+    private $translations;
 
-    public function __construct()
-    {
-        $this->model = new ImagesModel();
+    // constructeur pour charger les traductions
+    public function __construct() {
+        $lang = $_SESSION['lang'] ?? 'fr';
+        $translation_model = new TranslationModel();
+        $this->translations = $translation_model->getTranslations($lang);
     }
 
-    // méthode appelée via ajax pour le crop
-    public function process()
-    {
+    // méthode principale (route /cropImages)
+    public function index() {
+        // 1. vérification de la connexion
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login");
+            exit;
+        }
+
+        // 2. récupération de la dernière image de l'utilisateur
+        $imagesModel = new ImagesModel();
+        
+        $lastImage = null;
+        if (method_exists($imagesModel, 'getLastImageByUserId')) {
+            $lastImage = $imagesModel->getLastImageByUserId($_SESSION['user_id']);
+        }
+
+        // 3. envoi des données à la vue
+        $this->render('crop_images_views', [
+            't' => $this->translations,
+            'image' => $lastImage,
+            // on passe le css spécifique
+            'css' => 'crop_images_views.css' 
+        ]);
+    }
+
+    // méthode appelée via ajax pour le traitement java
+    public function process() {
         // suppression des erreurs visuelles pour ne pas casser le json
         error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
         ini_set('display_errors', 0);
         header("Content-Type: application/json");
 
-        if (!isset($_SESSION['user_id']) || ($_SESSION['status'] ?? '') !== 'valide') {
+        if (!isset($_SESSION['user_id'])) {
             echo json_encode(["status" => "error", "message" => "access denied"]);
             exit;
         }
 
         $user_id = $_SESSION['user_id'];
 
-        if (!isset($_FILES['cropped_image']) || !isset($_POST['original_name']) || !isset($_POST['size'])) {
+        // vérification des paramètres envoyés par js
+        if (!isset($_FILES['cropped_image']) || !isset($_POST['size'])) {
             echo json_encode(["status" => "error", "message" => "missing parameters"]);
             exit;
         }
 
-        // ... logique de traitement d'image gd ...
-        $originalName = basename($_POST['original_name']);
-        $cropped = $_FILES['cropped_image'];
-        $boardSize = intval($_POST['size']);
+        $uploadedFile = $_FILES['cropped_image'];
+        $boardSize = intval($_POST['size']); // ex: 32, 48, 64
         $_SESSION['boardSize'] = $boardSize;
 
-        $source = @imagecreatefrompng($cropped['tmp_name']);
-        if (!$source) {
-            echo json_encode(["status" => "error", "message" => "invalid image"]);
-            exit;
-        }
+        // chemins des fichiers temporaires
+        $tempDir = sys_get_temp_dir();
+        $inputPath = $tempDir . '/lego_in_' . uniqid() . '.png';
+        $outputPath = $tempDir . '/lego_out_' . uniqid() . '.png';
 
-        // création de l'image redimensionnée
-        $width = imagesx($source);
-        $height = imagesy($source);
-        $resized = imagecreatetruecolor($boardSize, $boardSize);
-        
-        imagealphablending($resized, false);
-        imagesavealpha($resized, true);
-        $transparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
-        imagefilledrectangle($resized, 0, 0, $boardSize, $boardSize, $transparent);
-        imagecopyresampled($resized, $source, 0, 0, 0, 0, $boardSize, $boardSize, $width, $height);
+        // chemin vers le jar (relatif à la racine du projet ou absolu)
+        // __dir__ est dans app/controllers, donc on remonte deux fois pour aller à la racine puis bin
+        $jarPath = realpath(__DIR__ . '/../../bin/legotools-1.0-SNAPSHOT.jar');
 
-        // capture du binaire
-        ob_start();
-        imagepng($resized);
-        $imageData = ob_get_clean();
-        
-        $newName = uniqid('img_crop_', true) . '.png';
+        try {
+            // 1. déplacer l'image uploadée vers un fichier temporaire
+            if (!move_uploaded_file($uploadedFile['tmp_name'], $inputPath)) {
+                throw new \Exception("Impossible de sauvegarder l'image temporaire.");
+            }
 
-        // mise à jour via le modèle
-        $updateResult = $this->model->updateImageBlob($originalName, $newName, $user_id, $imageData);
+            // 2. construction de la commande java
+            // format : java -jar legotools.jar resize <input> <output> <wxh> [strategy]
+            $dimension = $boardSize . "x" . $boardSize;
+            $strategy = "stepwise"; // comme demandé
+            
+            if (!$jarPath || !file_exists($jarPath)) {
+                throw new \Exception("Fichier JAR introuvable : " . $jarPath);
+            }
 
-        // nettoyage mémoire
-        imagedestroy($source);
-        imagedestroy($resized);
+            // on redirige stderr vers stdout pour capturer les erreurs java éventuelles
+            $command = "java -jar " . escapeshellarg($jarPath) . " resize " . escapeshellarg($inputPath) . " " . escapeshellarg($outputPath) . " " . escapeshellarg($dimension) . " " . escapeshellarg($strategy) . " 2>&1";
 
-        if ($updateResult) {
-            echo json_encode(["status" => "success", "file" => $newName]);
-        } else {
-            echo json_encode(["status" => "error", "message" => "db error"]);
+            // 3. exécution
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+
+            // vérification du succès (java peut renvoyer 0 mais ne pas créer le fichier si exception interne)
+            if ($returnCode !== 0 || !file_exists($outputPath)) {
+                // on log l'erreur pour le debug
+                error_log("Erreur Java: " . implode("\n", $output));
+                throw new \Exception("Echec du traitement Java. Code: $returnCode");
+            }
+
+            // 4. lecture du résultat
+            $processedData = file_get_contents($outputPath);
+            if ($processedData === false) {
+                throw new \Exception("Impossible de lire l'image traitée.");
+            }
+
+            // 5. sauvegarde en bdd
+            $model = new ImagesModel();
+            $newName = 'processed_' . uniqid() . '.png';
+            $mimeType = 'image/png';
+
+            $newId = $model->saveCustomerImage($user_id, $processedData, $newName, $mimeType);
+
+            // 6. nettoyage
+            @unlink($inputPath);
+            @unlink($outputPath);
+
+            if ($newId) {
+                echo json_encode(["status" => "success", "file" => $newId]);
+            } else {
+                echo json_encode(["status" => "error", "message" => "Erreur lors de la sauvegarde en BDD."]);
+            }
+
+        } catch (\Exception $e) {
+            // nettoyage en cas d'erreur
+            if (file_exists($inputPath)) @unlink($inputPath);
+            if (file_exists($outputPath)) @unlink($outputPath);
+            
+            echo json_encode(["status" => "error", "message" => "Exception: " . $e->getMessage()]);
         }
         exit;
-    }
-    
-    // affichage de la vue de crop
-    public function index() {
-         $this->render('crop_images_views', ['css' => 'crop_images_views_style.css']);
     }
 }

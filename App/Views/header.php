@@ -16,14 +16,15 @@ $baseUrl = $_ENV['BASE_URL'] ?? '';
         </div>
         
         <ul class="nav-links">
+            <li><a href="<?= $baseUrl ?>/setting"><?= $trans['menu_settings'] ?? 'Paramètres' ?></a></li>
             <?php if ($isLoggedIn): ?>
                 <li><a href="<?= $baseUrl ?>/commande"><?= $trans['menu_orders'] ?? 'Mes Commandes' ?></a></li>
                 <li><a href="<?= $baseUrl ?>/user/logout" class="btn-logout"><?= $trans['menu_logout'] ?? 'Déconnexion' ?></a></li>
             <?php else: ?>
-                <li><a href="<?= $baseUrl ?>/setting"><?= $trans['menu_settings'] ?? 'Paramètres' ?></a></li>
                 <li><a href="<?= $baseUrl ?>/user/login"><?= $trans['menu_login'] ?? 'Connexion' ?></a></li>
                 <li><a href="<?= $baseUrl ?>/user/register"><?= $trans['menu_register'] ?? 'Inscription' ?></a></li>
             <?php endif; ?>
+            
         </ul>
     </nav>
 </header>

@@ -1,83 +1,128 @@
-// DOM elements
-const image = document.getElementById('image');
-const cropButton = document.getElementById('cropButton');
-const message = document.getElementById('message');
-const warnings = document.getElementById('warnings');
+// éléments du dom
+const image = document.getElementById('image-to-crop');
+const cropButton = document.getElementById('btn-crop');
 const aspectSelect = document.getElementById('aspect');
 const sizeSelect = document.getElementById('size');
 
-// Initialize Cropper.js
+// création dynamique des conteneurs de message s'ils sont absents
+let message = document.getElementById('message');
+let warnings = document.getElementById('warnings');
+
+// fonction utilitaire pour créer les div de notification
+if (!message) {
+    message = document.createElement('div');
+    message.id = 'message';
+    message.style.textAlign = 'center';
+    message.style.marginTop = '10px';
+    message.style.fontWeight = 'bold';
+    cropButton.parentElement.insertBefore(message, cropButton);
+}
+
+if (!warnings) {
+    warnings = document.createElement('div');
+    warnings.id = 'warnings';
+    warnings.style.color = '#e67e22'; // orange
+    warnings.style.textAlign = 'center';
+    warnings.style.marginBottom = '10px';
+    message.parentElement.insertBefore(warnings, message);
+}
+
+// initialisation de cropper.js
 let cropper = new Cropper(image, {
-    aspectRatio: 1, 
+    aspectRatio: 1, // carré par défaut
     viewMode: 1,
     background: false,
     autoCropArea: 1,
+    ready() {
+        // applique le ratio sélectionné au chargement si différent
+        const initialAspect = parseFloat(aspectSelect.value);
+        this.cropper.setAspectRatio(initialAspect);
+    }
 });
 
-// Warn if image is very large
-image.onload = () => {
+// avertissement si l'image est très grande
+image.addEventListener('load', () => {
     if (image.naturalWidth > 3000 || image.naturalHeight > 3000) {
-        warnings.textContent = "The image is very large. It may be resized in the browser for performance.";
+        warnings.textContent = "L'image est très grande, les performances peuvent être réduites.";
     }
-};
+});
 
-// Dynamically change crop aspect ratio
+// changement dynamique du ratio de recadrage via l'aside
 aspectSelect.addEventListener('change', () => {
-    const value = aspectSelect.value === "NaN" ? NaN : eval(aspectSelect.value);
+    const value = parseFloat(aspectSelect.value);
     cropper.setAspectRatio(value);
 });
 
-// Handle crop and continue
+// gestion du clic sur le bouton de validation
 cropButton.addEventListener('click', () => {
-    // Get crop data first to check dimensions
+    // récupération des données de recadrage
     const cropData = cropper.getData(true);
     const cropWidth = Math.round(cropData.width);
     const cropHeight = Math.round(cropData.height);
 
-    const minSize = 100; 
+    const minSize = 50; 
 
+    // vérification de la taille minimale
     if (cropWidth < minSize || cropHeight < minSize) {
-        message.textContent = "Erreur : La zone sélectionnée est trop petite (min " + minSize + "x" + minSize + "px).";
-        message.style.color = "red";
+        message.textContent = "Erreur : la zone sélectionnée est trop petite.";
+        message.style.color = "#E3000B"; // rouge lego
         return; 
     }
 
-    message.textContent = "Processing...";
-    message.style.color = "black"; 
+    message.textContent = "Traitement en cours...";
+    message.style.color = "#333"; 
     warnings.textContent = "";
+    cropButton.disabled = true;
 
-    // Chosen board size
+    // récupération de la taille de plateau choisie dans l'aside
     const boardSize = parseInt(sizeSelect.value);
 
-    // Generate cropped canvas (no resizing here)
+    // génération du canvas recadré
     const canvasData = cropper.getCroppedCanvas({
         width: cropWidth,
         height: cropHeight
     });
 
-    // Convert canvas to Blob and send via AJAX
+    if (!canvasData) {
+        message.textContent = "Erreur lors de la génération de l'image.";
+        cropButton.disabled = false;
+        return;
+    }
+
+    // conversion en blob et envoi via ajax
     canvasData.toBlob(blob => {
         const formData = new FormData();
         formData.append('cropped_image', blob, 'cropped.png');
-        formData.append('original_name', image.dataset.originalName);
-        formData.append('size', boardSize); // send size to store in session
+        
+        // récupération du nom original
+        const originalName = image.getAttribute('alt') || 'image';
+        formData.append('original_name', originalName);
+        
+        // envoi de la taille choisie
+        formData.append('size', boardSize); 
 
-        fetch('../control/crop_images_control.php', {
+        // envoi vers la méthode process du contrôleur
+        fetch('cropImages/process', { 
             method: 'POST',
             body: formData
         })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                message.textContent = "Image successfully cropped!";
-                // Redirect to review page
-                window.location.href = "review_images_views.php?img=" + encodeURIComponent(data.file);
+                message.textContent = "Image recadrée avec succès !";
+                message.style.color = "#006DB7"; // bleu lego
+                // redirection
+                window.location.href = "reviewImages?img=" + encodeURIComponent(data.file);
             } else {
-                message.textContent = "Error: " + data.message;
+                message.textContent = "Erreur : " + (data.message || "Erreur inconnue");
+                message.style.color = "#E3000B";
+                cropButton.disabled = false;
             }
         })
         .catch(err => {
-            message.textContent = "Error: " + err.message;
+            message.textContent = "Erreur réseau : " + err.message;
+            message.style.color = "#E3000B";
+            cropButton.disabled = false;
         });
     }, 'image/png');
 });

@@ -30,7 +30,14 @@ class TokensModel extends Model
         return $this->requete($sql, [$token, $now])->fetch();
     }
 
-    // supprime les tokens expirés
+    // méthode pour supprimer un token spécifique après usage
+    public function consumeToken($token)
+    {
+        $sql = "DELETE FROM {$this->table} WHERE token = ?";
+        $this->requete($sql, [$token]);
+    }
+
+    // supprime les tokens expirés (nettoyage global)
     public function deleteToken()
     {
         $now = date('Y-m-d H:i:s');

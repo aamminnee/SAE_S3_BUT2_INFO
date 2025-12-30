@@ -57,42 +57,39 @@ class UserController extends Controller {
             $username = trim($_POST['username']);
             $password = $_POST['password'];
             
-            // appel au modèle
+            // appel au modèle qui fait la jointure customer/savecustomer
             $user = $this->user_model->getUserByUsername($username);
 
-            // adaptation pour supporter tableau ou objet
+            // adaptation pour supporter tableau ou objet selon le retour pdo
             $userMdp = is_object($user) ? $user->mdp : ($user['mdp'] ?? null);
             $userId = is_object($user) ? $user->id_user : ($user['id_user'] ?? null);
+            $userEtat = is_object($user) ? $user->etat : ($user['etat'] ?? null);
+            $userMode = is_object($user) ? $user->mode : ($user['mode'] ?? null);
+            $userEmail = is_object($user) ? $user->email : ($user['email'] ?? null);
 
             if ($user && password_verify($password, $userMdp)) {
-                // récupération du mode (2fa ou null)
-                $mode = $this->user_model->getModeById($userId);                
                 
-                if ($mode === '2FA') {
-                    $emailData = $this->user_model->getEmailById($userId);
-                    $email = is_object($emailData) ? $emailData->email : $emailData['email'];
-
+                // gestion de la double authentification (2fa)
+                if ($userMode === '2FA') {
+                    // stockage temporaire pour la validation 2fa
                     $_SESSION['temp_2fa_user_id'] = $userId;
-                    $_SESSION['temp_2fa_email']   = $email;
+                    $_SESSION['temp_2fa_email']   = $userEmail;
                     
                     // génération et envoi du token
                     $token = $this->token_model->generateToken($userId, "2FA");
-                    $this->sendVerificationEmail($_SESSION['temp_2fa_email'], $token);
+                    $this->sendVerificationEmail($userEmail, $token);
                     
-                    // redirection vers la page de vérification
+                    // redirection vers la page de vérification (renommée verify)
                     header("Location: $baseUrl/user/verify");
                     exit;
                 }
 
                 // connexion classique sans 2fa
-                $emailData = $this->user_model->getEmailById($userId);
-                $statusData = $this->user_model->getStatusById($userId);
-
                 $_SESSION['username'] = $username;
                 $_SESSION['user_id']  = $userId;
-                $_SESSION['email']    = is_object($emailData) ? $emailData->email : $emailData['email'];
-                $_SESSION['status']   = is_object($statusData) ? $statusData->etat : $statusData['etat'];
-                $_SESSION['mode']     = $mode;
+                $_SESSION['email']    = $userEmail;
+                $_SESSION['status']   = $userEtat;
+                $_SESSION['mode']     = $userMode;
                 
                 // redirection vers la page d'accueil des images
                 header("Location: $baseUrl/index.php"); 
@@ -109,7 +106,7 @@ class UserController extends Controller {
 
     // gestion de l'inscription
     public function register() {
-        $baseUrl = $_ENV['BASE_URL'] ?? '';
+        $baseUrl = $_ENV['BASE_URL'];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['username'], $_POST['password'])) {
             $email = trim($_POST['email']);
@@ -126,7 +123,7 @@ class UserController extends Controller {
                 return;
             }
 
-            // tentative d'ajout de l'utilisateur
+            // tentative d'ajout de l'utilisateur (crée savecustomer + customer)
             $result = $this->user_model->addUser($email, $username, $password);
             
             if ($result === true) {
@@ -137,6 +134,7 @@ class UserController extends Controller {
                 $token = $this->token_model->generateToken($userId, "validation");
                 $this->sendVerificationEmail($email, $token);
                 
+                // redirection vers verify
                 header("Location: $baseUrl/user/verify");
                 exit;
             } elseif ($result === "duplicate") {
@@ -171,7 +169,7 @@ class UserController extends Controller {
             if ($password === $password_confirm) {
                 $this->user_model->setPassword($_SESSION['user_id'], $password);
                 $message = $this->t('password_reset_success', "Password reset successfully.");
-                header("Location: $baseUrl/images");
+                header("Location: $baseUrl/index.php");
                 exit;
             } else {
                 $message = $this->t('password_mismatch', "Passwords do not match.");
@@ -193,28 +191,16 @@ class UserController extends Controller {
         $token = $this->token_model->generateToken($_SESSION['user_id'], "reinitialisation");
         $this->sendVerificationEmail($_SESSION['email'], $token);
         
-        // on affiche la vue de vérification
-        $this->render('verify_views');
+        header("Location: $baseUrl/user/verify");
+        exit;
     }
 
-    // demande de validation email
-    public function validateEmail() {
+    // méthode pour gérer la page de vérification de code
+    public function verify() {
+        // récupération de l'url de base
         $baseUrl = $_ENV['BASE_URL'] ?? '';
 
-        if (!isset($_SESSION['user_id'])) {
-            header("Location: $baseUrl/user/login");
-            exit;
-        }
-        $token = $this->token_model->generateToken($_SESSION['user_id'], "validation");
-        $this->sendVerificationEmail($_SESSION['email'], $token);
-        
-        $this->render('verify_views');
-    }
-
-    // formulaire de saisie du token
-    public function tokenForm() {
-        $baseUrl = $_ENV['BASE_URL'] ?? '';
-
+        // si le formulaire est soumis avec un token
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
             $token = $_POST['token'];
             
@@ -223,24 +209,32 @@ class UserController extends Controller {
 
             // gestion objet vs array pour token_data
             if ($token_data) {
-                $this->token_model->deleteToken(); // suppression après usage
+                // suppression du token spécifique après usage (pour éviter le rejeu)
+                $this->token_model->consumeToken($token);
+                // nettoyage des vieux tokens expirés
+                $this->token_model->deleteToken();
                 
-                $userId = is_object($token_data) ? $token_data->id_user : $token_data['id_user'];
+                // correction ici : on utilise id_Customer (nom de la colonne en bdd)
+                $userId = is_object($token_data) ? $token_data->id_Customer : $token_data['id_Customer'];
                 $types = is_object($token_data) ? $token_data->types : $token_data['types'];
 
+                // cas 1 : validation de compte
                 if ($types === 'validation') {
                     $this->user_model->activateUser($userId);
                     if(isset($_SESSION['user_id'])) {
                          $_SESSION['status'] = 'valide';
                     }
-                    header("Location: $baseUrl/images");
+                    header("Location: $baseUrl/user/login");
                     exit;
 
+                // cas 2 : réinitialisation de mot de passe
                 } elseif ($types === 'reinitialisation') {
-                    $_SESSION['user_id'] = $userId; // connexion temporaire pour le reset
-                    header("Location: $baseUrl/user/resetPassword"); 
+                    // connexion temporaire pour le reset
+                    $_SESSION['user_id'] = $userId; 
+                    header("Location: $baseUrl/user/resetPasswordForm"); 
                     exit;
 
+                // cas 3 : authentification double facteur (2fa)
                 } elseif ($types === '2FA') {
                     $userFull = $this->user_model->getUserById($userId); 
                     
@@ -250,17 +244,20 @@ class UserController extends Controller {
                         $username = is_object($userFull) ? $userFull->username : $userFull['username'];
                         $email = is_object($userFull) ? $userFull->email : $userFull['email'];
                         $etat = is_object($userFull) ? $userFull->etat : $userFull['etat'];
+                        $mode = is_object($userFull) ? $userFull->mode : $userFull['mode'];
 
+                        // enregistrement des infos en session
                         $_SESSION['user_id']  = $idUser;
                         $_SESSION['username'] = $username;
                         $_SESSION['email']    = $email;
                         $_SESSION['status']   = $etat;
-                        $_SESSION['mode']     = '2FA';
+                        $_SESSION['mode']     = $mode;
                         
+                        // nettoyage des variables temporaires
                         unset($_SESSION['temp_2fa_user_id']);
                         unset($_SESSION['temp_2fa_email']);
                         
-                        header("Location: $baseUrl/images");
+                        header("Location: $baseUrl/index.php");
                         exit;
                     } else {
                         $message = "Erreur critique : utilisateur introuvable.";
@@ -269,10 +266,12 @@ class UserController extends Controller {
                     }
                 }
             } else {
+                // token invalide ou expiré
                 $message = $this->t('token_invalid', "Code invalide ou expiré.");
                 $this->render('verify_views', ['message' => $message]);
             }
         } else {
+            // affichage simple du formulaire de vérification
             $this->render('verify_views');
         }
     }
