@@ -6,7 +6,7 @@ import fr.univ_eiffel.legotools.factory.impl.HttpRestFactory;
 import fr.univ_eiffel.legotools.model.FactoryBrick;
 import fr.univ_eiffel.legotools.image.*;
 import fr.univ_eiffel.legotools.paving.PavingService;
-import io.github.cdimascio.dotenv.Dotenv; 
+import io.github.cdimascio.dotenv.Dotenv;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -43,6 +43,10 @@ public class App {
                 case "resize" -> runResize(args);
                 case "pave" -> runPave(args);
                 case "order" -> runOrder();
+                case "ping" -> runPing();
+                case "production" -> runProduction();
+                case "key" -> runKey();
+                case "catalog" -> runCatalog();
                 default -> {
                     System.err.println("Commande inconnue : " + command);
                     printUsage();
@@ -60,6 +64,40 @@ public class App {
         System.out.println("  3. Paver : java -jar legotools.jar pave <input> <output_base> <exe_c> [algo|all]");
         System.out.println("     Algos disponibles : v4_stock, v4_libre, v4_rupture, v4_rentable, all");
         System.out.println("  4. Commander : java -jar legotools.jar order");
+        System.out.println("  5. Ping : java -jar legotools.jar ping");
+        System.out.println("  6. Production : java -jar legotools.jar production");
+        System.out.println("  7. Clé publique : java -jar legotools.jar key");
+        System.out.println("  8. Catalogue : java -jar legotools.jar catalog");
+    }
+
+    private static void runPing() throws IOException {
+        var email = getEnv("LEGOFACTORY_EMAIL");
+        var key = getEnv("LEGOFACTORY_KEY");
+        if (email == null || key == null) {
+            System.err.println("Erreur : Variables LEGOFACTORY manquantes.");
+            return;
+        }
+        var factory = new HttpRestFactory(email, key);
+        if (factory.ping()) {
+            System.out.println("Ping OK ! Connexion réussie.");
+        } else {
+            System.err.println("Ping échoué.");
+        }
+    }
+
+    private static void runProduction() throws IOException {
+        var factory = new HttpRestFactory("void", "void"); // Pas besoin d'auth
+        System.out.println("Production : " + factory.getProductionStats());
+    }
+
+    private static void runKey() throws IOException {
+        var factory = new HttpRestFactory("void", "void"); // Pas besoin d'auth
+        System.out.println("Clé publique : " + factory.getSignaturePublicKey());
+    }
+
+    private static void runCatalog() throws IOException {
+        var factory = new HttpRestFactory("void", "void"); // Pas besoin d'auth
+        System.out.println("Catalogue : " + factory.getCatalog());
     }
 
     private static void runRefill() throws IOException {
@@ -103,7 +141,7 @@ public class App {
             System.out.println("Usage: pave <input> <output_prefix> <exe_c> [algo|all]");
             return;
         }
-        
+
         String inputPath = args[1];
         String outputBasePath = args[2];
         String exePath = args[3];
@@ -111,7 +149,8 @@ public class App {
         String algoArg = (args.length > 4) ? args[4] : "all";
 
         BufferedImage source = ImageIO.read(new File(inputPath));
-        if (source == null) throw new IOException("Image introuvable : " + inputPath);
+        if (source == null)
+            throw new IOException("Image introuvable : " + inputPath);
 
         PavingService service = new PavingService(exePath);
 
@@ -141,7 +180,7 @@ public class App {
                 // construction du nom de fichier final (ex: output_v4_stock.png)
                 String finalName = basePath + "_" + algo + ".png";
                 ImageIO.write(result, "png", new File(finalName));
-                
+
                 System.out.println("Image générée : " + finalName);
             } catch (Exception e) {
                 System.err.println("Erreur sur l'algo " + algo + " : " + e.getMessage());
@@ -153,11 +192,12 @@ public class App {
     private static void runOrder() {
         var email = getEnv("LEGOFACTORY_EMAIL");
         var key = getEnv("LEGOFACTORY_KEY");
-        if (email == null) return;
+        if (email == null)
+            return;
 
         // 1. instanciation
         HttpRestFactory factory = new HttpRestFactory(email, key);
-        
+
         StockManager stock = new StockManager();
         stock.showStock();
 
@@ -172,18 +212,19 @@ public class App {
             Map<String, Integer> panier = Map.of("2-2/c9cae2", 1);
             String quoteId = factory.requestQuote(panier);
             factory.acceptQuote(quoteId);
-            
+
             System.out.println("Attente livraison...");
             List<FactoryBrick> briques = List.of();
             while (briques.isEmpty()) {
                 briques = factory.retrieveOrder(quoteId);
-                if (briques.isEmpty()) Thread.sleep(1000);
+                if (briques.isEmpty())
+                    Thread.sleep(1000);
             }
-            
+
             // 2. vérification et stockage
             System.out.println("Réception de " + briques.size() + " briques.");
             List<FactoryBrick> verifiedBricks = new java.util.ArrayList<>();
-            
+
             for (FactoryBrick b : briques) {
                 if (factory.verifyBrick(b)) {
                     System.out.println("Brique authentique : " + b.serial());

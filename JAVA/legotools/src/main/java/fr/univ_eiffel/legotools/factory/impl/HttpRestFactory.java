@@ -117,5 +117,30 @@ public class HttpRestFactory implements LegoFactory {
         }
     }
 
+    @Override
+    public boolean ping() {
+        try {
+            sendRequest("/ping", "GET", null);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public String getProductionStats() throws IOException {
+        return sendRequest("/production", "GET", null);
+    }
+
+    @Override
+    public String getSignaturePublicKey() throws IOException {
+        return sendRequest("/signature-public-key", "GET", null);
+    }
+
+    @Override
+    public String getCatalog() throws IOException {
+        return sendRequest("/catalog", "GET", null);
+    }
+
     private record DeliveryResponse(Boolean completion_date, List<FactoryBrick> built_blocks) {}
 }
