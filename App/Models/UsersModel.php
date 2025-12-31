@@ -74,7 +74,7 @@ class UsersModel extends Model
     }
 
     // ajoute un nouvel utilisateur (inscription)
-    public function addUser($email, $username, $password) {
+    public function addUser($email, $username, $password, $lastname) {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         $db = Db::getInstance();
         
@@ -83,10 +83,10 @@ class UsersModel extends Model
             
             // 1. insertion des informations personnelles dans savecustomer
             // on initialise avec des chaînes vides pour respecter la structure not null si besoin
-            $sql1 = "INSERT INTO SaveCustomer (first_name, last_name, email, adress, postal_code, city) 
-                     VALUES (?, 'Inconnu', ?, '', '', '')";
+            $sql1 = "INSERT INTO SaveCustomer (first_name, last_name, email) 
+                     VALUES (?, ?, ?)";
             $stmt1 = $db->prepare($sql1);
-            $stmt1->execute([$username, $email]);
+            $stmt1->execute([$username, $lastname, $email]);
             
             // récupération de l'id généré (le plus élevé pour cet utilisateur à cet instant)
             $id_save = $db->lastInsertId();

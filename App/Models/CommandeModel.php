@@ -12,8 +12,6 @@ class CommandeModel extends Model {
     public function getOrderDetails($orderId) {
         $db = Db::getInstance();
         
-        // // Requête adaptée à votre schéma SQL
-        // // On récupère les infos de la commande, de la facture, et du client associé à la facture
         $sql = "SELECT 
                     co.id_Order, 
                     co.total_amount, 
@@ -22,7 +20,7 @@ class CommandeModel extends Model {
                     i.issue_date,
                     sc.first_name, 
                     sc.last_name, 
-                    sc.adress, 
+                    sc.adress,  -- // C'est ici que l'adresse est récupérée
                     sc.email,
                     c.phone
                 FROM CustomerOrder co

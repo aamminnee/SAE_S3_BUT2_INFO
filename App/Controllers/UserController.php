@@ -112,6 +112,7 @@ class UserController extends Controller {
             $email = trim($_POST['email']);
             $username = trim($_POST['username']);
             $password = $_POST['password'];
+            $lastname = $_POST['lastname'];
             
             // validation de la complexité du mot de passe
             $passwordPattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/';
@@ -123,8 +124,14 @@ class UserController extends Controller {
                 return;
             }
 
+            if (empty($lastname)) {
+                $error = "Le nom de famille est obligatoire.";
+                require '../App/Views/register_views.php';
+                return;
+            }
+
             // tentative d'ajout de l'utilisateur (crée savecustomer + customer)
-            $result = $this->user_model->addUser($email, $username, $password);
+            $result = $this->user_model->addUser($email, $username, $password, $lastname);
             
             if ($result === true) {
                 // inscription réussie, on récupère l'user pour envoyer le token

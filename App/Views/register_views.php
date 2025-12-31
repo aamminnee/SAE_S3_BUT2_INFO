@@ -20,6 +20,11 @@
             <label for="username"><?= $trans['label_username'] ?? "Nom d'utilisateur" ?></label>
             <input type="text" id="username" name="username" required>
         </div>
+
+        <div class="form-group">
+            <label for="lastname">Nom de famille</label>
+            <input type="text" name="lastname" id="lastname" required class="form-control" placeholder="Votre nom">
+        </div>
         
         <div class="form-group">
             <label for="password"><?= $trans['label_password'] ?? 'Mot de passe' ?></label>
