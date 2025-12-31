@@ -5,8 +5,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Files; // ajout import
+import java.nio.file.StandardCopyOption; // ajout import
 import java.util.ArrayList;
 import java.util.List;
+import javax.imageio.ImageIO; // // ajout de l'import manquant pour imageio
 
 public class PavingService {
 
@@ -21,7 +24,8 @@ public class PavingService {
         if (!outputDir.exists()) outputDir.mkdirs();
     }
 
-    public BufferedImage generatePaving(BufferedImage sourceImage, String algoName) throws IOException, InterruptedException {
+    // // signature modifiée pour accepter un fichier de destination pour le txt
+    public BufferedImage generatePaving(BufferedImage sourceImage, String algoName, File destTxtFile) throws IOException, InterruptedException {
         writeImageTxt(sourceImage);
 
         String inputArg = "input"; 
@@ -60,8 +64,35 @@ public class PavingService {
              throw new IOException("Résultat introuvable : " + resultFile.getAbsolutePath());
         }
 
+        // // copie du fichier txt vers la destination si demandée
+        if (destTxtFile != null) {
+            Files.copy(resultFile.toPath(), destTxtFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+
         List<LegoBrick> bricks = parsePavingFile(resultFile);
         return renderPreview(sourceImage.getWidth(), sourceImage.getHeight(), bricks);
+    }
+
+    // // méthode publique pour générer une visualisation depuis un fichier texte existant
+    public void createVisualization(File inputTxt, File outputPng) throws IOException {
+        List<LegoBrick> bricks = parsePavingFile(inputTxt);
+        
+        // // calcul des dimensions de l'image en fonction des briques
+        int maxX = 0;
+        int maxY = 0;
+        for (LegoBrick b : bricks) {
+            int right = b.getX() + b.getWidth();
+            int bottom = b.getY() + b.getHeight();
+            if (right > maxX) maxX = right;
+            if (bottom > maxY) maxY = bottom;
+        }
+
+        // // gestion cas vide
+        if (maxX == 0) maxX = 100;
+        if (maxY == 0) maxY = 100;
+
+        BufferedImage image = renderPreview(maxX, maxY, bricks);
+        ImageIO.write(image, "png", outputPng);
     }
 
     private void writeImageTxt(BufferedImage img) throws IOException {
@@ -93,7 +124,7 @@ public class PavingService {
                 line = line.trim();
                 if (line.isEmpty()) continue;
 
-                // Ex: "2x2/ff0000 0 0 0" ou "2-2/ff0000 0 0 0"
+                // // ex: "2x2/ff0000 0 0 0" ou "2-2/ff0000 0 0 0"
                 String[] parts = line.split(" ");
                 if (parts.length < 4) continue;
 
@@ -103,7 +134,7 @@ public class PavingService {
                 String dims = typeAndColor[0];
                 String color = typeAndColor[1];
                 
-                // CORRECTION ICI : on découpe sur '-' OU sur 'x'
+                // // correction ici : on découpe sur '-' ou sur 'x'
                 String[] dimParts = dims.split("[-x]");
                 if (dimParts.length < 2) continue;
                 

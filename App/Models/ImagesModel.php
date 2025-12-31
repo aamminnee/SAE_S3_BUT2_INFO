@@ -7,77 +7,93 @@ use PDO;
 use PDOException;
 
 class ImagesModel extends Model {
-    // définition de la table principale
     protected $table = 'Image';
 
-    /**
-     * Sauvegarde une image en suivant votre structure spécifique :
-     * 1. Table 'Image' : on stocke le nom du fichier (filename) et le propriétaire (id_Customer).
-     * 2. Table 'CustomerImage' : on stocke le contenu binaire et le type, liés par id_Image.
-     */
+    // // save initial image from upload
     public function saveCustomerImage($idCustomer, $imgData, $fileName, $mimeType) {
         $db = Db::getInstance();
 
         try {
-            // début de la transaction
+            // // start transaction
             $db->beginTransaction();
 
-            // ---------------------------------------------------------
-            // ÉTAPE 1 : Insertion dans la table parente 'Image'
-            // ---------------------------------------------------------
-            // on insère ici le filename et l'id_Customer comme demandé
+            // // insert into parent table 'image'
             $sqlImage = "INSERT INTO Image (filename, id_Customer) VALUES (?, ?)";
             $stmt = $db->prepare($sqlImage);
             $stmt->execute([$fileName, $idCustomer]);
 
-            // récupération de l'id de l'image qui vient d'être créée
+            // // get generated id
             $idImage = $db->lastInsertId();
 
-            // ---------------------------------------------------------
-            // ÉTAPE 2 : Insertion dans la table enfant 'CustomerImage'
-            // ---------------------------------------------------------
-            // on ne met PAS id_Customer ici, seulement le lien vers l'image et les données
+            // // insert into child table 'customerimage' with blob
             $sqlCustomer = "INSERT INTO CustomerImage (id_Image, file, file_type) VALUES (?, ?, ?)";
             $stmt2 = $db->prepare($sqlCustomer);
             
-            // liaison des paramètres
             $stmt2->bindParam(1, $idImage);
-            $stmt2->bindParam(2, $imgData, PDO::PARAM_LOB); // gestion du blob
+            $stmt2->bindParam(2, $imgData, PDO::PARAM_LOB);
             $stmt2->bindParam(3, $mimeType);
             
             $stmt2->execute();
 
-            // validation de la transaction
+            // // commit transaction
             $db->commit();
 
             return $idImage;
 
         } catch (PDOException $e) {
-            // annulation en cas d'erreur
+            // // rollback on error
             $db->rollBack();
             throw $e;
         }
     }
 
-    /**
-     * Récupère l'image complète
-     */
-    public function getImageById($id) {
-        // jointure adaptée à vos noms de colonnes
+    // // update existing image blob (for crop feature)
+    public function updateCustomerImageBlob($idImage, $idCustomer, $newData) {
+        $db = Db::getInstance();
+        
+        // // update blob only if image belongs to customer
+        $sql = "UPDATE CustomerImage c
+                INNER JOIN Image i ON c.id_Image = i.id_Image
+                SET c.file = ?
+                WHERE c.id_Image = ? AND i.id_Customer = ?";
+                
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(1, $newData, PDO::PARAM_LOB);
+        $stmt->bindParam(2, $idImage, PDO::PARAM_INT);
+        $stmt->bindParam(3, $idCustomer, PDO::PARAM_INT);
+        
+        return $stmt->execute();
+    }
+
+    // // get image by id with optional user security check
+    public function getImageById($id, $userId = null) {
+        // // join tables to get file content and metadata
         $sql = "SELECT i.id_Image, i.filename, i.id_Customer, c.file, c.file_type 
                 FROM Image i
                 JOIN CustomerImage c ON i.id_Image = c.id_Image
                 WHERE i.id_Image = ?";
         
-        return $this->requete($sql, [$id])->fetch();
+        $params = [$id];
+
+        // // if userid provided, add security check
+        if ($userId !== null) {
+            $sql .= " AND i.id_Customer = ?";
+            $params[] = $userId;
+        }
+        
+        return $this->requete($sql, $params)->fetch();
     }
 
-    // méthode pour récupérer la dernière image de l'utilisateur
+    // // get last uploaded image for a specific user
     public function getLastImageByUserId($userId) {
-        // sélectionne l'image la plus récente pour cet utilisateur
-        $sql = "SELECT * FROM Image WHERE id_Customer = ? ORDER BY id_Image DESC LIMIT 1";
+        // // get the most recent image for user
+        $sql = "SELECT i.id_Image, i.filename, i.id_Customer, c.file, c.file_type 
+                FROM Image i
+                JOIN CustomerImage c ON i.id_Image = c.id_Image
+                WHERE i.id_Customer = ? 
+                ORDER BY i.id_Image DESC 
+                LIMIT 1";
         
-        // exécute la requête et retourne le résultat
         return $this->requete($sql, [$userId])->fetch();
     }
 }

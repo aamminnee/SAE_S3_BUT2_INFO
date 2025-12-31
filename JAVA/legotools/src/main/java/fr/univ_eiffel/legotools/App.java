@@ -17,10 +17,10 @@ import javax.imageio.ImageIO;
 
 public class App {
 
-    // charge le .env (ignore s'il est absent pour éviter de planter en prod)
+    // // charge le .env (ignore s'il est absent pour éviter de planter en prod)
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-    // méthode utilitaire : cherche dans .env, sinon dans le système
+    // // méthode utilitaire : cherche dans .env, sinon dans le système
     private static String getEnv(String key) {
         String value = dotenv.get(key);
         if (value == null) {
@@ -43,6 +43,7 @@ public class App {
                 case "resize" -> runResize(args);
                 case "pave" -> runPave(args);
                 case "order" -> runOrder();
+                case "visualize" -> runVisualize(args);
                 default -> {
                     System.err.println("Commande inconnue : " + command);
                     printUsage();
@@ -60,6 +61,7 @@ public class App {
         System.out.println("  3. Paver : java -jar legotools.jar pave <input> <output_base> <exe_c> [algo|all]");
         System.out.println("     Algos disponibles : v4_stock, v4_libre, v4_rupture, v4_rentable, all");
         System.out.println("  4. Commander : java -jar legotools.jar order");
+        System.out.println("  5. Visualiser : java -jar legotools.jar visualize <input_txt> <output_png>");
     }
 
     private static void runRefill() throws IOException {
@@ -106,7 +108,7 @@ public class App {
         String inputPath = args[1];
         String outputBasePath = args[2];
         String exePath = args[3];
-        // si l'argument algo est 'all' ou absent, on fait tout
+        // // si l'argument algo est 'all' ou absent, on fait tout
         String algoArg = (args.length > 4) ? args[4] : "all";
 
         BufferedImage source = ImageIO.read(new File(inputPath));
@@ -114,7 +116,7 @@ public class App {
 
         PavingService service = new PavingService(exePath);
 
-        // liste des algorithmes à exécuter
+        // // liste des algorithmes à exécuter
         List<String> algos;
         if ("all".equalsIgnoreCase(algoArg)) {
             algos = List.of("v4_stock", "v4_libre", "v4_rupture", "v4_rentable");
@@ -122,7 +124,7 @@ public class App {
             algos = List.of(algoArg);
         }
 
-        // nettoyage du chemin de sortie pour gérer l'extension proprement
+        // // nettoyage du chemin de sortie pour gérer l'extension proprement
         String basePath = outputBasePath;
         if (basePath.toLowerCase().endsWith(".png")) {
             basePath = basePath.substring(0, basePath.length() - 4);
@@ -130,21 +132,24 @@ public class App {
             basePath = basePath.substring(0, basePath.length() - 4);
         }
 
-        // boucle sur chaque algorithme demandé
+        // // boucle sur chaque algorithme demandé
         for (String algo : algos) {
             System.out.println("\n--- Traitement : " + algo + " ---");
             try {
-                // génération du pavage via le service (qui appelle le C)
-                BufferedImage result = service.generatePaving(source, algo);
-
-                // construction du nom de fichier final (ex: output_v4_stock.png)
-                String finalName = basePath + "_" + algo + ".png";
-                ImageIO.write(result, "png", new File(finalName));
+                // // construction du nom de fichier final pour le png et le txt
+                String finalNamePng = basePath + "_" + algo + ".png";
+                String finalNameTxt = basePath + "_" + algo + ".txt";
                 
-                System.out.println("Image générée : " + finalName);
+                // // génération du pavage via le service (qui appelle le c)
+                // // correction : on passe le fichier txt de destination
+                BufferedImage result = service.generatePaving(source, algo, new File(finalNameTxt));
+
+                ImageIO.write(result, "png", new File(finalNamePng));
+                
+                System.out.println("Image générée : " + finalNamePng);
             } catch (Exception e) {
                 System.err.println("Erreur sur l'algo " + algo + " : " + e.getMessage());
-                // on continue la boucle même si un algo échoue pour traiter les autres
+                // // on continue la boucle même si un algo échoue pour traiter les autres
             }
         }
     }
@@ -154,7 +159,7 @@ public class App {
         var key = getEnv("LEGOFACTORY_KEY");
         if (email == null) return;
 
-        // 1. instanciation
+        // // 1. instanciation
         HttpRestFactory factory = new HttpRestFactory(email, key);
         
         StockManager stock = new StockManager();
@@ -179,7 +184,7 @@ public class App {
                 if (briques.isEmpty()) Thread.sleep(1000);
             }
             
-            // 2. vérification et stockage
+            // // 2. vérification et stockage
             System.out.println("Réception de " + briques.size() + " briques.");
             List<FactoryBrick> verifiedBricks = new java.util.ArrayList<>();
             
@@ -192,12 +197,27 @@ public class App {
                 }
             }
 
-            // 3. sauvegarde dans le stock local
+            // // 3. sauvegarde dans le stock local
             stock.addBricks(verifiedBricks);
             stock.showStock();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // // méthode pour gérer la commande visualize
+    private static void runVisualize(String[] args) throws IOException {
+        if (args.length < 3) {
+            System.out.println("Usage: visualize <input_txt> <output_png>");
+            return;
+        }
+        String inputPath = args[1];
+        String outputPath = args[2];
+
+        // // on instancie le service avec un chemin bidon car on ne lance pas le c ici
+        PavingService service = new PavingService("dummy");
+        service.createVisualization(new File(inputPath), new File(outputPath));
+        System.out.println("Visualisation générée : " + outputPath);
     }
 }
