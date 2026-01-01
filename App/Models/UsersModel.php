@@ -5,8 +5,7 @@ use App\Core\Model;
 use App\Core\Db;
 use PDOException;
 
-class UsersModel extends Model
-{
+class UsersModel extends Model {
     // définition de la table principale
     protected $table = 'Customer';
 
@@ -20,10 +19,7 @@ class UsersModel extends Model
                     c.mode,
                     s.first_name as username, 
                     s.last_name, 
-                    s.email, 
-                    s.adress, 
-                    s.postal_code, 
-                    s.city
+                    s.email 
                 FROM Customer c 
                 JOIN SaveCustomer s ON c.id_SaveCustomer = s.id_SaveCustomer 
                 WHERE c.id_Customer = ?";

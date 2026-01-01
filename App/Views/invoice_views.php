@@ -49,7 +49,8 @@
                 <strong><?= htmlspecialchars(($order['first_name'] ?? '') . ' ' . ($order['last_name'] ?? '')) ?></strong><br>
                 <br>
                 Email : <?= htmlspecialchars($order['email'] ?? '') ?><br>
-                Adress : <?= htmlspecialchars($order['adress'] ?? '') ?><br>
+                <?php // affichage de l'adresse complète stockée dans invoice ?>
+                Adresse : <?= htmlspecialchars($order['adress'] ?? '') ?><br>
             </div>
         </div>
     </div>
@@ -98,13 +99,9 @@
     </div>
 </div>
 
-
 <script>
 function downloadPDF() {
-    // On sélectionne uniquement la feuille blanche
     const element = document.getElementById('invoice-content');
-    
-    // Configuration pour un rendu A4 propre
     const opt = {
         margin:       10,
         filename:     'Facture_<?= $order['invoice_number'] ?? 'Lego' ?>.pdf',
@@ -112,7 +109,6 @@ function downloadPDF() {
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-
     html2pdf().set(opt).from(element).save();
 }
 </script>

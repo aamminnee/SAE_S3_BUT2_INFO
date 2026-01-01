@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $titre ?? 'SAE_S3_BUT2_INFO' ?></title>
+    <title><?= $titre ?></title>
     
     <link rel="stylesheet" href="<?=$_ENV['BASE_URL']?>/CSS/style.css">
     <link rel="stylesheet" href="<?=$_ENV['BASE_URL']?>/CSS/header.css">

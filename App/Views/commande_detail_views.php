@@ -1,151 +1,103 @@
 <?php
-// start session if not already started
-if (session_status() === PHP_SESSION_NONE) session_start();
+// // calcul de l'état de la livraison
+$dateCommande = new DateTime($commande->order_date);
+$maintenant = new DateTime();
+$interval = $dateCommande->diff($maintenant);
+$joursPasses = $interval->days;
 
-// redirect to order list if command data is missing
-if (!isset($commande) || empty($commande)) {
-    header("Location: " . ($BASE_URL ?? '/img2brick') . "/views/commande_views.php");
-    exit;
+$statusLivraison = "";
+$progressWidth = "0%";
+$classEtat = "";
+
+if ($joursPasses < 3) {
+    $statusLivraison = "En préparation / Expédition";
+    $progressWidth = "33%";
+    $classEtat = "state-shipping";
+} elseif ($joursPasses >= 3 && $joursPasses <= 7) {
+    $statusLivraison = "En cours de livraison";
+    $progressWidth = "66%";
+    $classEtat = "state-transit";
+} else {
+    $statusLivraison = "Livrée";
+    $progressWidth = "100%";
+    $classEtat = "state-delivered";
 }
-
-$mosaic = $mosaic ?? [];
-
-$tr = $t ?? [];
-
-// initialize command model if not already present
-if (!isset($commandeModel)) {
-    require_once __DIR__ . '/../models/commande_models.php';
-    $commandeModel = new CommandeModel();
-}
-
-// retrieve status and format order reference
-$status = $commandeModel->getCommandeStatusById($commande['id_commande']);
-$statusClass = strtolower(str_replace(' ', '-', $status));
-$orderCode = 'CMD-' . date('Y', strtotime($commande['date_commande'])) . '-' . str_pad($commande['id_commande'], 5, '0', STR_PAD_LEFT);
-
-// setup image path and fallback
-$identifiant = $mosaic['identifiant'] ?? 'default.png';
-$imagePath = $BASE_URL . "/control/get_image.php?img=" . urlencode($identifiant);
-
-// determine css filters based on mosaic type
-$type = $mosaic['type'] ?? 'default';
-$colorLabel = 'Original';
-$filterCSS = 'none';
-
-if ($type === 'blue') {
-    $filterCSS = 'brightness(1.1) saturate(1.4) hue-rotate(200deg)';
-    $colorLabel = 'Blue Palette';
-} elseif ($type === 'red') {
-    $filterCSS = 'brightness(1.1) saturate(1.4) hue-rotate(-20deg)';
-    $colorLabel = 'Red Palette';
-} elseif ($type === 'bw') {
-    $filterCSS = 'grayscale(100%) contrast(1.1)';
-    $colorLabel = 'Black & White';
-}
-
-// calculate estimated shipping and delivery dates
-$dateCommande = strtotime($commande['date_commande']);
-$expeditionDate = date('d/m/Y', strtotime('+2 days', $dateCommande));
-$livraisonDate = date('d/m/Y', strtotime('+7 days', $dateCommande));
-
-$supportEmail = $_ENV['SUPPORT_EMAIL'] ?? 'support@img2brick.com';
 ?>
 
-<!DOCTYPE html>
-<html lang="<?= $_SESSION['lang'] ?? 'en' ?>">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($tr['order_details'] ?? 'Order Details') ?></title>
-    
-    <link rel="stylesheet" href="<?=$BASE_URL?>/views/CSS/style.css">
-    <link rel="stylesheet" href="<?=$BASE_URL?>/views/CSS/commande_detail_views.css?v=<?= time() ?>">
-</head>
-<body>
-
-<?php include __DIR__ . '/header.php'; ?>
-
-<main class="detail-container">
-    
-    <div class="page-header">
-        <h1 class="page-title"><?= htmlspecialchars($tr['order_details'] ?? 'Order details') ?></h1>
-        <h2 class="order-ref"><?= htmlspecialchars($orderCode) ?></h2>
+<div class="detail-container">
+    <div class="detail-header">
+        <a href="<?= $_ENV['BASE_URL'] ?>/commande" class="btn-back">&larr; Retour à mes commandes</a>
+        
+        <h1>Commande #<?= htmlspecialchars($commande->id_Order) ?></h1>
+        
+        <p class="order-date-full">
+            Effectuée le <strong><?= date('d/m/Y à H:i', strtotime($commande->order_date)) ?></strong>
+        </p>
     </div>
 
-    <div class="detail-grid">
-
-        <div class="detail-card mosaic-card">
-            <h3><?= $tr['mosaic_details'] ?? 'Mosaic Visual' ?></h3>
-            
-            <div class="img-wrapper">
-                <img src="<?= $imagePath ?>" 
-                     alt="<?= htmlspecialchars($tr['selected_mosaic'] ?? 'Selected mosaic') ?>" 
-                     class="mosaic-img" 
-                     style="filter: <?= htmlspecialchars($filterCSS) ?>;">
+    <div class="detail-content">
+        <div class="col-visual">
+            <div class="image-box">
+                <?php if ($visuel): ?>
+                    <img src="<?= htmlspecialchars($visuel) ?>" alt="Votre Pavage">
+                <?php else: ?>
+                    <div class="no-image">Visuel non disponible</div>
+                <?php endif; ?>
             </div>
             
-            <p class="palette-tag">
-                <?= $tr['palette'] ?? 'Palette' ?>: <strong><?= htmlspecialchars($colorLabel) ?></strong>
-            </p>
+            <div class="info-card">
+                <h3>Informations</h3>
+                <div class="info-item">
+                    <span class="label">Prix Total :</span>
+                    <span class="value price"><?= number_format($commande->total_amount, 2) ?> €</span>
+                </div>
+                
+                <div class="info-item address-item">
+                    <span class="label">Adresse de livraison :</span>
+                    <p class="value address-text">
+                        <?= nl2br(htmlspecialchars($commande->adress ?? 'Adresse non disponible')) ?>
+                    </p>
+                </div>
+            </div>
+        </div>
 
-            <div class="download-section">
-                <a href="<?= $imagePath ?>" download="mosaic_<?= $identifiant ?>" class="btn-lego btn-lego-green btn-small">
-                    <?= $tr['download_image'] ?? 'Download Image' ?>
+        <div class="col-info">
+            <div class="tracking-box">
+                <h3>Suivi de livraison</h3>
+                
+                <div class="tracking-status">
+                    État : <strong class="<?= $classEtat ?>"><?= $statusLivraison ?></strong>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: <?= $progressWidth ?>;"></div>
+                </div>
+                
+                <div class="steps">
+                    <div class="step <?= $joursPasses >= 0 ? 'active' : '' ?>">
+                        <span class="icon">📦</span>
+                        <span class="text">Expédition<br>(< 3j)</span>
+                    </div>
+                    <div class="step <?= $joursPasses >= 3 ? 'active' : '' ?>">
+                        <span class="icon">🚚</span>
+                        <span class="text">En transit<br>(3-7j)</span>
+                    </div>
+                    <div class="step <?= $joursPasses > 7 ? 'active' : '' ?>">
+                        <span class="icon">🏠</span>
+                        <span class="text">Livrée<br>(> 7j)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions-box">
+                <a href="<?= $_ENV['BASE_URL'] ?>/payment/confirmation?id=<?= $commande->id_Order ?>" class="btn-action btn-invoice">
+                    Télécharger la facture
+                </a>
+                <br>
+                <a href="mailto:<?= htmlspecialchars($_ENV['SUPPORT_EMAIL']) ?>?subject=Support Commande #<?= $commande->id_Order ?>" class="btn-action btn-support">
+                    Contacter le support client
                 </a>
             </div>
         </div>
-
-        <div class="detail-card info-card">
-            
-            <div class="info-section">
-                <h3><?= $tr['status'] ?? 'Status' ?></h3>
-                <div class="status-box <?= htmlspecialchars($statusClass) ?>">
-                    <?= htmlspecialchars($status) ?>
-                </div>
-                <p class="date-line">
-                    <?= $tr['date'] ?? 'Order Date' ?>: <strong><?= date('d/m/Y', $dateCommande) ?></strong>
-                </p>
-            </div>
-
-            <hr>
-
-            <?php 
-            // display estimated dates only if not delivered
-            if (strtolower($status) !== 'livrée' && strtolower($status) !== 'delivered'): ?>
-            <div class="info-section">
-                <h3><?= $tr['estimated_dates'] ?? 'Estimations' ?></h3>
-                <p><strong><?= $tr['estimated_shipping'] ?? 'Shipping' ?>:</strong> <?= htmlspecialchars($expeditionDate) ?></p>
-                <p><strong><?= $tr['estimated_delivery'] ?? 'Delivery' ?>:</strong> <?= htmlspecialchars($livraisonDate) ?></p>
-            </div>
-            <hr>
-            <?php endif; ?>
-
-            <div class="info-section address-box">
-                <h3><?= $tr['delivery_address'] ?? 'Delivery Address' ?></h3>
-                <p>
-                    <strong><?= htmlspecialchars($commande['adresse']) ?></strong><br>
-                    <?= htmlspecialchars($commande['code_postal']) ?> <?= htmlspecialchars($commande['ville']) ?><br>
-                    <?= htmlspecialchars($commande['pays']) ?><br>
-                    <?= htmlspecialchars($commande['telephone']) ?>
-                </p>
-            </div>
-
-        </div>
-
     </div>
-
-    <div class="footer-actions">
-        <a class="btn-lego btn-lego-blue" href="<?=$BASE_URL?>/control/commande_control.php">
-            <?= htmlspecialchars($tr['back'] ?? '← Back to Orders') ?>
-        </a>
-        
-        <a class="btn-lego btn-lego-yellow" href="mailto:<?= htmlspecialchars($supportEmail) ?>">
-            <?= htmlspecialchars($tr['contact_support'] ?? 'Contact Support') ?>
-        </a>
-    </div>
-
-</main>
-
-<?php include __DIR__ . '/footer.html'; ?>
-</body>
-</html>
+</div>

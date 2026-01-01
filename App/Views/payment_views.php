@@ -12,30 +12,28 @@
         <?php endif; ?>
 
         <div class="summary-row">
-            <span>Pavage LEGO personnalisé</span>
+            <span>Pavage personnalisé</span>
             <span class="total-price">Total : <?= number_format($price, 2) ?> €</span>
         </div>
     </div>
 
-    <form action="<?= ($_ENV['BASE_URL'] ?? '') ?>/payment/process" method="POST" class="lego-form">
+    <form action="<?= $_ENV['BASE_URL'] ?>/payment/process" method="POST" class="lego-form">
 
-        <?php // champ téléphone avec valeur par défaut ?>
+        <?php // champ téléphone ?>
         <div class="form-group">
             <label for="phone">Téléphone</label>
             <input type="tel" id="phone" name="phone" required placeholder="ex: 06 12 34 56 78" value="07 77 77 77 77">
         </div>
 
-        <?php // champ adresse avec valeur par défaut ?>
+        <?php // champ adresse complet (name="adress" pour la bdd) ?>
         <div class="form-group">
-            <label for="address">Adresse de facturation</label>
-            <input type="text" id="address" name="address" required placeholder="ex: 12 Rue de la Paix, 75000 Paris" value="12 Rue de la Paix, 75000 Paris">
-        </div>
-        
-        <div class="form-group">
-            <label for="card_holder">Nom sur la carte</label>
-            <input type="text" id="card_holder" name="card_holder" required placeholder="ex: Jean Dupont" value="Jean Dupont">
+            <label for="adress">Adresse complète</label>
+            <input type="text" id="adress" name="adress" required 
+                   placeholder="ex: 12 Rue de la Paix, 75000 Paris" 
+                   value="12 Rue de la Paix, 75002 Paris">
         </div>
 
+        <?php // champ numéro de carte ?>
         <div class="form-group">
             <label for="card_number">Numéro de carte</label>
             <input type="text" id="card_number" name="card_number" required placeholder="0000 0000 0000 0000" maxlength="19" value="4242 4242 4242 4242">

@@ -1,109 +1,55 @@
-<?php
-// on sécurise l'accès direct aux variables d'environnement
-$BASE_URL = $_ENV["BASE_URL"];
-$tr = $t ?? [];
-$commandes = $commandes ?? [];
-if (!isset($commandeModel)) {
-    // cas d'erreur ou d'accès direct non prévu
-    $commandeModel = null; 
-}
-?>
+<div class="orders-container">
+    
+    <a href="<?= $_ENV['BASE_URL'] ?>/index.php" class="btn-home-back">&larr; Retour à l'accueil</a>
 
-<h1 class="page-title"><?= $tr['orders_title'] ?? 'Mes commandes' ?></h1>
+    <h1 class="page-title">Mes Commandes</h1>
 
-<p class="subtitle"><?= $tr['orders_intro'] ?? 'Retrouvez ici l\'historique de vos créations.' ?></p>
+    <?php if (empty($commandes)): ?>
+        <div class="empty-state">
+            <p>Vous n'avez pas encore passé de commande.</p>
+            <a href="<?= $_ENV['BASE_URL'] ?>/images" class="btn-action">Créer mon premier pavage</a>
+        </div>
+    <?php else: ?>
+        <div class="orders-list">
+            <?php foreach ($commandes as $c): ?>
+                <div class="order-card">
+                    <div class="order-visual">
+                        <?php if (!empty($c->visuel)): ?>
+                            <img src="<?= htmlspecialchars($c->visuel) ?>" alt="Pavage #<?= $c->id_commande ?>">
+                        <?php else: ?>
+                            <div class="no-image">Pas d'aperçu</div>
+                        <?php endif; ?>
+                    </div>
 
-<div class="actions-bar">
-    <a class="btn-lego btn-lego-blue" href="<?=$BASE_URL?>/index.php">
-        + <?= $tr['new_order'] ?? 'Nouvelle commande' ?>
-    </a>
-</div>
-<?php 
-// vérification s'il n'y a aucune commande
-if (empty($commandes)): ?>
-    <div class="empty-state">
-        <p><?= $tr['no_orders'] ?? 'Aucune commande trouvée.' ?></p>
-    </div>
-<?php else: ?>
-    <div class="table-wrapper">
-        <table class="lego-table">
-            <thead>
-                <tr>
-                    <th><?= $tr['order_number'] ?? 'Numéro' ?></th>
-                    <th><?= $tr['date'] ?? 'Date' ?></th>
-                    <th><?= $tr['status'] ?? 'Statut' ?></th>
-                    <th><?= $tr['mosaic'] ?? 'Mosaïque' ?></th>
-                    <th><?= $tr['amount'] ?? 'Montant' ?></th>
-                    <th><?= $tr['actions'] ?? 'Actions' ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($commandes as $cmd): 
-                    // support objet (fetch_obj) ou array (fetch_assoc)
-                    $id_commande = is_object($cmd) ? $cmd->id_commande : $cmd['id_commande'];
-                    $date_commande = is_object($cmd) ? $cmd->date_commande : $cmd['date_commande'];
-                    $montant = is_object($cmd) ? $cmd->montant : $cmd['montant'];
-                    $imgName = is_object($cmd) ? ($cmd->image_identifiant ?? '') : ($cmd['image_identifiant'] ?? '');
-                    $type = is_object($cmd) ? ($cmd->image_type ?? 'default') : ($cmd['image_type'] ?? 'default');
-
-                    // calcul du statut via le modèle passé par le contrôleur
-                    $status = "Inconnu";
-                    if ($commandeModel) {
-                        $status = $commandeModel->getCommandeStatusById($id_commande);
-                    }
-                    $statusClass = strtolower(str_replace(' ', '-', $status));
-                    
-                    // formatage de la référence unique
-                    $orderCode = 'CMD-' . date('Y', strtotime($date_commande)) . '-' . str_pad($id_commande, 5, '0', STR_PAD_LEFT);
-
-                    // filtres css pour la vignette
-                    $filterCSS = match($type) {
-                        'blue' => 'brightness(1.1) saturate(1.4) hue-rotate(200deg)',
-                        'red'  => 'brightness(1.1) saturate(1.4) hue-rotate(-20deg)',
-                        'bw'   => 'grayscale(100%) contrast(1.1)',
-                        default => 'none'
-                    };
-                ?>
-                <tr>
-                    <td data-label="<?= $tr['order_number'] ?? 'Numéro' ?>">
-                        <strong><?= htmlspecialchars($orderCode) ?></strong>
-                    </td>
-                    
-                    <td data-label="<?= $tr['date'] ?? 'Date' ?>">
-                        <?= date('d/m/Y', strtotime($date_commande)) ?>
-                    </td>
-                    
-                    <td data-label="<?= $tr['status'] ?? 'Statut' ?>">
-                        <span class="status-badge <?= htmlspecialchars($statusClass) ?>">
-                            <?= htmlspecialchars($status) ?>
-                        </span>
-                    </td>
-                    
-                    <td data-label="<?= $tr['mosaic'] ?? 'Mosaïque' ?>">
-                        <div class="img-frame">
-                            <?php if($imgName): ?>
-                                <img class="thumb" 
-                                        src="<?=$BASE_URL?>/uploads/<?= htmlspecialchars($imgName) ?>" 
-                                        style="filter: <?= $filterCSS ?>;" 
-                                        alt="mosaic">
-                            <?php else: ?>
-                                <span>No Image</span>
-                            <?php endif; ?>
+                    <div class="order-info">
+                        <div class="info-header">
+                            <span class="order-ref">Commande #<?= htmlspecialchars($c->id_commande) ?></span>
+                            <span class="order-date"><?= date('d/m/Y', strtotime($c->date_commande)) ?></span>
                         </div>
-                    </td>
-                    
-                    <td data-label="<?= $tr['amount'] ?? 'Montant' ?>" class="price">
-                        <?= number_format($montant, 2, ',', ' ') ?> €
-                    </td>
-                    
-                    <td data-label="<?= $tr['actions'] ?? 'Actions' ?>">
-                        <a class="btn-lego btn-lego-yellow btn-small" href="<?=$BASE_URL?>/commande/detail/<?= (int)$id_commande ?>">
-                            <?= $tr['view_details'] ?? 'Voir détails' ?>
+                        
+                        <div class="info-status">
+                            <span class="status-badge status-<?= strtolower($c->status) ?>">
+                                <?= htmlspecialchars($c->status) ?>
+                            </span>
+                        </div>
+
+                        <div class="info-price">
+                            Prix : <span class="price-val"><?= number_format($c->montant, 2) ?> €</span>
+                        </div>
+                    </div>
+
+                    <div class="order-actions">
+                        <a href="<?= $_ENV['BASE_URL'] ?>/commande/detail/<?= $c->id_commande ?>" class="btn-details">
+                            Voir le détail
                         </a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-<?php endif; ?>
+                        <?php if ($c->status === 'Payée'): ?>
+                            <a href="<?= $_ENV['BASE_URL'] ?>/payment/confirmation?id=<?= $c->id_commande ?>" class="btn-invoice">
+                                Facture
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</div>
