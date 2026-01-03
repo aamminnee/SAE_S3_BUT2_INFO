@@ -31,8 +31,8 @@
 }
 
 .original-img {
-    max-width: 200px;
-    height: 200px;
+    max-width: 800px;
+    height: auto;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
@@ -138,16 +138,4 @@
     text-decoration: none;
     border-radius: 6px;
     font-weight: bold;
-}
-
-.brick-badge {
-    background-color: #ebf8ff;
-    color: #2b6cb0;
-    font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    display: inline-block;
-    margin-bottom: 10px;
-    border: 1px solid #bee3f8;
 }

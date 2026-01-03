@@ -7,7 +7,6 @@ import fr.univ_eiffel.legotools.model.FactoryBrick;
 import fr.univ_eiffel.legotools.image.*;
 import fr.univ_eiffel.legotools.paving.PavingService;
 import io.github.cdimascio.dotenv.Dotenv; 
-import fr.univ_eiffel.legotools.scripts.PavingInventory;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -109,6 +108,7 @@ public class App {
         String inputPath = args[1];
         String outputBasePath = args[2];
         String exePath = args[3];
+        // // si l'argument algo est 'all' ou absent, on fait tout
         String algoArg = (args.length > 4) ? args[4] : "all";
 
         BufferedImage source = ImageIO.read(new File(inputPath));
@@ -116,6 +116,7 @@ public class App {
 
         PavingService service = new PavingService(exePath);
 
+        // // liste des algorithmes à exécuter
         List<String> algos;
         if ("all".equalsIgnoreCase(algoArg)) {
             algos = List.of("v4_stock", "v4_libre", "v4_rupture", "v4_rentable");
@@ -123,36 +124,32 @@ public class App {
             algos = List.of(algoArg);
         }
 
+        // // nettoyage du chemin de sortie pour gérer l'extension proprement
         String basePath = outputBasePath;
-        // Nettoyage extension
-        if (basePath.toLowerCase().endsWith(".png") || basePath.toLowerCase().endsWith(".jpg")) {
-            basePath = basePath.substring(0, basePath.lastIndexOf('.'));
+        if (basePath.toLowerCase().endsWith(".png")) {
+            basePath = basePath.substring(0, basePath.length() - 4);
+        } else if (basePath.toLowerCase().endsWith(".jpg")) {
+            basePath = basePath.substring(0, basePath.length() - 4);
         }
 
+        // // boucle sur chaque algorithme demandé
         for (String algo : algos) {
             System.out.println("\n--- Traitement : " + algo + " ---");
             try {
+                // // construction du nom de fichier final pour le png et le txt
                 String finalNamePng = basePath + "_" + algo + ".png";
                 String finalNameTxt = basePath + "_" + algo + ".txt";
-                // Nom du fichier inventaire associé
-                String inventoryName = basePath + "_" + algo + "_inventory.txt";
                 
-                // 1. Génération du pavage (image + fichier texte brut)
+                // // génération du pavage via le service (qui appelle le c)
+                // // correction : on passe le fichier txt de destination
                 BufferedImage result = service.generatePaving(source, algo, new File(finalNameTxt));
+
                 ImageIO.write(result, "png", new File(finalNamePng));
-                System.out.println("Image générée : " + finalNamePng);
-
-                // 2. Génération de l'inventaire et récupération du nombre de briques
-                // On appelle notre nouvelle méthode statique
-                int brickCount = PavingInventory.createInventory(finalNameTxt, inventoryName);
                 
-                // 3. Affichage du résultat pour l'utilisateur (ou parsing futur par PHP)
-                System.out.println("Inventaire généré : " + inventoryName);
-                System.out.println("NOMBRE_BRIQUES_TOTAL=" + brickCount); 
-
+                System.out.println("Image générée : " + finalNamePng);
             } catch (Exception e) {
                 System.err.println("Erreur sur l'algo " + algo + " : " + e.getMessage());
-                e.printStackTrace();
+                // // on continue la boucle même si un algo échoue pour traiter les autres
             }
         }
     }

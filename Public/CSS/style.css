@@ -1,12 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100%;
-    height: 100%;
-}
-
 /* variables de design sobre et moderne */
 :root {
     /* palette monochrome et professionnelle */
@@ -36,7 +29,6 @@ html, body {
 
 /* corps de page minimaliste */
 body {
-    margin: 0;
     font-family: 'Inter', -apple-system, sans-serif;
     color: var(--text-main);
     line-height: 1.5;

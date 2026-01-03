@@ -1,0 +1,200 @@
+/* Public/CSS/invoice_views.css */
+
+/* Fond global de la page de vue pour faire ressortir la feuille */
+.invoice-wrapper {
+    background-color: #e0e0e0;
+    padding: 40px 20px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* --- BOUTONS --- */
+.invoice-controls {
+    width: 100%;
+    max-width: 210mm; /* Largeur A4 */
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.btn-back, .btn-download {
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    border: none;
+}
+
+.btn-back {
+    background-color: #666;
+    color: white;
+}
+
+.btn-download {
+    background-color: #d01012; /* Rouge Lego */
+    color: white;
+}
+
+.btn-download:hover {
+    background-color: #b00b0d;
+}
+
+/* --- LA FEUILLE (PAPIER) --- */
+.invoice-paper {
+    background-color: white;
+    width: 100%;
+    max-width: 210mm; /* Largeur standard A4 */
+    min-height: 297mm; /* Hauteur standard A4 */
+    padding: 40px;
+    box-sizing: border-box;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+/* --- HEADER DU PAPIER --- */
+.paper-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.logo-text {
+    margin: 0;
+    font-size: 28px;
+    text-transform: uppercase;
+    color: #333;
+}
+
+.logo-text .highlight {
+    color: #d01012;
+}
+
+.company-address {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.invoice-title {
+    margin: 0;
+    font-size: 32px;
+    color: #ddd; /* Gris très clair pour le style */
+    text-align: right;
+    letter-spacing: 2px;
+}
+
+.meta-table {
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: right;
+}
+
+.meta-table th {
+    padding-right: 10px;
+    color: #777;
+    font-weight: normal;
+}
+
+.separator {
+    border: 0;
+    border-top: 2px solid #eee;
+    margin: 20px 0 40px 0;
+}
+
+/* --- CLIENT --- */
+.client-section {
+    margin-bottom: 40px;
+}
+
+.client-box {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-left: 4px solid #333;
+    width: 50%;
+}
+
+.section-title {
+    margin: 0 0 10px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.client-details {
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* --- TABLEAU ARTICLES --- */
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.items-table th {
+    background-color: #333;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.items-table td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.bold { font-weight: bold; }
+
+/* --- TOTAUX --- */
+.totals-section {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.totals-table {
+    width: 300px;
+    border-collapse: collapse;
+}
+
+.totals-table th {
+    text-align: right;
+    padding: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.totals-table td {
+    text-align: right;
+    padding: 8px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.grand-total th, .grand-total td {
+    border-top: 2px solid #333;
+    padding-top: 15px;
+    font-size: 18px;
+    color: #d01012;
+}
+
+/* --- PIED DE PAGE PAPIER --- */
+.paper-footer {
+    margin-top: 80px;
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}

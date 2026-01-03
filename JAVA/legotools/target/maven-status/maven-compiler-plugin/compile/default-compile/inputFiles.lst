@@ -5,7 +5,6 @@
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/paving/PavingInput.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/factory/security/ProofOfWorkSolver.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/image/ResolutionStrategy.java
-/var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/scripts/PavingInventory.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/image/BicubicStrategy.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/image/NearestNeighborStrategy.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/model/FactoryBrick.java
@@ -17,5 +16,4 @@
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/factory/StockManager.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/factory/api/PaymentStrategy.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/App.java
-/var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/scripts/GenerationItem.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/image/StepwiseStrategy.java

@@ -36,4 +36,3 @@ $baseUrl = $_ENV['BASE_URL'] ?? '';
         </nav>
     </div>
 </header>
-

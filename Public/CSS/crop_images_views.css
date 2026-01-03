@@ -1,0 +1,75 @@
+/* style du panneau d'options (aside) */
+#options-panel {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+}
+
+.lego-box h3 {
+    width: 100%;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-family: sans-serif;
+    border-bottom: 2px solid #f4f4f4;
+    padding-bottom: 10px;
+}
+
+.option-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 150px;
+}
+
+.option-group label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.option-group select {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: white;
+    width: 100%;
+}
+
+.option-group select:hover {
+    border-color: #006DB7; /* bleu lego */
+}
+
+.img-container {
+    width: 100%;
+    max-width: 100%;
+    /* limite la hauteur pour ne pas dépasser l'écran */
+    max-height: 70vh; 
+    margin: 20px auto;
+    overflow: hidden; /* cache ce qui dépasse */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* l'image s'adapte à son conteneur */
+.img-container img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block; /* évite les espaces fantômes */
+    object-fit: contain;
+}
