@@ -1,65 +1,208 @@
+/* --- Header Principal --- */
 header {
-    background-color: var(--bg-card);
-    border-bottom: 1px solid var(--border-light);
-    height: 80px;
-    width: 100%;
-    position: fixed;
+    background-color: #ffffff;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    position: sticky;
     top: 0;
-    left: 0;
     z-index: 1000;
-    box-shadow: var(--shadow-sm);
+    height: 90px; /* Hauteur augmentée pour accommoder le logo plus grand */
     display: flex;
     align-items: center;
+    width: 100%;
+    margin: 0; /* Sécurité anti-espace */
+    padding: 0; /* Sécurité anti-espace */
 }
 
-.navbar {
+/* IMPORTANT : Assurez-vous que le body n'a pas de marge dans style.css */
+/* body { margin: 0; padding: 0; } */
+
+.header-container {
+    max-width: 1400px; /* Un peu plus large pour aérer */
     width: 100%;
-    max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 100%;
 }
 
-.logo-container {
+/* --- Logo Agrandit --- */
+.logo {
     display: flex;
     align-items: center;
+    height: 100%;
 }
 
-.logo {
-    height: 40px;
+.logo img {
+    height: 130px;
     width: auto;
-    display: block;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.nav-links {
+.logo:hover img {
+    transform: scale(1.05);
+}
+
+/* --- Navigation --- */
+.main-nav ul {
     list-style: none;
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 30px;
     margin: 0;
     padding: 0;
 }
 
-.nav-links a {
+.nav-link {
     text-decoration: none;
-    color: var(--text-muted);
-    font-weight: 500;
+    color: #333;
+    font-weight: 600;
+    font-size: 1rem;
+    position: relative;
+    padding: 5px 0;
+    transition: color 0.3s;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 3px;
+    bottom: 0;
+    left: 0;
+    background-color: #FFD500;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* --- Bouton Header (Inscription) --- */
+.btn-header {
+    background-color: #006CB7;
+    color: white;
+    padding: 12px 25px; /* Un peu plus grand */
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
     font-size: 0.95rem;
-    transition: color 0.2s ease;
-    padding: 0.5rem 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 108, 183, 0.2);
 }
 
-.nav-links a:hover {
-    color: var(--primary-color);
+.btn-header:hover {
+    background-color: #005596;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 108, 183, 0.3);
 }
 
-.nav-links .btn-logout {
-    color: #ef4444;
+/* --- Menu Profil --- */
+.profile-menu {
+    position: relative;
+    cursor: pointer;
+    height: 100%;
+    display: flex;
+    align-items: center;
 }
 
-.nav-links .btn-logout:hover {
-    color: #b91c1c;
-    text-decoration: underline;
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 15px;
+    border-radius: 30px;
+    transition: background 0.3s;
+    border: 1px solid transparent;
+}
+
+.profile-trigger:hover {
+    background-color: #f4f4f4;
+    border-color: #eee;
+}
+
+.profile-trigger span {
+    font-weight: 600;
+    color: #333;
+}
+
+.avatar-mini {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+}
+
+/* Menu déroulant */
+.dropdown {
+    position: absolute;
+    top: 85px; /* Ajusté par rapport à la nouvelle hauteur du header */
+    right: 0;
+    background: white;
+    width: 220px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+    display: block !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 8px 0 !important;
+    border: 1px solid #f0f0f0;
+    z-index: 1100;
+}
+
+.profile-menu:hover .dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown li {
+    width: 100%;
+}
+
+.dropdown a {
+    display: block;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #555;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+
+.dropdown a:hover {
+    background-color: #f9f9f9;
+    color: #006CB7;
+}
+
+.separator {
+    height: 1px;
+    background-color: #eee;
+    margin: 5px 0;
+}
+
+.logout-btn:hover {
+    color: #D11013 !important;
+    background-color: #fff5f5 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    header {
+        height: 70px;
+    }
+    
+    .logo img {
+        height: 50px;
+    }
+    
+    .nav-link span {
+        display: none;
+    }
 }
