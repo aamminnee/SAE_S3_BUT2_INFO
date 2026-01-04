@@ -1,0 +1,124 @@
+/* --- Global & Centrage --- */
+body {
+    background-color: #f8f9fa;
+}
+
+/* La Carte d'Inscription */
+.register-container {
+    background-color: white;
+    width: 100%;
+    max-width: 450px; /* Un peu plus large que le login */
+    margin: 40px auto;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    font-family: 'Segoe UI', sans-serif;
+    border: 1px solid #f0f0f0;
+}
+
+.register-container h2 {
+    text-align: center;
+    color: #1a202c;
+    font-weight: 800;
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
+
+/* Messages d'erreur */
+.error-msg {
+    background-color: #fff5f5;
+    color: #e53e3e;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #fed7d7;
+    margin-bottom: 25px;
+    font-size: 0.9rem;
+    text-align: center;
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* --- Formulaire --- */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #4a5568;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    background-color: #fdfdfd;
+}
+
+.form-group input:focus {
+    border-color: #3182ce;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    background-color: #fff;
+}
+
+/* Petit texte d'aide (ex: password requirements) */
+.form-group small {
+    display: block;
+    margin-top: 6px;
+    color: #718096;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* --- Bouton --- */
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
+    box-shadow: 0 4px 6px rgba(49, 130, 206, 0.3);
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(49, 130, 206, 0.4);
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+/* --- Lien Login --- */
+.login-link {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.95rem;
+    color: #718096;
+}
+
+.login-link a {
+    color: #3182ce;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}

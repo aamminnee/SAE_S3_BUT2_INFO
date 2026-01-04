@@ -66,11 +66,11 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Pavage LEGO Personnalisé</td>
-                    <td class="text-center">1</td>
+                <tr class="item">
+                    <td><strong>Pack Mosaïque Personnalisée</strong></td>
+                    <td class="text-right">1</td>
                     <td class="text-right"><?= number_format($order['total_amount'], 2) ?> €</td>
-                    <td class="text-right bold"><?= number_format($order['total_amount'], 2) ?> €</td>
+                    <td class="text-right"><?= number_format($order['total_amount'], 2) ?> €</td>
                 </tr>
             </tbody>
         </table>

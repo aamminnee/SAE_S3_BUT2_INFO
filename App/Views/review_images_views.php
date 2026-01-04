@@ -1,4 +1,10 @@
 <div class="review-container">
+
+    <?php if (isset($error_msg) && $error_msg): ?>
+        <div class="alert alert-danger" style="background: red; color: white; padding: 15px; margin-bottom: 20px;">
+            <?= $error_msg ?>
+        </div>
+    <?php endif; ?>
     
     <h2><?= $t['review_title'] ?? 'Choisissez votre pavage' ?></h2>
 
@@ -30,6 +36,12 @@
                     
 
                     <h3><?= $t['style_' . $key] ?? $info['label'] ?></h3>
+
+                    <?php if (isset($counts[$key]) && $counts[$key] > 0): ?>
+                        <div class="brick-badge">
+                            <?= $counts[$key] ?> briques utilisées
+                        </div>
+                    <?php endif; ?>
 
                     <div class="preview-box">
                         <?php 

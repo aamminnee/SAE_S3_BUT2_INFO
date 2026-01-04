@@ -100,7 +100,9 @@ class UserController extends Controller {
             }
         } else {
             // affichage simple du formulaire
-            $this->render('login_views');
+            $this->render('login_views', [
+            'css' => 'login_views.css'
+        ]);
         }
     }
 
@@ -155,7 +157,9 @@ class UserController extends Controller {
             }
         } else {
             // affichage du formulaire d'inscription
-            $this->render('register_views');
+            $this->render('register_views', [
+                'css' => 'register_views.css'
+            ]);
         }
     }
 
@@ -336,7 +340,11 @@ class UserController extends Controller {
             $message = $this->t('invalid_request', "Invalid request.");
         }
         
-        $this->render('setting_views', ['message' => $message]);
+        $this->render('setting_views', [
+            'message' => $message,
+            'css' => 'setting_views.css',   
+            'trans' => $this->translations 
+        ]);
     }
 
     // déconnexion

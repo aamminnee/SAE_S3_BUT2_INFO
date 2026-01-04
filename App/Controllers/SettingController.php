@@ -40,7 +40,7 @@ class SettingController extends Controller {
         $translations = $this->translation_model->getTranslations($lang);
 
         $this->render('setting_views', [
-            'css' => 'setting_views_style.css',
+            'css' => 'setting_views.css',
             'trans' => $translations
         ]);
     }

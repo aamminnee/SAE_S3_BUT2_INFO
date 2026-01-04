@@ -1,7 +1,7 @@
 <div class="orders-container">
     
     <a href="<?= $_ENV['BASE_URL'] ?>/index.php" class="btn-home-back">&larr; Retour à l'accueil</a>
-
+    <br>
     <h1 class="page-title">Mes Commandes</h1>
 
     <?php if (empty($commandes)): ?>
@@ -23,7 +23,7 @@
 
                     <div class="order-info">
                         <div class="info-header">
-                            <span class="order-ref">Commande #<?= htmlspecialchars($c->id_commande) ?></span>
+                            <span class="order-ref">Commande #<?= htmlspecialchars($c->id_commande) ?></span>&nbsp;
                             <span class="order-date"><?= date('d/m/Y', strtotime($c->date_commande)) ?></span>
                         </div>
                         

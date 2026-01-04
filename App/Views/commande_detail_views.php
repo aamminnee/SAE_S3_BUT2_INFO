@@ -97,6 +97,38 @@ if ($joursPasses < 3) {
                 <a href="mailto:<?= htmlspecialchars($_ENV['SUPPORT_EMAIL']) ?>?subject=Support Commande #<?= $commande->id_Order ?>" class="btn-action btn-support">
                     Contacter le support client
                 </a>
+                <?php if (!empty($briques)): ?>
+                    <div class="bricks-container">
+                        <h3>Contenu de la boîte (<?= array_sum(array_column($briques, 'count')) ?> pièces)</h3>
+                        
+                        <div class="table-wrapper">
+                            <table class="bricks-table">
+                                <thead>
+                                    <tr>
+                                        <th>Aperçu</th>
+                                        <th>Taille</th>
+                                        <th>Couleur</th>
+                                        <th class="text-right">Quantité</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($briques as $b): ?>
+                                        <tr>
+                                            <td>
+                                                <span class="brick-preview" style="background-color: <?= $b['color'] ?>;"></span>
+                                            </td>
+                                            <td><?= htmlspecialchars($b['size']) ?></td>
+                                            <td>
+                                                <span class="color-code"><?= strtoupper($b['color']) ?></span>
+                                            </td>
+                                            <td class="text-right count-cell">x <?= $b['count'] ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

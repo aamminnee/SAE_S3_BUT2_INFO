@@ -13,20 +13,20 @@ class Main
         }
 
         // on retire le "trailing slash" éventuel de l'url
-        $uri = $_SERVER['REQUEST_URI'];
+        // $uri = $_SERVER['REQUEST_URI'];
 
-        // on vérifie que uri n'est pas vide et se termine par un slash
-        if (!empty($uri) && $uri != '/' && $uri[-1] === '/') {
-            // on enlève le slash
-            $uri = substr($uri, 0, -1);
+        // // on vérifie que uri n'est pas vide et se termine par un slash
+        // if (!empty($uri) && $uri != '/' && $uri[-1] === '/') {
+        //     // on enlève le slash
+        //     $uri = substr($uri, 0, -1);
 
-            // on envoie un code de redirection permanente
-            http_response_code(301);
+        //     // on envoie un code de redirection permanente
+        //     http_response_code(301);
 
-            // on redirige vers l'url sans /
-            header('Location: ' . $uri);
-            exit;
-        }
+        //     // on redirige vers l'url sans /
+        //     header('Location: ' . $uri);
+        //     exit;
+        // }
 
         // on gère les paramètres d'url (p=controleur/methode/parametres)
         $params = [];

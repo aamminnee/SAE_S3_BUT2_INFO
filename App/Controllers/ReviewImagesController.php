@@ -19,7 +19,7 @@ class ReviewImagesController extends Controller {
     // method to display previews
     public function index() {
         if (!isset($_SESSION['user_id']) || !isset($_GET['img'])) {
-            header("Location: /"); // redirection si accès direct
+            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/images");
             exit;
         }
 
@@ -28,29 +28,37 @@ class ReviewImagesController extends Controller {
 
         $imagesModel = new ImagesModel();
         $image = $imagesModel->getImageById($imageId, $userId);
+        
+        if (!$image) {
+            die("Image introuvable.");
+        }
         $image = (array) $image;
 
         $previews = [];
+        $counts = [];
+        $error = null; // Variable pour stocker l'erreur
         
-        // on génère seulement si on ne l'a pas déjà fait pour cette image dans cette session
-        // (pour éviter de recharger java si on rafraichit la page)
         $sessionKey = 'mosaics_' . $imageId;
         
-        if (!isset($_SESSION[$sessionKey])) {
+        if (!isset($_SESSION[$sessionKey]) || empty($_SESSION[$sessionKey])) {
             $mosaicModel = new MosaicModel();
             try {
                 $extension = ($image['file_type'] === 'image/png') ? 'png' : 'jpg';
-                // récupération des données (txt + img)
                 $results = $mosaicModel->generateTemporaryMosaics($image['id_Image'], $image['file'], $extension);
                 
-                // stockage temporaire en session pour l'étape suivante
-                $_SESSION[$sessionKey] = $results;
+                // VÉRIFICATION : Si aucun résultat n'est retourné, c'est une erreur
+                if (empty($results)) {
+                    $error = "La génération a échoué. Vérifiez les logs serveur et les permissions.";
+                } else {
+                    $_SESSION[$sessionKey] = $results;
+                }
             } catch (\Exception $e) {
+                $error = "Erreur : " . $e->getMessage();
                 error_log($e->getMessage());
             }
         }
 
-        // préparation des images pour la vue
+        // Récupération des prévisualisations si elles existent
         if (isset($_SESSION[$sessionKey])) {
             foreach ($_SESSION[$sessionKey] as $type => $data) {
                 if (isset($data['img'])) {
@@ -59,11 +67,25 @@ class ReviewImagesController extends Controller {
             }
         }
 
+        if (isset($_SESSION[$sessionKey])) {
+            foreach ($_SESSION[$sessionKey] as $type => $data) {
+                if (isset($data['img'])) {
+                    $previews[$type] = $data['img'];
+                }
+                // Récupération du nombre de briques
+                if (isset($data['count'])) {
+                    $counts[$type] = $data['count'];
+                }
+            }
+        }
+
         $this->render('review_images_views', [
             't' => $this->translations,
             'image' => $image,
             'previews' => $previews,
-            'css' => 'review_images_views.css'
+            'counts' => $counts,
+            'css' => 'review_images_views.css',
+            'error_msg' => $error // On passe l'erreur à la vue
         ]);
     }
 

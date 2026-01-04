@@ -8,6 +8,13 @@ use PDO;
 class CommandeModel extends Model {
     protected $table = 'CustomerOrder';
 
+    public function updateStatus($id, $status) {
+        $db = Db::getInstance();
+        $sql = "UPDATE " . $this->table . " SET status = ? WHERE id_Order = ?";
+        $stmt = $db->prepare($sql);
+        return $stmt->execute([$status, $id]);
+    }
+    
     // récupère les détails pour la facture (utilisé par paymentcontroller)
     public function getOrderDetails($orderId) {
         $db = Db::getInstance();

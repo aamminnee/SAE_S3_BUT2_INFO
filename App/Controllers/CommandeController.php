@@ -70,14 +70,18 @@ class CommandeController extends Controller {
 
         // // récupération du visuel du pavage
         $visuel = null;
+        $briques = [];
+
         if (!empty($commande->id_Mosaic)) {
             $visuel = $mosaicModel->getMosaicVisual($commande->id_Mosaic);
+            $briques = $mosaicModel->getBricksList($commande->id_Mosaic);
         }
 
         // // on passe tout à la vue (plus besoin de require le modèle dans la vue)
         $this->render('commande_detail_views', [
             'commande' => $commande,
             'visuel' => $visuel,
+            'briques' => $briques,
             't' => $this->translations,
             'css' => 'commande_detail_views.css'
         ]);

@@ -37,13 +37,18 @@ class PaymentController extends Controller {
         $mosaicModel = new MosaicModel();
         $visualImage = $mosaicModel->getMosaicVisual($mosaicId);
 
+        $dynamicPrice = $mosaicModel->getMosaicPrice($mosaicId); 
+    
+        // Si le prix est 0 ou invalide, vous pouvez définir un prix minimum ou gérer l'erreur
+        if ($dynamicPrice <= 0) $dynamicPrice = 12.99;
+
         $usersModel = new UsersModel();
         // // conversion en tableau car le model peut renvoyer un objet
         $clientInfo = (array) $usersModel->getUserById($_SESSION['user_id']);
 
         $this->render('payment_views', [
             't' => $this->translations,
-            'price' => 12.99,
+            'price' => $dynamicPrice,
             'css' => 'payment_views.css',
             'mosaicImage' => $visualImage,
             'client' => $clientInfo 
@@ -86,21 +91,40 @@ class PaymentController extends Controller {
                 'email'      => $userInfo['email'] ?? ($_SESSION['user_email'] ?? 'client@legofactory.com')
             ];
 
-            $amount = 12.99;
+            $mosaicModel = new MosaicModel(); // Instancier le modèle ici si ce n'est pas fait
+            $amount = $mosaicModel->getMosaicPrice($mosaicId);
+
+            // Fallback de sécurité
+            if ($amount <= 0) $amount = 12.99;
 
             $financialModel = new FinancialModel();
             $result = $financialModel->processOrder($userId, $mosaicId, $cardInfo, $amount, $billingInfo);
 
             if (is_numeric($result)) {
-                // // succès : on récupère les détails pour le mail
+                $orderId = $result; // L'ID est dans $result
                 $commandeModel = new CommandeModel();
-                $orderDetails = $commandeModel->getOrderDetails($result);
-                $emailToSend = $billingInfo['email'];
 
+                // 1. Mise à jour du statut
+                $commandeModel->updateStatus($orderId, 'Payée');
+
+                // 2. Sauvegarde de la composition (Inventaire des briques)
+                $commande = $commandeModel->getCommandeById($orderId);
+                if (!empty($commande->id_Mosaic)) {
+                    $mosaicModel = new MosaicModel();
+                    // On sauvegarde uniquement si ce n'est pas déjà fait
+                    if (!$mosaicModel->hasComposition($commande->id_Mosaic)) {
+                        $mosaicModel->saveMosaicComposition($commande->id_Mosaic);
+                    }
+                }
+
+                // 3. Envoi de l'email
+                $orderDetails = $commandeModel->getOrderDetails($orderId);
+                $emailToSend = $billingInfo['email'];
                 $this->sendInvoiceEmail($emailToSend, $orderDetails);
 
+                // 4. Redirection
                 unset($_SESSION['pending_payment_mosaic_id']);
-                header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/payment/confirmation?id=" . $result);
+                header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/payment/confirmation?id=" . $orderId);
                 exit;
             } else {
                 $mosaicModel = new MosaicModel();
