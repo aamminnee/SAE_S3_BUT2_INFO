@@ -9,6 +9,15 @@ use Exception;
 class MosaicModel extends Model {
     protected $table = 'Mosaic';
 
+    // Coefficient multiplicateur de marge sur la matière première
+    private const MARGIN_COEFF = 2;
+
+    // Frais fixes (emballage, logistique)
+    private const HANDLING_FEE = 5.99;
+
+    // Frais de livraison
+    private const DELIVERY = 4.99;
+
     // // génération des mosaïques (code existant)
     public function generateTemporaryMosaics($idImage, $blobData, $extension) {
         $projectRoot = dirname(__DIR__, 2); 
@@ -290,5 +299,37 @@ class MosaicModel extends Model {
         $stmt = $db->prepare("SELECT 1 FROM MosaicComposition WHERE id_Mosaic = ? LIMIT 1");
         $stmt->execute([$idMosaic]);
         return (bool)$stmt->fetch();
+    }
+
+    // Ajoutez cette méthode à la classe MosaicModel
+    public function getMosaicPrice($idMosaic) {
+        $db = Db::getInstance();
+        $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
+        $stmt->execute([$idMosaic]);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$res || empty($res['pavage'])) {
+            return 0.00; // Prix par défaut ou gestion d'erreur
+        }
+
+        $lines = explode("\n", $res['pavage']);
+        $firstLine = trim($lines[0]);
+        $parts = preg_split('/\s+/', $firstLine);
+
+        $rawCost = 0.00;
+
+        if (isset($parts[1]) && is_numeric($parts[1])) {
+            $rawCost = (float) $parts[1];
+        }
+
+        if ($rawCost <= 0) {
+            return 19.99; // Prix par défaut minimum
+        }
+
+        // Formule de rentabilité
+        $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE + self::DELIVERY;
+
+        // Arrondir
+        return floor($finalPrice) + 0.99;
     }
 }

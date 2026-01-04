@@ -67,10 +67,10 @@
             </thead>
             <tbody>
                 <tr class="item">
-                    <td><strong>Mosaïque Personnalisée</strong></td>
+                    <td><strong>Pack Mosaïque Personnalisée</strong></td>
                     <td class="text-right">1</td>
-                    <td class="text-right"><?= number_format($order['montant'] ?? 12.99, 2) ?> €</td>
-                    <td class="text-right"><?= number_format($order['montant'] ?? 12.99, 2) ?> €</td>
+                    <td class="text-right"><?= number_format($order['total_amount'], 2) ?> €</td>
+                    <td class="text-right"><?= number_format($order['total_amount'], 2) ?> €</td>
                 </tr>
             </tbody>
         </table>
