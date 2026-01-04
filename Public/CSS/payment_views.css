@@ -1,0 +1,113 @@
+/* // conteneur principal centré */
+.payment-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* // titre de la page */
+.payment-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-family: 'Arial', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* // bloc récapitulatif de la commande */
+.order-summary {
+    background-color: #f8f9fa;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-left: 6px solid #E3000B; /* // rouge lego */
+    border-radius: 4px;
+}
+
+.order-summary h3 {
+    margin-top: 0;
+    color: #555;
+    font-size: 1.1em;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.total-price {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #333;
+}
+
+/* // formulaire et champs */
+.lego-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #444;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box; /* // important pour le padding */
+}
+
+.form-group input:focus {
+    border-color: #006DB7; /* // bleu lego */
+    outline: none;
+}
+
+/* // disposition en ligne pour date et cvv */
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* // bouton de paiement */
+.btn-pay {
+    width: 100%;
+    padding: 15px;
+    background-color: #009e0f; /* // vert lego */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-pay:hover {
+    background-color: #007a0b;
+}
+
+.btn-pay:active {
+    transform: scale(0.98);
+}
