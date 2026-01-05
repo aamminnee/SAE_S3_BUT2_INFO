@@ -12,12 +12,24 @@ import java.util.Map;
 
 public class GenerationItem {
 
+    private static final Map<String, String> ENV = new HashMap<>();
+
     // Paramètres de connexion
     private static final String URL = "jdbc:mysql://localhost:3306/SAE_S3_BUT2_INFO";
     private static final String USER = "root";
     private static final String PASSWORD = "";
 
     public static void main(String[] args) {
+
+        loadEnv(".env");
+
+        String host = ENV.getOrDefault("DB_HOST", "localhost");
+        String dbName = ENV.getOrDefault("DB_NAME", "SAE_S3_BUT2_INFO");
+        String user = ENV.getOrDefault("DB_USER", "root");
+        String password = ENV.getOrDefault("DB_PASS", "");
+
+        String url = "jdbc:mysql://" + host + ":3306/" + dbName;
+        
         List<String> shapesList = new ArrayList<>();
         Map<Integer, Integer> shapeIdToIndex = new HashMap<>();
 
