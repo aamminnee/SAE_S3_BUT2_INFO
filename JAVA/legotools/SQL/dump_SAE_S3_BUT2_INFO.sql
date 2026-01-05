@@ -48,6 +48,7 @@ CREATE TABLE `Customer` (
   `id_SaveCustomer` int DEFAULT NULL,
   `etat` varchar(20) COLLATE utf8mb4_general_ci DEFAULT 'invalide',
   `mode` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `role` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'user',
   PRIMARY KEY (`id_Customer`),
   KEY `id_SaveCustomer` (`id_SaveCustomer`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
