@@ -66,6 +66,7 @@ class UserController extends Controller {
             $userEtat = is_object($user) ? $user->etat : ($user['etat'] ?? null);
             $userMode = is_object($user) ? $user->mode : ($user['mode'] ?? null);
             $userEmail = is_object($user) ? $user->email : ($user['email'] ?? null);
+            $userRole = is_object($user) ? ($user->role ?? 'user') : ($user['role'] ?? 'user');
 
             if ($user && password_verify($password, $userMdp)) {
                 
@@ -90,6 +91,7 @@ class UserController extends Controller {
                 $_SESSION['email']    = $userEmail;
                 $_SESSION['status']   = $userEtat;
                 $_SESSION['mode']     = $userMode;
+                $_SESSION['role']     = $userRole;
                 
                 // redirection vers la page d'accueil des images
                 header("Location: $baseUrl/index.php"); 
@@ -256,13 +258,15 @@ class UserController extends Controller {
                         $email = is_object($userFull) ? $userFull->email : $userFull['email'];
                         $etat = is_object($userFull) ? $userFull->etat : $userFull['etat'];
                         $mode = is_object($userFull) ? $userFull->mode : $userFull['mode'];
-
+                        $role = is_object($userFull) ? ($userFull->role ?? 'user') : ($userFull['role'] ?? 'user');
+                        
                         // enregistrement des infos en session
                         $_SESSION['user_id']  = $idUser;
                         $_SESSION['username'] = $username;
                         $_SESSION['email']    = $email;
                         $_SESSION['status']   = $etat;
                         $_SESSION['mode']     = $mode;
+                        $_SESSION['role']     = $role;
                         
                         // nettoyage des variables temporaires
                         unset($_SESSION['temp_2fa_user_id']);

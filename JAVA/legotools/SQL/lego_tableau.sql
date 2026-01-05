@@ -57,8 +57,6 @@ BEGIN
     CALL create_mosaic_composition_table();
 END$$
 
--- 3. Le reste de vos procédures (déjà correctes dans l'export)
-
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_bank_details_table` ()   BEGIN
     CREATE TABLE IF NOT EXISTS BankDetails (
         id_Bank_Details INT AUTO_INCREMENT PRIMARY KEY,

@@ -17,6 +17,7 @@ class UsersModel extends Model {
                     c.password as mdp, 
                     c.etat, 
                     c.mode,
+                    c.role,
                     s.first_name as username, 
                     s.last_name, 
                     s.email 
@@ -34,6 +35,7 @@ class UsersModel extends Model {
                     c.password as mdp, 
                     c.etat,
                     c.mode, 
+                    c.role,
                     s.first_name as username, 
                     s.email 
                 FROM Customer c 
@@ -89,7 +91,7 @@ class UsersModel extends Model {
             
             // 2. création du compte customer lié à ce profil savecustomer
             // on définit l'état par défaut à 'invalide' (en attente de mail)
-            $sql2 = "INSERT INTO Customer (password, id_SaveCustomer, etat, mode) VALUES (?, ?, 'invalide', NULL)";
+            $sql2 = "INSERT INTO Customer (password, id_SaveCustomer, etat, mode, role) VALUES (?, ?, 'invalide', NULL, 'user')";
             $stmt2 = $db->prepare($sql2);
             $stmt2->execute([$hashed, $id_save]);
             
