@@ -23,6 +23,17 @@
             </configuration>
           </execution>
           <execution>
+            <id>generate-bricks-file</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>fr.univ_eiffel.legotools.scripts.GenerationItem</mainClass>
+              <cleanupDaemonThreads>false</cleanupDaemonThreads>
+            </configuration>
+          </execution>
+          <execution>
             <id>clean-c-code</id>
             <phase>clean</phase>
             <goals>

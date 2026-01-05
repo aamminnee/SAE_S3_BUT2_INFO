@@ -1,10 +1,16 @@
--- DÉBUT DU FICHIER
+-- phpMyAdmin SQL Dump
+-- version 5.2.1deb3
+-- https://www.phpmyadmin.net/
+--
+-- Hôte : localhost:3306
+-- Généré le : lun. 05 jan. 2026 à 23:35
+-- Version du serveur : 8.0.44-0ubuntu0.24.04.2
+-- Version de PHP : 8.3.6
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
--- Désactiver temporairement les contraintes de clés étrangères pour éviter les erreurs d'ordre
-SET FOREIGN_KEY_CHECKS = 0;
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -15,203 +21,87 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Base de données : `SAE_S3_BUT2_INFO`
 --
 
--- --------------------------------------------------------
--- 1. CRÉATION DES TABLES
+DELIMITER $$
+--
+-- Procédures
+--
+CREATE DEFINER=`admin`@`localhost` PROCEDURE `check_mosaic_stock` (IN `p_id_Mosaic` INT, OUT `p_is_available` BOOLEAN)   BEGIN
+    DECLARE v_missing_items INT$$
+
+CREATE DEFINER=`admin`@`localhost` PROCEDURE `get_all_items_stock` ()   BEGIN
+    SELECT 
+        i.id_Item, 
+        s.name AS shape_name, 
+        c.name AS color_name,
+        i.price,
+        (IFNULL(entries.total_in, 0) - IFNULL(sales.total_out, 0)) AS calculated_stock
+    FROM Item i
+    JOIN Shapes s ON i.shape_id = s.id_shape
+    JOIN Colors c ON i.color_id = c.id_color
+    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_in FROM StockEntry GROUP BY id_Item) entries ON i.id_Item = entries.id_Item
+    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_out FROM OrderItem GROUP BY id_Item) sales ON i.id_Item = sales.id_Item$$
+
+CREATE DEFINER=`admin`@`localhost` PROCEDURE `get_export_colors` ()   BEGIN
+	SELECT id_color, hex_color 
+    FROM Colors 
+    ORDER BY id_color$$
+
+CREATE DEFINER=`admin`@`localhost` PROCEDURE `get_export_items_stock` ()   BEGIN
+	SELECT 
+        i.shape_id,
+        i.color_id,
+        i.price,
+        CAST((IFNULL(entries.total_in, 0) - IFNULL(sales.total_out, 0)) AS SIGNED) AS current_stock
+    FROM Item i
+    LEFT JOIN (
+        SELECT id_Item, SUM(quantity) AS total_in 
+        FROM StockEntry 
+        GROUP BY id_Item
+    ) entries ON i.id_Item = entries.id_Item
+    LEFT JOIN (
+        SELECT id_Item, SUM(quantity) AS total_out 
+        FROM OrderItem 
+        GROUP BY id_Item
+    ) sales ON i.id_Item = sales.id_Item$$
+
+CREATE DEFINER=`admin`@`localhost` PROCEDURE `get_export_shapes` ()   BEGIN
+	SELECT id_shape, width, length 
+    FROM Shapes 
+    ORDER BY id_shape$$
+
+DELIMITER ;
+
 -- --------------------------------------------------------
 
-DROP TABLE IF EXISTS `BankDetails`;
+--
+-- Structure de la table `BankDetails`
+--
+
 CREATE TABLE `BankDetails` (
-  `id_Bank_Details` int NOT NULL AUTO_INCREMENT,
+  `id_Bank_Details` int NOT NULL,
   `id_Customer` int NOT NULL,
-  `bank_name` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
-  `card_number` varchar(16) COLLATE utf8mb4_general_ci NOT NULL,
+  `bank_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `card_number` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `expire_at` date NOT NULL,
-  `cvc` varchar(3) COLLATE utf8mb4_general_ci NOT NULL,
-  PRIMARY KEY (`id_Bank_Details`),
-  KEY `id_Customer` (`id_Customer`)
+  `cvc` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-DROP TABLE IF EXISTS `Colors`;
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Colors`
+--
+
 CREATE TABLE `Colors` (
-  `id_color` int(4) NOT NULL AUTO_INCREMENT,
-  `name` varchar(28) DEFAULT NULL,
-  `hex_color` varchar(6) DEFAULT NULL,
-  `is_trans` varchar(5) DEFAULT NULL,
-  PRIMARY KEY (`id_color`)
+  `id_color` int NOT NULL,
+  `name` varchar(28) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `hex_color` varchar(6) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `is_trans` varchar(5) COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-DROP TABLE IF EXISTS `Customer`;
-CREATE TABLE `Customer` (
-  `id_Customer` int NOT NULL AUTO_INCREMENT,
-  `password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `phone` char(10) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `id_SaveCustomer` int DEFAULT NULL,
-  `etat` varchar(20) COLLATE utf8mb4_general_ci DEFAULT 'invalide',
-  `mode` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `role` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'user',
-  PRIMARY KEY (`id_Customer`),
-  KEY `id_SaveCustomer` (`id_SaveCustomer`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `CustomerImage`;
-CREATE TABLE `CustomerImage` (
-  `id_Image` int NOT NULL AUTO_INCREMENT,
-  `upload_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `file` longblob NOT NULL,
-  `file_type` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  PRIMARY KEY (`id_Image`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `CustomerOrder`;
-CREATE TABLE `CustomerOrder` (
-  `id_Order` int NOT NULL AUTO_INCREMENT,
-  `order_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
-  `total_amount` decimal(10,2) NOT NULL,
-  `id_Customer` int NOT NULL,
-  `id_Image` int DEFAULT NULL,
-  `id_Mosaic` int DEFAULT NULL,
-  PRIMARY KEY (`id_Order`),
-  KEY `id_Customer` (`id_Customer`),
-  KEY `id_Image` (`id_Image`),
-  KEY `id_Mosaic` (`id_Mosaic`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `FactoryOrder`;
-CREATE TABLE `FactoryOrder` (
-  `id_FactoryOrder` int NOT NULL AUTO_INCREMENT,
-  `id_Item` int NOT NULL,
-  `quantity` int NOT NULL,
-  `price` decimal(10,2) NOT NULL,
-  `order_date` date NOT NULL DEFAULT (curdate()),
-  PRIMARY KEY (`id_FactoryOrder`),
-  KEY `id_Item` (`id_Item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `Image`;
-CREATE TABLE `Image` (
-  `id_Image` int NOT NULL AUTO_INCREMENT,
-  `filename` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `id_Customer` int NOT NULL,
-  PRIMARY KEY (`id_Image`),
-  KEY `id_Customer` (`id_Customer`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `Invoice`;
-CREATE TABLE `Invoice` (
-  `id_Invoice` int NOT NULL AUTO_INCREMENT,
-  `issue_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `payment_date` datetime DEFAULT NULL,
-  `total_amount` decimal(10,2) NOT NULL,
-  `order_status` varchar(50) COLLATE utf8mb4_general_ci DEFAULT 'Pending',
-  `invoice_number` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `adress` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `id_Order` int NOT NULL,
-  `order_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `id_Bank_Details` int DEFAULT NULL,
-  `id_SaveCustomer` int NOT NULL,
-  PRIMARY KEY (`id_Invoice`),
-  UNIQUE KEY `invoice_number` (`invoice_number`),
-  KEY `id_Order` (`id_Order`),
-  KEY `id_Bank_Details` (`id_Bank_Details`),
-  KEY `id_SaveCustomer` (`id_SaveCustomer`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `Item`;
-CREATE TABLE `Item` (
-  `id_Item` int NOT NULL AUTO_INCREMENT,
-  `shape_id` int(11) NOT NULL,
-  `color_id` int(11) NOT NULL,
-  `price` decimal(6,2) NOT NULL DEFAULT 0.00,
-  PRIMARY KEY (`id_Item`),
-  UNIQUE KEY `shape_id` (`shape_id`,`color_id`),
-  KEY `color_id` (`color_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `Mosaic`;
-CREATE TABLE `Mosaic` (
-  `id_Mosaic` int NOT NULL AUTO_INCREMENT,
-  `pavage` longblob NOT NULL,
-  `generation_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `id_Image` int DEFAULT NULL,
-  PRIMARY KEY (`id_Mosaic`),
-  KEY `fk_mosaic_image` (`id_Image`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `MosaicComposition`;
-CREATE TABLE `MosaicComposition` (
-  `id_Mosaic` int NOT NULL,
-  `id_Item` int NOT NULL,
-  `quantity_needed` int NOT NULL DEFAULT 1,
-  PRIMARY KEY (`id_Mosaic`, `id_Item`),
-  KEY `fk_composition_item` (`id_Item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `OrderItem`;
-CREATE TABLE `OrderItem` (
-  `id_Order` int NOT NULL,
-  `id_Item` int NOT NULL,
-  `quantity` int NOT NULL,
-  `unit_price_snapshot` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`id_Order`,`id_Item`),
-  KEY `id_Item` (`id_Item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `SaveCustomer`;
-CREATE TABLE `SaveCustomer` (
-  `id_SaveCustomer` int NOT NULL AUTO_INCREMENT,
-  `first_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `last_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `phone` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_SaveCustomer`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `Shapes`;
-CREATE TABLE `Shapes` (
-  `id_shape` int(11) NOT NULL AUTO_INCREMENT,
-  `width` tinyint(4) NOT NULL,
-  `length` tinyint(4) NOT NULL,
-  `hole` int(11) DEFAULT NULL,
-  `name` varchar(50) NOT NULL,
-  PRIMARY KEY (`id_shape`),
-  UNIQUE KEY `width` (`width`,`length`,`hole`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `StockEntry`;
-CREATE TABLE `StockEntry` (
-  `id_Stock` int NOT NULL AUTO_INCREMENT,
-  `id_Item` int NOT NULL,
-  `date_import` date NOT NULL DEFAULT (curdate()),
-  `quantity` int NOT NULL,
-  PRIMARY KEY (`id_Stock`),
-  KEY `fk_stock_item` (`id_Item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `Tokens`;
-CREATE TABLE `Tokens` (
-  `id_Token` int NOT NULL AUTO_INCREMENT,
-  `id_Customer` int NOT NULL,
-  `token` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `types` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `expires_at` datetime NOT NULL,
-  PRIMARY KEY (`id_Token`),
-  KEY `id_Customer` (`id_Customer`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-DROP TABLE IF EXISTS `Translations`;
-CREATE TABLE `Translations` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `key_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `lang` varchar(5) COLLATE utf8mb4_general_ci NOT NULL,
-  `texte` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
--- 2. INSERTION DES DONNÉES (DUMP)
--- --------------------------------------------------------
+--
+-- Déchargement des données de la table `Colors`
+--
 
 INSERT INTO `Colors` (`id_color`, `name`, `hex_color`, `is_trans`) VALUES
 (0, '[Unknown]', '0033B2', 'False'),
@@ -489,6 +379,188 @@ INSERT INTO `Colors` (`id_color`, `name`, `hex_color`, `is_trans`) VALUES
 (272, 'Warm Pink', 'F6B7BF', 'False'),
 (273, 'Blue Violet', 'A3A9FF', 'False'),
 (274, '[No Color/Any Color]', '05131D', 'False');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Customer`
+--
+
+CREATE TABLE `Customer` (
+  `id_Customer` int NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `phone` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `id_SaveCustomer` int DEFAULT NULL,
+  `etat` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'invalide',
+  `mode` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `Customer`
+--
+
+INSERT INTO `Customer` (`id_Customer`, `password`, `phone`, `id_SaveCustomer`, `etat`, `mode`, `role`) VALUES
+(1, '$2y$10$l8IOLlTYzV/r8jM9GWeUP.BpIEqeFHAIq0on3pQrQgOABPTvGLe6G', NULL, 1, 'invalide', NULL, 'user');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `CustomerImage`
+--
+
+CREATE TABLE `CustomerImage` (
+  `id_Image` int NOT NULL,
+  `upload_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `file` longblob NOT NULL,
+  `file_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `CustomerOrder`
+--
+
+CREATE TABLE `CustomerOrder` (
+  `id_Order` int NOT NULL,
+  `order_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `id_Customer` int NOT NULL,
+  `id_Image` int DEFAULT NULL,
+  `id_Mosaic` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `FactoryBrick`
+--
+
+CREATE TABLE `FactoryBrick` (
+  `serial` varchar(32) COLLATE utf8mb4_general_ci NOT NULL,
+  `certificate` text COLLATE utf8mb4_general_ci,
+  `shape_id` int DEFAULT NULL,
+  `color_id` int DEFAULT NULL,
+  `purchase_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `FactoryBrick`
+--
+
+INSERT INTO `FactoryBrick` (`serial`, `certificate`, `shape_id`, `color_id`, `purchase_date`) VALUES
+('251d58a11ee8928cd2de65cdabe856', 'ce0321818e32c297b24d8e217e821850df57939722b4fb278a20c0760eb4d2e29b1e305bd978180bdf0c5f5487cd260f94f7900a8f6aa067ab4bbd8b1a8a3101', 7, 20, '2026-01-05 23:33:46');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `FactoryOrder`
+--
+
+CREATE TABLE `FactoryOrder` (
+  `id_FactoryOrder` varchar(64) NOT NULL,
+  `total_price` decimal(10,2) NOT NULL,
+  `order_date` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Déchargement des données de la table `FactoryOrder`
+--
+
+INSERT INTO `FactoryOrder` (`id_FactoryOrder`, `total_price`, `order_date`) VALUES
+('2069393b447b41fb9a0c7f7ded0d420a', 0.81, '2026-01-05'),
+('3507919dc1d2a285a2ef41ffea8b53c9', 0.81, '2026-01-05'),
+('8e799738aa1a8b1b6aeafbfb439244fe', 0.81, '2026-01-06'),
+('946c5e660c6f9c4872a948ebe7b566cd', 0.81, '2026-01-05'),
+('acf22b614674a7f6d3475b74e958f0fd', 0.81, '2026-01-06'),
+('cff87fd195ed946ef7bb0506b8e7abdc', 0.81, '2026-01-05');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `FactoryOrderDetails`
+--
+
+CREATE TABLE `FactoryOrderDetails` (
+  `id_Detail` int NOT NULL,
+  `id_FactoryOrder` varchar(64) NOT NULL,
+  `id_Item` int NOT NULL,
+  `quantity` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Déchargement des données de la table `FactoryOrderDetails`
+--
+
+INSERT INTO `FactoryOrderDetails` (`id_Detail`, `id_FactoryOrder`, `id_Item`, `quantity`) VALUES
+(1, '8e799738aa1a8b1b6aeafbfb439244fe', 810, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Image`
+--
+
+CREATE TABLE `Image` (
+  `id_Image` int NOT NULL,
+  `filename` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `id_Customer` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Invoice`
+--
+
+CREATE TABLE `Invoice` (
+  `id_Invoice` int NOT NULL,
+  `issue_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `payment_date` datetime DEFAULT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `order_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Pending',
+  `invoice_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `adress` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `id_Order` int NOT NULL,
+  `order_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id_Bank_Details` int DEFAULT NULL,
+  `id_SaveCustomer` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déclencheurs `Invoice`
+--
+DELIMITER $$
+CREATE TRIGGER `before_invoice_insert` BEFORE INSERT ON `Invoice` FOR EACH ROW BEGIN
+    DECLARE v_id_SaveCustomer INT$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `prevent_invoice_delete` BEFORE DELETE ON `Invoice` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (Invoice).'$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `prevent_invoice_update` BEFORE UPDATE ON `Invoice` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (Invoice).'$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Item`
+--
+
+CREATE TABLE `Item` (
+  `id_Item` int NOT NULL,
+  `shape_id` int NOT NULL,
+  `color_id` int NOT NULL,
+  `price` decimal(6,2) NOT NULL DEFAULT '0.00'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `Item`
+--
 
 INSERT INTO `Item` (`id_Item`, `shape_id`, `color_id`, `price`) VALUES
 (1, 1, 0, 0.04),
@@ -11496,281 +11568,541 @@ INSERT INTO `Item` (`id_Item`, `shape_id`, `color_id`, `price`) VALUES
 (10999, 38, 274, 1.50),
 (11000, 40, 274, 5.00);
 
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Mosaic`
+--
+
+CREATE TABLE `Mosaic` (
+  `id_Mosaic` int NOT NULL,
+  `pavage` longblob NOT NULL,
+  `generation_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id_Image` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `MosaicComposition`
+--
+
+CREATE TABLE `MosaicComposition` (
+  `id_Mosaic` int NOT NULL,
+  `id_Item` int NOT NULL,
+  `quantity_needed` int NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `OrderItem`
+--
+
+CREATE TABLE `OrderItem` (
+  `id_Order` int NOT NULL,
+  `id_Item` int NOT NULL,
+  `quantity` int NOT NULL,
+  `unit_price_snapshot` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déclencheurs `OrderItem`
+--
+DELIMITER $$
+CREATE TRIGGER `prevent_orderitem_delete` BEFORE DELETE ON `OrderItem` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (OrderItem).'$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `prevent_orderitem_update` BEFORE UPDATE ON `OrderItem` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (OrderItem).'$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `SaveCustomer`
+--
+
+CREATE TABLE `SaveCustomer` (
+  `id_SaveCustomer` int NOT NULL,
+  `first_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `last_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `SaveCustomer`
+--
+
 INSERT INTO `SaveCustomer` (`id_SaveCustomer`, `first_name`, `last_name`, `email`, `phone`, `created_at`) VALUES
 (1, 'aissyne', 'AISSYNE', 'amine.aissyne06@icloud.com', NULL, '2026-01-01 20:31:19');
 
-INSERT INTO `Shapes` (`id_shape`, `width`, `length`, `hole`, `name`) VALUES
-(1, 1, 1, NULL, 'Brick 1x1'),
-(2, 1, 2, NULL, 'Brick 1x2'),
-(3, 1, 3, NULL, 'Brick 1x3'),
-(4, 1, 4, NULL, 'Brick 1x4'),
-(5, 1, 5, NULL, 'Brick 1x5'),
-(6, 1, 6, NULL, 'Brick 1x6'),
-(7, 2, 2, NULL, 'Brick 2x2'),
-(8, 2, 2, 1, 'Brick 2x2 in L'),
-(9, 1, 8, NULL, 'Brick 1x8'),
-(10, 2, 3, NULL, 'Brick 2x3'),
-(11, 2, 3, 1, 'Brick 2x3 in U'),
-(12, 1, 10, NULL, 'Brick 1x10'),
-(13, 1, 12, NULL, 'Brick 1x12'),
-(14, 2, 4, NULL, 'Brick 2x4'),
-(15, 3, 3, NULL, 'Brick 3x3'),
-(16, 3, 3, 268, 'Brick 3x3 in +'),
-(17, 3, 3, 1245, 'Brick 3x3 in L'),
-(18, 2, 6, NULL, 'Brick 2x6'),
-(19, 2, 8, NULL, 'Brick 2x8'),
-(20, 4, 4, NULL, 'Brick 4x4'),
-(21, 4, 4, 2367, 'Brick 4x4 in L'),
-(22, 2, 10, NULL, 'Brick 2x10'),
-(23, 2, 12, NULL, 'Brick 2x12'),
-(24, 4, 6, NULL, 'Brick 4x6'),
-(25, 2, 14, NULL, 'Brick 2x14'),
-(26, 2, 16, NULL, 'Brick 2x16'),
-(27, 4, 8, NULL, 'Brick 4x8'),
-(28, 6, 6, NULL, 'Brick 6x6'),
-(29, 4, 10, NULL, 'Brick 4x10'),
-(30, 4, 12, NULL, 'Brick 4x12'),
-(31, 6, 8, NULL, 'Brick 6x8'),
-(32, 6, 10, NULL, 'Brick 6x10'),
-(33, 8, 8, NULL, 'Brick 8x8'),
-(34, 6, 12, NULL, 'Brick 6x12'),
-(35, 6, 14, NULL, 'Brick 6x14'),
-(36, 8, 11, NULL, 'Brick 8x11'),
-(37, 6, 16, NULL, 'Brick 6x16'),
-(38, 8, 16, NULL, 'Brick 8x16'),
-(39, 6, 24, NULL, 'Brick 6x24'),
-(40, 16, 16, NULL, 'Brick 16x16');
+--
+-- Déclencheurs `SaveCustomer`
+--
+DELIMITER $$
+CREATE TRIGGER `prevent_savecustomer_delete` BEFORE DELETE ON `SaveCustomer` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (SaveCustomer).'$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `prevent_savecustomer_update` BEFORE UPDATE ON `SaveCustomer` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (SaveCustomer).'$$
+DELIMITER ;
 
-INSERT INTO `Customer` (`id_Customer`, `password`, `phone`, `id_SaveCustomer`, `etat`, `mode`) VALUES
-(1, '$2y$10$l8IOLlTYzV/r8jM9GWeUP.BpIEqeFHAIq0on3pQrQgOABPTvGLe6G', NULL, 1, 'invalide', NULL);
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Shapes`
+--
+
+CREATE TABLE `Shapes` (
+  `id_shape` int NOT NULL,
+  `width` tinyint NOT NULL,
+  `length` tinyint NOT NULL,
+  `hole` int DEFAULT NULL,
+  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `Shapes`
+--
+
+INSERT INTO `Shapes` (`id_shape`, `width`, `length`, `hole`, `name`) VALUES
+(1, 1, 1, NULL, '1-1'),
+(2, 1, 2, NULL, '1-2'),
+(3, 1, 3, NULL, '1-3'),
+(4, 1, 4, NULL, '1-4'),
+(5, 1, 5, NULL, '1-5'),
+(6, 1, 6, NULL, '1-6'),
+(7, 2, 2, NULL, '2-2'),
+(8, 2, 2, 1, '2-2_L'),
+(9, 1, 8, NULL, '1-8'),
+(10, 2, 3, NULL, '2-3'),
+(11, 2, 3, 1, '2-3_U'),
+(12, 1, 10, NULL, '1-10'),
+(13, 1, 12, NULL, '1-12'),
+(14, 2, 4, NULL, '2-4'),
+(15, 3, 3, NULL, '3-3'),
+(16, 3, 3, 268, '3-3_Plus'),
+(17, 3, 3, 1245, '3-3_L'),
+(18, 2, 6, NULL, '2-6'),
+(19, 2, 8, NULL, '2-8'),
+(20, 4, 4, NULL, '4-4'),
+(21, 4, 4, 2367, '4-4_L'),
+(22, 2, 10, NULL, '2-10'),
+(23, 2, 12, NULL, '2-12'),
+(24, 4, 6, NULL, '4-6'),
+(25, 2, 14, NULL, '2-14'),
+(26, 2, 16, NULL, '2-16'),
+(27, 4, 8, NULL, '4-8'),
+(28, 6, 6, NULL, '6-6'),
+(29, 4, 10, NULL, '4-10'),
+(30, 4, 12, NULL, '4-12'),
+(31, 6, 8, NULL, '6-8'),
+(32, 6, 10, NULL, '6-10'),
+(33, 8, 8, NULL, '8-8'),
+(34, 6, 12, NULL, '6-12'),
+(35, 6, 14, NULL, '6-14'),
+(36, 8, 11, NULL, '8-11'),
+(37, 6, 16, NULL, '6-16'),
+(38, 8, 16, NULL, '8-16'),
+(39, 6, 24, NULL, '6-24'),
+(40, 16, 16, NULL, '16-16');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `StockEntry`
+--
+
+CREATE TABLE `StockEntry` (
+  `id_Stock` int NOT NULL,
+  `id_Item` int NOT NULL,
+  `date_import` date NOT NULL DEFAULT (curdate()),
+  `quantity` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `StockEntry`
+--
+
+INSERT INTO `StockEntry` (`id_Stock`, `id_Item`, `date_import`, `quantity`) VALUES
+(1, 810, '2026-01-06', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `Tokens`
+--
+
+CREATE TABLE `Tokens` (
+  `id_Token` int NOT NULL,
+  `id_Customer` int NOT NULL,
+  `token` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `types` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `expires_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `Tokens`
+--
 
 INSERT INTO `Tokens` (`id_Token`, `id_Customer`, `token`, `types`, `expires_at`) VALUES
 (1, 1, '240475', 'validation', '2026-01-01 19:32:19');
 
 -- --------------------------------------------------------
--- 3. VUES
--- --------------------------------------------------------
 
-DROP VIEW IF EXISTS `View_StockStatus`;
+--
+-- Structure de la table `Translations`
+--
 
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `View_StockStatus`  AS 
-SELECT 
-	`i`.`id_Item` AS `id_Item`, 
-	concat(`s`.`name`,' ',`c`.`name`) AS `name`, 
-	ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0) AS `current_stock`, 
-	CASE WHEN ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0) < 10 THEN 'OUI' ELSE 'NON' END AS `alert_status` 
-FROM 
-	((((`Item` `i` 
-	join `Shapes` `s` on(`i`.`shape_id` = `s`.`id_shape`)) 
-	join `Colors` `c` on(`i`.`color_id` = `c`.`id_color`)) 
-	left join (select `StockEntry`.`id_Item` AS `id_Item`,sum(`StockEntry`.`quantity`) AS `total_in` from `StockEntry` group by `StockEntry`.`id_Item`) `entries` on(`i`.`id_Item` = `entries`.`id_Item`)) 
-	left join (select `OrderItem`.`id_Item` AS `id_Item`,sum(`OrderItem`.`quantity`) AS `total_out` from `OrderItem` group by `OrderItem`.`id_Item`) `sales` on(`i`.`id_Item` = `sales`.`id_Item`)) ;
+CREATE TABLE `Translations` (
+  `id` int NOT NULL,
+  `key_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `lang` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `texte` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
--- 4. PROCÉDURES STOCKÉES (LOGIQUE MÉTIER UNIQUEMENT)
--- --------------------------------------------------------
 
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS `check_mosaic_stock`$$
-CREATE PROCEDURE `check_mosaic_stock` (IN `p_id_Mosaic` INT, OUT `p_is_available` BOOLEAN)
-BEGIN
-    DECLARE v_missing_items INT;
-    SELECT COUNT(*) INTO v_missing_items
-    FROM MosaicComposition mc
-    JOIN View_StockStatus vss ON mc.id_Item = vss.id_Item
-    WHERE mc.id_Mosaic = p_id_Mosaic
-    AND vss.current_stock < mc.quantity_needed;
-
-    IF v_missing_items = 0 THEN SET p_is_available = TRUE; ELSE SET p_is_available = FALSE; END IF;
-    IF (SELECT COUNT(*) FROM MosaicComposition WHERE id_Mosaic = p_id_Mosaic) = 0 THEN SET p_is_available = FALSE; END IF;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_all_items_stock`$$
-CREATE PROCEDURE `get_all_items_stock` ()
-BEGIN
-    SELECT 
-        i.id_Item, 
-        s.name AS shape_name, 
-        c.name AS color_name,
-        i.price,
-        (IFNULL(entries.total_in, 0) - IFNULL(sales.total_out, 0)) AS calculated_stock
-    FROM Item i
-    JOIN Shapes s ON i.shape_id = s.id_shape
-    JOIN Colors c ON i.color_id = c.id_color
-    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_in FROM StockEntry GROUP BY id_Item) entries ON i.id_Item = entries.id_Item
-    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_out FROM OrderItem GROUP BY id_Item) sales ON i.id_Item = sales.id_Item;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_export_colors`$$
-CREATE PROCEDURE `get_export_colors` () 
-BEGIN
-	SELECT id_color, hex_color 
-    FROM Colors 
-    ORDER BY id_color;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_export_items_stock`$$
-CREATE PROCEDURE `get_export_items_stock` ()
-BEGIN
-	SELECT 
-        i.shape_id,
-        i.color_id,
-        i.price,
-        CAST((IFNULL(entries.total_in, 0) - IFNULL(sales.total_out, 0)) AS SIGNED) AS current_stock
-    FROM Item i
-    LEFT JOIN (
-        SELECT id_Item, SUM(quantity) AS total_in 
-        FROM StockEntry 
-        GROUP BY id_Item
-    ) entries ON i.id_Item = entries.id_Item
-    LEFT JOIN (
-        SELECT id_Item, SUM(quantity) AS total_out 
-        FROM OrderItem 
-        GROUP BY id_Item
-    ) sales ON i.id_Item = sales.id_Item;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_export_shapes`$$
-CREATE PROCEDURE `get_export_shapes` ()
-BEGIN
-	SELECT id_shape, width, length 
-    FROM Shapes 
-    ORDER BY id_shape;
-END$$
-
-DELIMITER ;
+--
+-- Doublure de structure pour la vue `View_StockStatus`
+-- (Voir ci-dessous la vue réelle)
+--
+CREATE TABLE `View_StockStatus` (
+`alert_status` varchar(3)
+,`current_stock` decimal(33,0)
+,`id_Item` int
+,`name` varchar(79)
+);
 
 -- --------------------------------------------------------
--- 5. TRIGGERS
--- --------------------------------------------------------
 
-DELIMITER $$
+--
+-- Structure de la vue `View_StockStatus`
+--
+DROP TABLE IF EXISTS `View_StockStatus`;
 
--- FactoryOrder Triggers
-DROP TRIGGER IF EXISTS `prevent_factory_order_delete`$$
-CREATE TRIGGER `prevent_factory_order_delete` BEFORE DELETE ON `FactoryOrder` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (FactoryOrder).';
-END$$
+CREATE ALGORITHM=UNDEFINED DEFINER=`admin`@`localhost` SQL SECURITY DEFINER VIEW `View_StockStatus`  AS SELECT `i`.`id_Item` AS `id_Item`, concat(`s`.`name`,' ',`c`.`name`) AS `name`, (ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0)) AS `current_stock`, (case when ((ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0)) < 10) then 'OUI' else 'NON' end) AS `alert_status` FROM ((((`Item` `i` join `Shapes` `s` on((`i`.`shape_id` = `s`.`id_shape`))) join `Colors` `c` on((`i`.`color_id` = `c`.`id_color`))) left join (select `StockEntry`.`id_Item` AS `id_Item`,sum(`StockEntry`.`quantity`) AS `total_in` from `StockEntry` group by `StockEntry`.`id_Item`) `entries` on((`i`.`id_Item` = `entries`.`id_Item`))) left join (select `OrderItem`.`id_Item` AS `id_Item`,sum(`OrderItem`.`quantity`) AS `total_out` from `OrderItem` group by `OrderItem`.`id_Item`) `sales` on((`i`.`id_Item` = `sales`.`id_Item`))) ;
 
-DROP TRIGGER IF EXISTS `prevent_factory_order_update`$$
-CREATE TRIGGER `prevent_factory_order_update` BEFORE UPDATE ON `FactoryOrder` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (FactoryOrder).';
-END$$
+--
+-- Index pour les tables déchargées
+--
 
--- Invoice Triggers
-DROP TRIGGER IF EXISTS `before_invoice_insert`$$
-CREATE TRIGGER `before_invoice_insert` BEFORE INSERT ON `Invoice` FOR EACH ROW BEGIN
-    DECLARE v_id_SaveCustomer INT;
-    DECLARE v_today_prefix VARCHAR(20) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
-    DECLARE v_max_invoice VARCHAR(50) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
-    DECLARE v_next_seq INT DEFAULT 1;
+--
+-- Index pour la table `BankDetails`
+--
+ALTER TABLE `BankDetails`
+  ADD PRIMARY KEY (`id_Bank_Details`),
+  ADD KEY `id_Customer` (`id_Customer`);
 
-    -- récupération client via la commande liée
-    SELECT c.id_SaveCustomer INTO v_id_SaveCustomer
-    FROM CustomerOrder co
-    JOIN Customer c ON co.id_Customer = c.id_Customer
-    WHERE co.id_Order = NEW.id_Order LIMIT 1; 
+--
+-- Index pour la table `Colors`
+--
+ALTER TABLE `Colors`
+  ADD PRIMARY KEY (`id_color`);
 
-    -- construction du format fac-annee-client-seq
-    SET v_today_prefix = CONCAT('FAC-', DATE_FORMAT(NOW(), '%Y'), '-', v_id_SaveCustomer, '-');
+--
+-- Index pour la table `Customer`
+--
+ALTER TABLE `Customer`
+  ADD PRIMARY KEY (`id_Customer`),
+  ADD KEY `id_SaveCustomer` (`id_SaveCustomer`);
 
-    SELECT invoice_number INTO v_max_invoice
-    FROM Invoice
-    WHERE invoice_number LIKE CONCAT(v_today_prefix, '%')
-    ORDER BY LENGTH(invoice_number) DESC, invoice_number DESC
-    LIMIT 1;
+--
+-- Index pour la table `CustomerImage`
+--
+ALTER TABLE `CustomerImage`
+  ADD PRIMARY KEY (`id_Image`);
 
-    IF v_max_invoice IS NOT NULL THEN
-        SET v_next_seq = CAST(SUBSTRING_INDEX(v_max_invoice, '-', -1) AS UNSIGNED) + 1;
-    END IF;
+--
+-- Index pour la table `CustomerOrder`
+--
+ALTER TABLE `CustomerOrder`
+  ADD PRIMARY KEY (`id_Order`),
+  ADD KEY `id_Customer` (`id_Customer`),
+  ADD KEY `id_Image` (`id_Image`),
+  ADD KEY `id_Mosaic` (`id_Mosaic`);
 
-    SET NEW.invoice_number = CONCAT(v_today_prefix, LPAD(v_next_seq, 3, '0'));
-END$$
+--
+-- Index pour la table `FactoryBrick`
+--
+ALTER TABLE `FactoryBrick`
+  ADD PRIMARY KEY (`serial`);
 
-DROP TRIGGER IF EXISTS `prevent_invoice_delete`$$
-CREATE TRIGGER `prevent_invoice_delete` BEFORE DELETE ON `Invoice` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (Invoice).';
-END$$
+--
+-- Index pour la table `FactoryOrder`
+--
+ALTER TABLE `FactoryOrder`
+  ADD PRIMARY KEY (`id_FactoryOrder`);
 
-DROP TRIGGER IF EXISTS `prevent_invoice_update`$$
-CREATE TRIGGER `prevent_invoice_update` BEFORE UPDATE ON `Invoice` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (Invoice).';
-END$$
+--
+-- Index pour la table `FactoryOrderDetails`
+--
+ALTER TABLE `FactoryOrderDetails`
+  ADD PRIMARY KEY (`id_Detail`),
+  ADD KEY `fk_order_ref` (`id_FactoryOrder`),
+  ADD KEY `fk_item_ref` (`id_Item`);
 
--- OrderItem Triggers
-DROP TRIGGER IF EXISTS `prevent_orderitem_delete`$$
-CREATE TRIGGER `prevent_orderitem_delete` BEFORE DELETE ON `OrderItem` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (OrderItem).';
-END$$
+--
+-- Index pour la table `Image`
+--
+ALTER TABLE `Image`
+  ADD PRIMARY KEY (`id_Image`),
+  ADD KEY `id_Customer` (`id_Customer`);
 
-DROP TRIGGER IF EXISTS `prevent_orderitem_update`$$
-CREATE TRIGGER `prevent_orderitem_update` BEFORE UPDATE ON `OrderItem` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (OrderItem).';
-END$$
+--
+-- Index pour la table `Invoice`
+--
+ALTER TABLE `Invoice`
+  ADD PRIMARY KEY (`id_Invoice`),
+  ADD UNIQUE KEY `invoice_number` (`invoice_number`),
+  ADD KEY `id_Order` (`id_Order`),
+  ADD KEY `id_Bank_Details` (`id_Bank_Details`),
+  ADD KEY `id_SaveCustomer` (`id_SaveCustomer`);
 
--- SaveCustomer Triggers
-DROP TRIGGER IF EXISTS `prevent_savecustomer_delete`$$
-CREATE TRIGGER `prevent_savecustomer_delete` BEFORE DELETE ON `SaveCustomer` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (SaveCustomer).';
-END$$
+--
+-- Index pour la table `Item`
+--
+ALTER TABLE `Item`
+  ADD PRIMARY KEY (`id_Item`),
+  ADD UNIQUE KEY `shape_id` (`shape_id`,`color_id`),
+  ADD KEY `color_id` (`color_id`);
 
-DROP TRIGGER IF EXISTS `prevent_savecustomer_update`$$
-CREATE TRIGGER `prevent_savecustomer_update` BEFORE UPDATE ON `SaveCustomer` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (SaveCustomer).';
-END$$
+--
+-- Index pour la table `Mosaic`
+--
+ALTER TABLE `Mosaic`
+  ADD PRIMARY KEY (`id_Mosaic`),
+  ADD KEY `fk_mosaic_image` (`id_Image`);
 
-DELIMITER ;
+--
+-- Index pour la table `MosaicComposition`
+--
+ALTER TABLE `MosaicComposition`
+  ADD PRIMARY KEY (`id_Mosaic`,`id_Item`),
+  ADD KEY `fk_composition_item` (`id_Item`);
 
--- --------------------------------------------------------
--- 6. CONTRAINTES DE CLÉS ÉTRANGÈRES
--- --------------------------------------------------------
+--
+-- Index pour la table `OrderItem`
+--
+ALTER TABLE `OrderItem`
+  ADD PRIMARY KEY (`id_Order`,`id_Item`),
+  ADD KEY `id_Item` (`id_Item`);
 
+--
+-- Index pour la table `SaveCustomer`
+--
+ALTER TABLE `SaveCustomer`
+  ADD PRIMARY KEY (`id_SaveCustomer`);
+
+--
+-- Index pour la table `Shapes`
+--
+ALTER TABLE `Shapes`
+  ADD PRIMARY KEY (`id_shape`),
+  ADD UNIQUE KEY `width` (`width`,`length`,`hole`);
+
+--
+-- Index pour la table `StockEntry`
+--
+ALTER TABLE `StockEntry`
+  ADD PRIMARY KEY (`id_Stock`),
+  ADD KEY `fk_stock_item` (`id_Item`);
+
+--
+-- Index pour la table `Tokens`
+--
+ALTER TABLE `Tokens`
+  ADD PRIMARY KEY (`id_Token`),
+  ADD KEY `id_Customer` (`id_Customer`);
+
+--
+-- Index pour la table `Translations`
+--
+ALTER TABLE `Translations`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- AUTO_INCREMENT pour les tables déchargées
+--
+
+--
+-- AUTO_INCREMENT pour la table `BankDetails`
+--
+ALTER TABLE `BankDetails`
+  MODIFY `id_Bank_Details` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `Colors`
+--
+ALTER TABLE `Colors`
+  MODIFY `id_color` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=275;
+
+--
+-- AUTO_INCREMENT pour la table `Customer`
+--
+ALTER TABLE `Customer`
+  MODIFY `id_Customer` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT pour la table `CustomerImage`
+--
+ALTER TABLE `CustomerImage`
+  MODIFY `id_Image` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `CustomerOrder`
+--
+ALTER TABLE `CustomerOrder`
+  MODIFY `id_Order` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `FactoryOrderDetails`
+--
+ALTER TABLE `FactoryOrderDetails`
+  MODIFY `id_Detail` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT pour la table `Image`
+--
+ALTER TABLE `Image`
+  MODIFY `id_Image` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `Invoice`
+--
+ALTER TABLE `Invoice`
+  MODIFY `id_Invoice` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `Item`
+--
+ALTER TABLE `Item`
+  MODIFY `id_Item` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11001;
+
+--
+-- AUTO_INCREMENT pour la table `Mosaic`
+--
+ALTER TABLE `Mosaic`
+  MODIFY `id_Mosaic` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `SaveCustomer`
+--
+ALTER TABLE `SaveCustomer`
+  MODIFY `id_SaveCustomer` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT pour la table `Shapes`
+--
+ALTER TABLE `Shapes`
+  MODIFY `id_shape` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+
+--
+-- AUTO_INCREMENT pour la table `StockEntry`
+--
+ALTER TABLE `StockEntry`
+  MODIFY `id_Stock` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT pour la table `Tokens`
+--
+ALTER TABLE `Tokens`
+  MODIFY `id_Token` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT pour la table `Translations`
+--
+ALTER TABLE `Translations`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- Contraintes pour les tables déchargées
+--
+
+--
+-- Contraintes pour la table `BankDetails`
+--
 ALTER TABLE `BankDetails`
   ADD CONSTRAINT `BankDetails_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`);
 
+--
+-- Contraintes pour la table `Customer`
+--
 ALTER TABLE `Customer`
   ADD CONSTRAINT `Customer_ibfk_1` FOREIGN KEY (`id_SaveCustomer`) REFERENCES `SaveCustomer` (`id_SaveCustomer`);
 
+--
+-- Contraintes pour la table `CustomerOrder`
+--
 ALTER TABLE `CustomerOrder`
   ADD CONSTRAINT `CustomerOrder_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`),
   ADD CONSTRAINT `CustomerOrder_ibfk_2` FOREIGN KEY (`id_Image`) REFERENCES `CustomerImage` (`id_Image`),
   ADD CONSTRAINT `CustomerOrder_ibfk_3` FOREIGN KEY (`id_Mosaic`) REFERENCES `Mosaic` (`id_Mosaic`);
 
-ALTER TABLE `FactoryOrder`
-  ADD CONSTRAINT `FactoryOrder_ibfk_1` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
+--
+-- Contraintes pour la table `FactoryOrderDetails`
+--
+ALTER TABLE `FactoryOrderDetails`
+  ADD CONSTRAINT `fk_item_ref` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`),
+  ADD CONSTRAINT `fk_order_ref` FOREIGN KEY (`id_FactoryOrder`) REFERENCES `FactoryOrder` (`id_FactoryOrder`) ON DELETE CASCADE;
 
+--
+-- Contraintes pour la table `Image`
+--
 ALTER TABLE `Image`
   ADD CONSTRAINT `Image_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`) ON DELETE CASCADE;
 
+--
+-- Contraintes pour la table `Invoice`
+--
 ALTER TABLE `Invoice`
   ADD CONSTRAINT `Invoice_ibfk_1` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`),
   ADD CONSTRAINT `Invoice_ibfk_2` FOREIGN KEY (`id_Bank_Details`) REFERENCES `BankDetails` (`id_Bank_Details`),
   ADD CONSTRAINT `Invoice_ibfk_3` FOREIGN KEY (`id_SaveCustomer`) REFERENCES `SaveCustomer` (`id_SaveCustomer`);
 
+--
+-- Contraintes pour la table `Item`
+--
 ALTER TABLE `Item`
   ADD CONSTRAINT `pieces_ibfk_1` FOREIGN KEY (`shape_id`) REFERENCES `Shapes` (`id_shape`) ON UPDATE CASCADE,
   ADD CONSTRAINT `pieces_ibfk_2` FOREIGN KEY (`color_id`) REFERENCES `Colors` (`id_color`) ON UPDATE CASCADE;
 
+--
+-- Contraintes pour la table `Mosaic`
+--
 ALTER TABLE `Mosaic`
   ADD CONSTRAINT `fk_mosaic_image` FOREIGN KEY (`id_Image`) REFERENCES `Image` (`id_Image`) ON DELETE CASCADE;
 
+--
+-- Contraintes pour la table `MosaicComposition`
+--
 ALTER TABLE `MosaicComposition`
-  ADD CONSTRAINT `fk_composition_mosaic` FOREIGN KEY (`id_Mosaic`) REFERENCES `Mosaic` (`id_Mosaic`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_composition_item` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_composition_item` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_composition_mosaic` FOREIGN KEY (`id_Mosaic`) REFERENCES `Mosaic` (`id_Mosaic`) ON DELETE CASCADE;
 
+--
+-- Contraintes pour la table `OrderItem`
+--
 ALTER TABLE `OrderItem`
   ADD CONSTRAINT `OrderItem_ibfk_1` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`),
   ADD CONSTRAINT `OrderItem_ibfk_2` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
 
+--
+-- Contraintes pour la table `StockEntry`
+--
 ALTER TABLE `StockEntry`
   ADD CONSTRAINT `fk_stock_item` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
 
+--
+-- Contraintes pour la table `Tokens`
+--
 ALTER TABLE `Tokens`
   ADD CONSTRAINT `Tokens_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`) ON DELETE CASCADE;
-
--- Réactiver les contraintes de clés étrangères
-SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

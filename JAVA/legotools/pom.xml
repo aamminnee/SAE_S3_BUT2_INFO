@@ -24,6 +24,11 @@
             <artifactId>dotenv-java</artifactId>
             <version>3.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.3.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -33,6 +38,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
+                    
                     <execution>
                         <id>compile-c-code</id>
                         <phase>compile</phase>
@@ -44,6 +50,19 @@
                             <workingDirectory>${project.basedir}/C</workingDirectory>
                         </configuration>
                     </execution>
+
+                    <execution>
+                        <id>generate-bricks-file</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>fr.univ_eiffel.legotools.scripts.GenerationItem</mainClass>
+                            <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                        </configuration>
+                    </execution>
+
                     <execution>
                         <id>clean-c-code</id>
                         <phase>clean</phase>

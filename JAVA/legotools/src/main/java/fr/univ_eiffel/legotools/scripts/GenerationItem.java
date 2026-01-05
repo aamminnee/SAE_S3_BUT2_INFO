@@ -1,5 +1,7 @@
 package fr.univ_eiffel.legotools.scripts;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -14,22 +16,39 @@ public class GenerationItem {
 
     private static final Map<String, String> ENV = new HashMap<>();
 
-    // Paramètres de connexion
-    private static final String URL = "jdbc:mysql://localhost:3306/SAE_S3_BUT2_INFO";
-    private static final String USER = "root";
-    private static final String PASSWORD = "";
-
     public static void main(String[] args) {
 
+        // // chargement manuel du fichier .env
+        // // assurez-vous de lancer le programme depuis la racine du projet (dossier legotools)
         loadEnv(".env");
 
-        String host = ENV.getOrDefault("DB_HOST", "localhost");
-        String dbName = ENV.getOrDefault("DB_NAME", "SAE_S3_BUT2_INFO");
-        String user = ENV.getOrDefault("DB_USER", "root");
-        String password = ENV.getOrDefault("DB_PASS", "");
+        // // récupération des variables sans valeur par défaut (comme demandé)
+        String host = ENV.get("DB_HOST");
+        String dbName = ENV.get("DB_NAME");
+        String user = ENV.get("DB_USER");
+        String password = ENV.get("DB_PASSWORD");
 
+        // // vérification de sécurité pour éviter les erreurs de connexion nulles
+        if (host == null) {
+            System.err.println("Erreur : DB_HOST manquant dans le fichier .env");
+            return;
+        }
+        if (dbName == null) {
+            System.err.println("Erreur : DB_NAME manquant dans le fichier .env");
+            return;
+        }
+        if (user == null) {
+            System.err.println("Erreur : DB_USER manquant dans le fichier .env");
+            return;
+        }
+        // // gère le cas où le mot de passe est vide (cas fréquent en local)
+        if (password == null) password = "";
+
+        // // construction de l'url jdbc avec les variables du .env
         String url = "jdbc:mysql://" + host + ":3306/" + dbName;
         
+        System.out.println("Connexion à la BDD : " + url + " (User: " + user + ")");
+
         List<String> shapesList = new ArrayList<>();
         Map<Integer, Integer> shapeIdToIndex = new HashMap<>();
 
@@ -38,8 +57,9 @@ public class GenerationItem {
 
         List<String> piecesLines = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
-        	
+        // // utilisation des variables chargées pour la connexion
+        try (Connection conn = DriverManager.getConnection(url, user, password)) {
+            
             try (CallableStatement csShapes = conn.prepareCall("{call get_export_shapes()}");
                  ResultSet rsShapes = csShapes.executeQuery()) {
                 
@@ -98,10 +118,33 @@ public class GenerationItem {
                 }
             }
 
-            System.out.println("Succès : brique.txt généré avec les procédures stockées !");
+            System.out.println("Succès : briques.txt généré avec les procédures stockées !");
 
         } catch (SQLException | IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    // // méthode manquante ajoutée pour parser le fichier .env
+    private static void loadEnv(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                // // ignore les lignes vides ou les commentaires
+                if (line.isEmpty() || line.startsWith("#")) continue;
+                
+                String[] parts = line.split("=", 2);
+                if (parts.length >= 2) {
+                    ENV.put(parts[0].trim(), parts[1].trim());
+                } else if (parts.length == 1) {
+                    // // gère le cas DB_PASSWORD= (vide)
+                    ENV.put(parts[0].trim(), "");
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur : Impossible de lire le fichier " + filePath);
+            System.err.println("Vérifiez que vous êtes bien dans le dossier 'legotools' lors de l'exécution.");
         }
     }
 }
