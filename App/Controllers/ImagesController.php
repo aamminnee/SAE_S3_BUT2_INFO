@@ -22,7 +22,9 @@ class ImagesController extends Controller {
         
         $this->render('images_views', [
             't' => $this->translations,
-            // on passe l'état de connexion à la vue si besoin, bien que $_SESSION soit accessible directement
+            // ajout de zhabrail pour le style
+            'css' => 'images_views.css',
+            // ajout d'amine pour la logique de connexion
             'is_logged_in' => isset($_SESSION['user_id'])
         ]);
     }

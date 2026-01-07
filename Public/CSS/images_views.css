@@ -1,161 +1,371 @@
-/* Reset basique pour s'assurer du centrage */
-.main-container {
+/* --- 1. PALETTE & VARIABLES --- */
+:root {
+    /* Couleurs Officielles Lego (Approximatives pour le Web) */
+    --lego-red: #D92328;
+    --lego-red-dark: #b31217;
+    --lego-blue: #006CB7;
+    --lego-blue-dark: #004c82;
+    --lego-yellow: #FFCF00; /* Un peu plus chaud que le jaune standard */
+    --lego-green: #00852B;
+    
+    /* Neutres Pro */
+    --text-dark: #1e293b;  /* Gris très foncé bleuté */
+    --text-grey: #475569;
+    --bg-base: #f4f7f6;    /* Gris très clair pour le fond global */
+    --card-bg: #ffffff;
+    
+    /* Polices */
+    --font-heading: 'Fredoka', sans-serif; /* La touche "Lego" */
+    --font-body: 'Inter', sans-serif;      /* La touche "Pro" */
+}
+
+/* --- 2. FOND & TYPO GÉNÉRALE --- */
+body {
+    background-color: var(--bg-base);
+    color: var(--text-dark);
+    font-family: var(--font-body);
+    margin: 0;
+    
+    /* EFFET "PLAQUE DE BASE" (Texture tenons subtile) */
+    background-image: 
+        radial-gradient(#e2e8f0 2px, transparent 2.5px), 
+        radial-gradient(#e2e8f0 2px, transparent 2.5px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: var(--font-heading);
+    letter-spacing: 0.5px;
+}
+
+/* --- 3. HERO SECTION (L'accroche) --- */
+.home-wrapper {
+    padding-bottom: 80px;
+    overflow-x: hidden; /* Évite le scroll horizontal si animations */
+}
+
+.hero-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    min-height: calc(100vh - 90px);
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 50px;
-    min-height: 80vh;
-    background-color: #f8f9fa; /* Gris très clair pour le fond de page */
+    align-items: center;
+    justify-content: space-between;
+    gap: 60px;
+    position: relative;
 }
 
-/* La carte blanche */
-.upload-card {
-    background: white;
-    width: 100%;
+/* Forme décorative jaune derrière le texte (Optionnel, ajoute du peps) */
+.hero-presentation::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255, 207, 0, 0.15) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.hero-presentation {
+    flex: 1;
+    padding-right: 20px;
+}
+
+.main-title {
+    font-size: 3.5rem; /* Plus gros */
+    line-height: 1.1;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+}
+
+/* On met "LEGO" en couleur dans le titre si possible, sinon CSS global */
+.main-title span { color: var(--lego-red); } 
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-grey);
+    line-height: 1.6;
+    margin-bottom: 40px;
     max-width: 600px;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05); /* Ombre douce et large */
-    text-align: center;
-    transition: transform 0.3s ease;
 }
 
-.card-header h2 {
-    font-size: 1.8rem;
-    color: #1a202c;
+/* --- CARTE EXEMPLE (AVANT / APRÈS) --- */
+.example-card {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 20px;
+    /* Grosse ombre colorée pour l'effet "Pop" */
+    box-shadow: 0 20px 40px -10px rgba(0, 108, 183, 0.15); 
+    border: 2px solid white;
+    margin-bottom: 30px;
+    max-width: 550px;
+    position: relative;
+}
+
+/* Petit détail "Brique" sur la carte */
+.example-card::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; right: 40px;
+    width: 80px; height: 10px;
+    background-color: var(--lego-red);
+    border-radius: 0 0 10px 10px;
+}
+
+.img-container {
+    flex: 1;
+    text-align: center;
+}
+
+.img-label {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-grey);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.img-container img {
+    width: 100%;
+    max-width: 160px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.example-card:hover .img-container img {
+    transform: scale(1.03);
+}
+
+.transformation-arrow {
+    padding: 0 20px;
+    color: var(--lego-yellow); /* Flèche jaune vif */
+    width: 40px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.hero-text-block h4 {
+    color: var(--lego-blue);
+    font-size: 1.3rem;
     margin-bottom: 8px;
     font-weight: 700;
 }
 
-.card-header p {
-    color: #718096;
-    margin-bottom: 30px;
+/* --- 4. UPLOAD CARD (L'Outil) --- */
+.hero-action {
+    flex: 1;
+    display: flex;
+    justify-content: center;
 }
 
-/* Zone de Drop */
-.drop-zone {
-    border: 2px dashed #e2e8f0;
-    border-radius: 16px;
-    background-color: #fafbfc;
-    min-height: 250px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.upload-card {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 550px;
+    padding: 40px;
+    border-radius: 24px;
+    /* Ombre profonde "Flottante" */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255,255,255,0.5);
+    text-align: center;
     position: relative;
     overflow: hidden;
 }
 
+/* Barre de couleur en haut de la carte */
+.upload-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--lego-blue), var(--lego-red), var(--lego-yellow));
+}
+
+.card-header h2 {
+    font-size: 2rem;
+    color: var(--text-dark);
+    margin: 10px 0 5px 0;
+}
+
+/* ZONE DROP */
+.drop-zone {
+    border: 3px dashed #cbd5e1; /* Bordure plus épaisse */
+    border-radius: 16px;
+    padding: 30px;
+    background-color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
 .drop-zone:hover {
-    border-color: #3182ce; /* Bleu pro */
-    background-color: #ebf8ff;
-}
-
-.drop-zone.dragover {
-    border-color: #3182ce;
-    background-color: #e6fffa; /* Vert très clair au drop */
-    transform: scale(1.02);
-}
-
-/* Contenu de la zone (icône et texte) */
-.drop-content {
-    pointer-events: none; /* Le clic traverse vers la div parente */
-    transition: opacity 0.3s;
+    border-color: var(--lego-blue);
+    background-color: #f0f9ff;
+    transform: translateY(-2px);
 }
 
 .upload-icon {
-    width: 64px;
-    height: 64px;
-    color: #a0aec0;
-    margin-bottom: 15px;
+    width: 60px; height: 60px;
+    color: #94a3b8; margin-bottom: 15px;
     transition: color 0.3s;
 }
+.drop-zone:hover .upload-icon { color: var(--lego-blue); }
 
-.drop-zone:hover .upload-icon {
-    color: #3182ce;
-}
+.drop-text { font-family: var(--font-heading); font-size: 1.2rem; margin-bottom: 5px; }
+.browse-text { color: var(--lego-blue); font-weight: 600; text-decoration: underline; }
 
-.drop-text {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #4a5568;
-}
-
-.browse-text {
-    font-size: 0.9rem;
-    color: #3182ce;
-    text-decoration: underline;
-    opacity: 0.8;
-}
-
-/* Image Prévisualisée */
-#image-preview {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 10px;
-    background: white;
-    z-index: 10;
-}
-
-/* Zone Actions (Boutons) */
-.action-area {
-    margin-top: 25px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    animation: slideUp 0.4s ease-out;
-}
-
-.action-area.hidden {
-    display: none;
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Boutons */
+/* BOUTON PRINCIPAL (Style "Play Button") */
 .btn-primary {
-    background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+    background-color: var(--lego-red);
     color: white;
     border: none;
-    padding: 14px 24px;
-    border-radius: 12px;
-    font-size: 1rem;
+    padding: 16px 40px;
+    font-size: 1.2rem;
+    font-family: var(--font-heading);
     font-weight: 600;
+    border-radius: 50px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
-    transition: all 0.2s;
+    margin-top: 25px;
+    box-shadow: 0 4px 0 var(--lego-red-dark); /* Effet 3D bouton physique */
+    transition: all 0.1s;
+    display: inline-flex; align-items: center; gap: 10px;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(49, 130, 206, 0.4);
+    box-shadow: 0 6px 0 var(--lego-red-dark);
 }
 
-.btn-secondary {
-    background: transparent;
-    color: #718096;
-    border: 2px solid transparent;
-    padding: 10px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    font-weight: 500;
+.btn-primary:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 var(--lego-red-dark);
 }
 
-.btn-secondary:hover {
-    color: #e53e3e; /* Rouge erreur pour "Changer" */
-    text-decoration: underline;
+/* --- 5. HOW IT WORKS (Section Étapes) --- */
+.how-it-works {
+    max-width: 1200px;
+    margin: 80px auto 0 auto;
+    padding: 0 20px;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.section-header h3 {
+    font-size: 2.5rem;
+    color: var(--text-dark);
+    margin-bottom: 15px;
+    position: relative;
+    display: inline-block;
+}
+
+/* Soulignement ondulé ou brique */
+.section-header h3::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 6px;
+    background-color: var(--lego-yellow);
+    border-radius: 3px;
+    margin-top: 5px;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+}
+
+/* CARTE ÉTAPE */
+.step-card {
+    background: white;
+    padding: 40px 25px;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-10px); /* Monte plus haut */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+/* Les numéros en mode "Brique Ronde" */
+.step-number {
+    width: 50px; height: 50px;
+    line-height: 50px;
+    border-radius: 50%;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    position: absolute;
+    top: -25px; left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+    border: 4px solid white; /* Bordure blanche pour détacher du fond */
+}
+
+/* Couleurs alternées pour les étapes */
+.step-card:nth-child(1) .step-number { background-color: var(--lego-blue); }
+.step-card:nth-child(2) .step-number { background-color: var(--lego-red); }
+.step-card:nth-child(3) .step-number { background-color: var(--lego-yellow); color: var(--text-dark); }
+
+/* Petite bordure colorée en bas de chaque carte */
+.step-card:nth-child(1) { border-bottom: 5px solid var(--lego-blue); }
+.step-card:nth-child(2) { border-bottom: 5px solid var(--lego-red); }
+.step-card:nth-child(3) { border-bottom: 5px solid var(--lego-yellow); }
+
+.step-img {
+    height: 140px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 20px 0;
+}
+
+.step-img img {
+    max-height: 100%;
+    max-width: 100%;
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+}
+
+.step-card h5 {
+    font-size: 1.4rem;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1024px) {
+    .hero-section {
+        flex-direction: column;
+        text-align: center;
+        height: auto;
+    }
+    .hero-presentation { padding-right: 0; }
+    .example-card { margin: 0 auto 40px auto; }
+    .hero-subtitle { margin: 0 auto 40px auto; }
+}
+
+@media (max-width: 768px) {
+    .main-title { font-size: 2.5rem; }
+    .steps-grid { grid-template-columns: 1fr; gap: 50px; }
+    .upload-card { padding: 30px 20px; }
 }

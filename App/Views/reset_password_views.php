@@ -1,29 +1,41 @@
-<div class="container-center">
-    <h2>Nouveau mot de passe</h2>
-    <p class="info-text">
-        Votre mot de passe doit respecter les recommandations de la CNIL : 
-        12 caractères min, majuscule, minuscule, chiffre, caractère spécial.
-        Il doit être différent de votre ancien mot de passe.
-    </p>
+<div class="reset-wrapper">
 
-    <?php if(isset($error)): ?>
-        <div class="alert alert-danger"><?= $error ?></div>
-    <?php endif; ?>
-
-    <form method="POST" action="<?= $_ENV['BASE_URL'] ?>/user/resetPasswordForm">
+    <div class="reset-container">
+        <div class="icon-key">🔑</div>
         
-        <input type="hidden" name="reset_password" value="1">
-
-        <div class="form-group">
-            <label for="new_password">Nouveau mot de passe :</label>
-            <input type="password" name="password" id="new_password" required>
-        </div>
+        <h2>Nouveau mot de passe</h2>
         
-        <div class="form-group">
-            <label for="confirm_password">Confirmer le mot de passe :</label>
-            <input type="password" name="password_confirm" id="confirm_password" required>
-        </div>
+        <p class="reset-desc" style="font-size: 0.9em; color: #555;">
+            Votre mot de passe doit respecter les recommandations de la CNIL : 
+            12 caractères min, majuscule, minuscule, chiffre, caractère spécial.
+        </p>
+        
+        <?php 
+        $msg = $error ?? ($message ?? null);
+        if (!empty($msg)): 
+        ?>
+            <div class="alert error-msg">
+                <?= $msg ?>
+            </div>
+        <?php endif; ?>
 
-        <button type="submit" class="btn-primary">Valider</button>
-    </form>
+        <form action="<?= $_ENV['BASE_URL'] ?>/user/resetPasswordForm" method="POST">
+            <input type="hidden" name="reset_password" value="1">
+            
+            <div class="form-group">
+                <label for="password">Nouveau mot de passe</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="••••••••" autocomplete="new-password">
+            </div>
+            
+            <div class="form-group">
+                <label for="password_confirm">Confirmer le mot de passe</label>
+                <input type="password" id="password_confirm" name="password_confirm" required 
+                       placeholder="••••••••" autocomplete="new-password">
+            </div>
+            
+            <button type="submit" class="btn-submit">Valider</button>
+        </form>
+    </div>
+
 </div>

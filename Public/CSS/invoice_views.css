@@ -1,14 +1,24 @@
 /* Public/CSS/invoice_views.css */
 
-/* Fond global de la page de vue pour faire ressortir la feuille */
+/* 1. On s'assure que la page prend tout l'écran */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* Fond global : Flexbox pour centrer parfaitement */
 .invoice-wrapper {
     background-color: #e0e0e0;
-    padding: 40px 20px;
+    min-height: 100vh; /* Prend toute la hauteur de l'écran */
+    width: 100%;
+    padding-top: 40px;
+    padding-bottom: 40px;
     font-family: 'Helvetica', 'Arial', sans-serif;
     color: #333;
+    
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: center; /* C'est ICI que le centrage horizontal se fait */
 }
 
 /* --- BOUTONS --- */
@@ -18,6 +28,9 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 20px;
+    /* Sécurité pour le centrage si le flex échoue */
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .btn-back, .btn-download {
@@ -50,10 +63,15 @@
     width: 100%;
     max-width: 210mm; /* Largeur standard A4 */
     min-height: 297mm; /* Hauteur standard A4 */
-    padding: 40px;
-    box-sizing: border-box;
+    padding: 40px; /* Attention : HTML2PDF peut couper si le padding est trop grand */
+    
+    box-sizing: border-box; /* Important pour que le padding ne dépasse pas */
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     position: relative;
+    
+    /* Sécurité centrage */
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* --- HEADER DU PAPIER --- */
@@ -84,9 +102,11 @@
 .invoice-title {
     margin: 0;
     font-size: 32px;
-    color: #ddd; /* Gris très clair pour le style */
+    color: #ddd; 
     text-align: right;
     letter-spacing: 2px;
+    /* Ajout d'une marge à droite pour éviter que le "E" soit coupé au PDF */
+    padding-right: 5px; 
 }
 
 .meta-table {

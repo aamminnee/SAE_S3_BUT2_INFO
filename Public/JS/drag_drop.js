@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dropArea = document.getElementById('drop-zone');
     const input = document.getElementById('file-upload');
     const form = dropArea ? dropArea.closest('form') : null;
+    const actionArea = document.getElementById('action-area');
 
     // --- sécurité critique ---
     // on empêche le navigateur d'ouvrir l'image si on rate la zone
@@ -80,11 +81,19 @@ document.addEventListener("DOMContentLoaded", () => {
             const img = document.createElement('img');
             img.src = reader.result;
             img.style.maxWidth = '100%';
-            img.style.maxHeight = '300px';
+            img.style.maxHeight = '400px';
             img.style.objectFit = 'contain';
+            img.style.borderRadius = '12px';
             
-            dropArea.innerHTML = ''; // on vide le texte
+            // Nettoyage et affichage
+            dropArea.innerHTML = ''; // on enlève le texte "Glisser ici"
             dropArea.appendChild(img); // on met l'image
+            dropArea.classList.add('has-image'); // Pour le style CSS si besoin
+
+            // --- C'EST ICI QUE TU AVAIS OUBLIÉ L'AFFICHAGE DU BOUTON ---
+            if (actionArea) {
+                actionArea.classList.remove('hidden'); // On retire la classe qui cache le bouton
+            }
         }
     }
 

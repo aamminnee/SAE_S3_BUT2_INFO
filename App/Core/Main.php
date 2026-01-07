@@ -5,18 +5,20 @@ use App\Controllers\ImagesController;
 
 class Main {
     public function start() {
-        // start session
-        session_start();
+        // démarrage de la session uniquement si elle n'est pas déjà active
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-        // retrieve parameters from url
-        // we separate the parameters from the url
+        // récupération des paramètres depuis l'url
+        // on sépare les paramètres de l'url
         $uri = $_SERVER['REQUEST_URI'];
         
-        // we remove the trailing slash if it is not the root
+        // on retire le slash de fin s'il n'est pas à la racine
         if (!empty($uri) && $uri[-1] === '/' && $uri != '/') {
             $uri = substr($uri, 0, -1);
             
-            // redirection code
+            // code de redirection
             http_response_code(301);
             
             // redirection
@@ -24,36 +26,36 @@ class Main {
             exit;
         }
 
-        // management of url parameters
+        // gestion des paramètres d'url
         $params = [];
         if (isset($_GET['p'])) {
             $params = explode('/', $_GET['p']);
         }
 
-        // check if at least one parameter exists
+        // on vérifie si au moins un paramètre existe
         if (isset($params[0]) && $params[0] != '') {
-            // recover the name of the controller to instantiate
+            // on récupère le nom du contrôleur à instancier
             // on met une majuscule en 1ère lettre
             $controller = '\\App\\Controllers\\' . ucfirst(array_shift($params)) . 'Controller';
 
-            // we instantiate the controller
+            // on instancie le contrôleur
             $controller = new $controller();
 
-            // we recover the 2nd url parameter
+            // on récupère le 2ème paramètre d'url
             $action = (isset($params[0])) ? array_shift($params) : 'index';
 
             if (method_exists($controller, $action)) {
-                // if the method exists in the controller
-                // we call the method
+                // si la méthode existe dans le contrôleur
+                // on appelle la méthode
                 (isset($params[0])) ? call_user_func_array([$controller, $action], $params) : $controller->$action();
             } else {
-                // we send the 404 response code
+                // on envoie le code réponse 404
                 http_response_code(404);
                 echo "La page recherchée n'existe pas";
             }
         } else {
-            // here we instantiate the default controller
-            // change 'Home' or 'Main' to 'Images' to make it the landing page
+            // ici on instancie le contrôleur par défaut
+            // changer 'home' ou 'main' en 'images' pour en faire la page d'accueil
             $controller = new \App\Controllers\ImagesController();
             $controller->index();
         }

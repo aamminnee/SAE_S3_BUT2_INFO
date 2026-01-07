@@ -1,113 +1,234 @@
-/* // conteneur principal centré */
-.payment-container {
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 30px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #fff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+/* --- VARIABLES --- */
+:root {
+    --lego-blue: #006CB7;
+    --lego-red: #D92328;
+    --lego-yellow: #FFCF00;
+    --lego-green: #00852B; /* C'est cette ligne qui manquait ! */
+    --bg-base: #f4f7f6;
+    --text-dark: #1e293b;
+    --font-heading: 'Fredoka', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --header-height: 90px;
 }
 
-/* // titre de la page */
+/* --- LAYOUT GLOBAL --- */
+.payment-wrapper {
+    min-height: calc(100vh - var(--header-height));
+    background-color: var(--bg-base);
+    background-image: radial-gradient(#e2e8f0 2px, transparent 2.5px);
+    background-size: 30px 30px;
+    padding: 60px 20px;
+    font-family: var(--font-body);
+}
+
+.payment-layout {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Formulaire à gauche, Résumé à droite */
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: start;
+}
+
+/* --- GAUCHE : FORMULAIRE --- */
+.payment-form-container {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
 .payment-title {
-    text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-    font-family: 'Arial', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* // bloc récapitulatif de la commande */
-.order-summary {
-    background-color: #f8f9fa;
-    padding: 20px;
-    margin-bottom: 25px;
-    border-left: 6px solid #E3000B; /* // rouge lego */
-    border-radius: 4px;
-}
-
-.order-summary h3 {
+    font-family: var(--font-heading);
+    color: var(--text-dark);
     margin-top: 0;
-    color: #555;
-    font-size: 1.1em;
+    margin-bottom: 30px;
+    font-size: 2rem;
 }
 
-.summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.total-price {
-    font-size: 1.4em;
-    font-weight: bold;
-    color: #333;
-}
-
-/* // formulaire et champs */
-.lego-form {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group {
+.lego-form .form-group {
     margin-bottom: 20px;
 }
 
-.form-group label {
+.lego-form label {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #444;
+    color: #64748b;
 }
 
-.form-group input {
+/* Styles des Inputs */
+.lego-form input {
     width: 100%;
     padding: 12px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    font-size: 16px;
-    transition: border-color 0.3s;
-    box-sizing: border-box; /* // important pour le padding */
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box; /* Important pour ne pas dépasser */
+    font-family: var(--font-body);
+    transition: border-color 0.2s;
+    color: var(--text-dark);
 }
 
-.form-group input:focus {
-    border-color: #006DB7; /* // bleu lego */
+.lego-form input:focus {
+    border-color: var(--lego-blue);
     outline: none;
+    background-color: #f0f9ff;
 }
 
-/* // disposition en ligne pour date et cvv */
+/* Conteneur avec icône (Carte & CVV) */
+.input-icon {
+    position: relative;
+}
+.input-icon input {
+    padding-left: 40px; /* Place pour l'icône */
+}
+.input-icon .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    opacity: 0.7;
+}
+
 .form-row {
     display: flex;
     gap: 20px;
 }
-
 .form-row .form-group {
     flex: 1;
 }
 
-/* // bouton de paiement */
+/* --- BOUTON PAYER --- */
 .btn-pay {
     width: 100%;
-    padding: 15px;
-    background-color: #009e0f; /* // vert lego */
+    background-color: var(--lego-green); /* Maintenant ça marchera car défini dans :root */
     color: white;
     border: none;
-    border-radius: 6px;
-    font-size: 1.2em;
-    font-weight: bold;
+    padding: 16px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 50px;
     cursor: pointer;
-    margin-top: 10px;
-    transition: background-color 0.2s, transform 0.1s;
+    margin-top: 25px;
+    box-shadow: 0 4px 0 #005f1f; /* Ombre vert foncé */
+    transition: transform 0.1s;
+    font-family: var(--font-heading);
 }
 
 .btn-pay:hover {
-    background-color: #007a0b;
+    background-color: #009e33;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #005f1f;
 }
 
 .btn-pay:active {
-    transform: scale(0.98);
+    transform: translateY(2px);
+    box-shadow: none;
+}
+
+/* --- DROITE : RÉCAPITULATIF (Sticky) --- */
+.order-summary {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.order-summary h3 {
+    font-family: var(--font-heading);
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--text-dark);
+    font-size: 1.5rem;
+}
+
+.summary-items {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding-right: 5px; /* Pour éviter que la scrollbar colle */
+}
+
+/* Carte item dans le résumé */
+.mosaic-preview {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.mosaic-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: white;
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.preview-title {
+    font-weight: 700;
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+}
+
+.preview-details {
+    margin: 3px 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.preview-price {
+    font-weight: 700;
+    color: var(--lego-blue);
+    margin: 0;
+    font-family: var(--font-heading);
+}
+
+.summary-divider {
+    height: 2px;
+    background: #e2e8f0;
+    margin: 20px 0;
+    border-radius: 2px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.total-price {
+    color: var(--lego-red);
+    font-size: 1.6rem;
+    font-family: var(--font-heading);
+}
+
+/* --- MOBILE --- */
+@media (max-width: 900px) {
+    .payment-layout {
+        grid-template-columns: 1fr;
+    }
+    .order-summary {
+        order: -1; /* Met le résumé en haut sur mobile */
+        position: static;
+        margin-bottom: 30px;
+    }
 }
