@@ -35,20 +35,12 @@
             </div>
         </div>
 
-        <div class="setting-section">
-            <h3>Changer de mot de passe</h3>
-            <form action="<?= $_ENV['BASE_URL'] ?>/user/resetPasswordForm" method="POST">
-                <input type="hidden" name="reset_password" value="1">
-                <div class="form-group">
-                    <label>Nouveau mot de passe</label>
-                    <input type="password" name="password" required>
-                </div>
-                <div class="form-group">
-                    <label>Confirmer le mot de passe</label>
-                    <input type="password" name="password_confirm" required>
-                </div>
-                <button type="submit" class="btn-submit">Mettre à jour</button>
-            </form>
+        <div class="settings-section">
+            <h3>Sécurité</h3>
+            <p>Pour modifier votre mot de passe</p>
+            <a href="<?= $_ENV['BASE_URL'] ?>/user/resetPassword" class="btn-primary">
+                Réinitialiser mon mot de passe
+            </a>
         </div>
     <?php endif; ?>
 </div>

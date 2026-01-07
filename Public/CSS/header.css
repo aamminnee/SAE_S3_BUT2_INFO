@@ -1,23 +1,21 @@
-/* --- Header Principal --- */
+/* --- header principal --- */
 header {
     background-color: #ffffff;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
-    height: 90px; /* Hauteur augmentée pour accommoder le logo plus grand */
+    height: 90px;
     display: flex;
     align-items: center;
     width: 100%;
-    margin: 0; /* Sécurité anti-espace */
-    padding: 0; /* Sécurité anti-espace */
+    margin: 0;
+    padding: 0;
 }
 
-/* IMPORTANT : Assurez-vous que le body n'a pas de marge dans style.css */
-/* body { margin: 0; padding: 0; } */
-
+/* conteneur global du header */
 .header-container {
-    max-width: 1400px; /* Un peu plus large pour aérer */
+    max-width: 1400px;
     width: 100%;
     margin: 0 auto;
     padding: 0 30px;
@@ -27,15 +25,20 @@ header {
     height: 100%;
 }
 
-/* --- Logo Agrandit --- */
+/* --- logo --- */
 .logo {
     display: flex;
     align-items: center;
     height: 100%;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    font-size: 1.5rem;
+    gap: 10px;
 }
 
 .logo img {
-    height: 130px;
+    height: 80px; /* ajusté pour ne pas dépasser le header de 90px */
     width: auto;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -44,9 +47,8 @@ header {
     transform: scale(1.05);
 }
 
-/* --- Navigation --- */
-.main-nav ul {
-    list-style: none;
+/* --- navigation --- */
+.nav-menu {
     display: flex;
     align-items: center;
     gap: 30px;
@@ -62,6 +64,7 @@ header {
     position: relative;
     padding: 5px 0;
     transition: color 0.3s;
+    text-transform: capitalize;
 }
 
 .nav-link::after {
@@ -80,129 +83,111 @@ header {
     width: 100%;
 }
 
-/* --- Bouton Header (Inscription) --- */
-.btn-header {
+/* --- actions utilisateur (droite) --- */
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* selecteur de langue */
+.lang-switch form {
+    margin: 0;
+}
+
+.lang-switch select {
+    border: 1px solid #eee;
+    background-color: #f9f9f9;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    outline: none;
+}
+
+.lang-switch select:hover {
+    background-color: #eee;
+}
+
+/* --- boutons --- */
+
+/* bouton principal (inscription) */
+.btn-primary {
     background-color: #006CB7;
     color: white;
-    padding: 12px 25px; /* Un peu plus grand */
+    padding: 12px 25px;
     border-radius: 30px;
     text-decoration: none;
     font-weight: 600;
     font-size: 0.95rem;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 108, 183, 0.2);
+    border: none;
+    cursor: pointer;
 }
 
-.btn-header:hover {
+.btn-primary:hover {
     background-color: #005596;
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 108, 183, 0.3);
 }
 
-/* --- Menu Profil --- */
-.profile-menu {
-    position: relative;
-    cursor: pointer;
-    height: 100%;
-    display: flex;
-    align-items: center;
-}
-
-.profile-trigger {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 15px;
-    border-radius: 30px;
-    transition: background 0.3s;
-    border: 1px solid transparent;
-}
-
-.profile-trigger:hover {
-    background-color: #f4f4f4;
-    border-color: #eee;
-}
-
-.profile-trigger span {
-    font-weight: 600;
-    color: #333;
-}
-
-.avatar-mini {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #eee;
-}
-
-/* Menu déroulant */
-.dropdown {
-    position: absolute;
-    top: 85px; /* Ajusté par rapport à la nouvelle hauteur du header */
-    right: 0;
-    background: white;
-    width: 220px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.2s ease;
-    display: block !important;
-    flex-direction: column !important;
-    gap: 0 !important;
-    padding: 8px 0 !important;
-    border: 1px solid #f0f0f0;
-    z-index: 1100;
-}
-
-.profile-menu:hover .dropdown {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.dropdown li {
-    width: 100%;
-}
-
-.dropdown a {
-    display: block;
-    padding: 12px 20px;
-    text-decoration: none;
-    color: #555;
-    font-weight: 500;
-    transition: background 0.2s, color 0.2s;
-}
-
-.dropdown a:hover {
-    background-color: #f9f9f9;
+/* bouton secondaire (connexion / déconnexion) */
+.btn-outline {
+    background-color: transparent;
     color: #006CB7;
+    padding: 10px 23px; /* légèrement plus petit pour compenser la bordure */
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    border: 2px solid #006CB7;
 }
 
-.separator {
-    height: 1px;
-    background-color: #eee;
-    margin: 5px 0;
+.btn-outline:hover {
+    background-color: #e6f4ff;
+    transform: translateY(-2px);
 }
 
-.logout-btn:hover {
-    color: #D11013 !important;
-    background-color: #fff5f5 !important;
+/* --- responsive --- */
+@media (max-width: 900px) {
+    .header-container {
+        padding: 0 15px;
+    }
+    
+    .logo span {
+        display: none; /* cache le texte du logo sur mobile */
+    }
+
+    .nav-menu {
+        gap: 15px;
+    }
+
+    .nav-link {
+        font-size: 0.9rem;
+    }
+
+    .btn-primary, .btn-outline {
+        padding: 8px 15px;
+        font-size: 0.85rem;
+    }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     header {
-        height: 70px;
+        height: auto;
+        padding: 10px 0;
     }
-    
-    .logo img {
-        height: 50px;
+
+    .header-container {
+        flex-direction: column;
+        gap: 15px;
     }
-    
-    .nav-link span {
-        display: none;
+
+    .nav-menu {
+        width: 100%;
+        justify-content: center;
     }
 }

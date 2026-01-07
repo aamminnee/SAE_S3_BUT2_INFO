@@ -93,8 +93,12 @@ class UserController extends Controller {
                 $_SESSION['mode']     = $userMode;
                 $_SESSION['role']     = $userRole;
                 
-                // redirection vers la page d'accueil des images
-                header("Location: $baseUrl/index.php"); 
+                // redirection selon le rôle
+                if ($userRole === 'admin') {
+                    header("Location: $baseUrl/user/admin");
+                } else {
+                    header("Location: $baseUrl/index.php"); 
+                }
                 exit;
             } else {
                 $message = $this->t('login_error', "Incorrect username or password.");
@@ -106,6 +110,23 @@ class UserController extends Controller {
             'css' => 'login_views.css'
         ]);
         }
+    }
+
+    // page d'administration
+    public function admin() {
+        $baseUrl = $_ENV['BASE_URL'] ?? '';
+
+        // vérification de sécurité : on s'assure que l'utilisateur est admin
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            // redirection si pas admin
+            header("Location: $baseUrl/index.php");
+            exit;
+        }
+
+        // affichage de la vue admin
+        $this->render('admin_views', [
+            'css' => 'admin_views.css' // optionnel si vous créez un css spécifique
+        ]);
     }
 
     // gestion de l'inscription
@@ -165,32 +186,38 @@ class UserController extends Controller {
         }
     }
 
-    // formulaire de réinitialisation de mot de passe
+    // méthode pour traiter le formulaire de nouveau mot de passe
     public function resetPasswordForm() {
-        $baseUrl = $_ENV['BASE_URL'] ?? '';
-
-        if (isset($_POST['reset_password'], $_POST['password'], $_POST['password_confirm'])) {
+        if (isset($_POST['reset_password'])) {
             $password = $_POST['password'];
             $password_confirm = $_POST['password_confirm'];
 
-            // vérification de connexion
-            if (!isset($_SESSION['user_id'])) {
-                 header("Location: $baseUrl/user/login");
-                 exit;
+            // // vérification de la correspondance des mots de passe
+            if ($password !== $password_confirm) {
+                $error = "Les mots de passe ne correspondent pas.";
+                require ROOT . '/App/Views/reset_password_views.php';
+                return;
             }
+
+            // // appel de la méthode de validation que nous venons de corriger
+            $validation = $this->user_model->validateNewPassword($_SESSION['user_id'], $password);
+
+            // // si la validation retourne une chaîne, c'est une erreur
+            if ($validation !== true) {
+                $error = $validation;
+                require ROOT . '/App/Views/reset_password_views.php';
+                return;
+            }
+
+            // // si tout est bon, on met à jour
+            $this->user_model->updatePassword($_SESSION['user_id'], $password);
             
-            if ($password === $password_confirm) {
-                $this->user_model->setPassword($_SESSION['user_id'], $password);
-                $message = $this->t('password_reset_success', "Password reset successfully.");
-                header("Location: $baseUrl/index.php");
-                exit;
-            } else {
-                $message = $this->t('password_mismatch', "Passwords do not match.");
-                $this->render('reset_password_views', ['message' => $message]);
-            }
-        } else {
-            $this->render('reset_password_views');
+            // // redirection vers le login ou la page de succès
+            header('Location: ' . $_ENV['BASE_URL'] . '/setting');
+            exit;
         }
+
+        require ROOT . '/App/Views/reset_password_views.php';
     }
 
     // demande de réinitialisation (envoi email)
@@ -235,7 +262,9 @@ class UserController extends Controller {
                 if ($types === 'validation') {
                     $this->user_model->activateUser($userId);
                     if(isset($_SESSION['user_id'])) {
-                         $_SESSION['status'] = 'valide';
+                        $_SESSION['status'] = 'valide';
+                        header("Location: $baseUrl/index.php");
+                        exit;
                     }
                     header("Location: $baseUrl/user/login");
                     exit;
@@ -272,7 +301,12 @@ class UserController extends Controller {
                         unset($_SESSION['temp_2fa_user_id']);
                         unset($_SESSION['temp_2fa_email']);
                         
-                        header("Location: $baseUrl/index.php");
+                        // redirection selon le rôle après 2fa
+                        if ($role === 'admin') {
+                            header("Location: $baseUrl/user/admin");
+                        } else {
+                            header("Location: $baseUrl/index.php");
+                        }
                         exit;
                     } else {
                         $message = "Erreur critique : utilisateur introuvable.";
@@ -322,7 +356,7 @@ class UserController extends Controller {
 
     // activation/désactivation 2fa
     public function toggle2FA() {
-        $baseUrl = $_ENV['BASE_URL'] ?? '';
+        $baseUrl = $_ENV['BASE_URL'];
 
         if (!isset($_SESSION['user_id'])) {
             header("Location: $baseUrl/user/login");
@@ -330,7 +364,7 @@ class UserController extends Controller {
         }
 
         $id_user = $_SESSION['user_id'];
-        $action = $_POST['mode'] ?? '';
+        $action = $_POST['mode'];
         
         if ($action === 'enable') {
             $this->user_model->setModeById($id_user, '2FA');
@@ -353,7 +387,7 @@ class UserController extends Controller {
 
     // déconnexion
     public function logout() {
-        $baseUrl = $_ENV['BASE_URL'] ?? '';
+        $baseUrl = $_ENV['BASE_URL'];
         session_unset();
         session_destroy();
         header("Location: $baseUrl/user/login");

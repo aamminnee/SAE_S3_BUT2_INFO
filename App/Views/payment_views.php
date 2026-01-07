@@ -51,6 +51,8 @@
             </div>
         </div>
 
+        <p>Mode de paiement simulé dans le cadre du projet (aucun paiement réel)</p><br>
+
         <button type="submit" class="btn-pay">
             Payer <?= number_format($price, 2) ?> €
         </button>

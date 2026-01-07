@@ -8,28 +8,45 @@ use App\Models\TranslationModel;
 class ImagesController extends Controller {
     private $translations;
 
+    // constructeur pour charger les traductions
     public function __construct() {
+        // on vérifie si une langue est définie en session, sinon fr par défaut
         $lang = $_SESSION['lang'] ?? 'fr';
         $translation_model = new TranslationModel();
         $this->translations = $translation_model->getTranslations($lang);
     }
 
+    // méthode d'affichage de la page principale (accessible à tous)
     public function index() {
-        if (!isset($_SESSION['user_id'])) {
-            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login");
-            exit;
-        }
-
+        // on a supprimé la redirection vers login ici pour laisser l'accès public
+        
         $this->render('images_views', [
-            't' => $this->translations
+            't' => $this->translations,
+            // on passe l'état de connexion à la vue si besoin, bien que $_SESSION soit accessible directement
+            'is_logged_in' => isset($_SESSION['user_id'])
         ]);
     }
 
+    // // méthode pour traiter l'upload (accès restreint via vérification session et statut)
     public function upload() {
         header('Content-Type: application/json');
 
+        // // vérification de la connexion
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['status' => 'error', 'message' => 'Non connecté']);
+            exit;
+        }
+
+        // // vérification du statut du compte (doit être valide)
+        $statut_compte = $_SESSION['status'] ?? 'invalide';
+        if ($statut_compte !== 'valide') {
+            echo json_encode([
+                'status' => 'error', 
+                'message' => 'Compte non activé. Veuillez activer votre compte.',
+                'redirect_account' => true // indicateur pour le js
+            ]);
             exit;
         }
 
@@ -49,13 +66,13 @@ class ImagesController extends Controller {
                 exit;
             }
 
-            // lecture binaire
+            // // lecture binaire du fichier
             $imgData = file_get_contents($file['tmp_name']);
-            $fileName = $file['name']; // correspond à votre colonne 'filename'
+            $fileName = $file['name']; 
 
             try {
                 $model = new ImagesModel();
-                // appel de la méthode corrigée
+                // // sauvegarde de l'image en base de données
                 $imageId = $model->saveCustomerImage($_SESSION['user_id'], $imgData, $fileName, $fileType);
 
                 echo json_encode([
@@ -73,8 +90,9 @@ class ImagesController extends Controller {
         exit;
     }
 
+    // méthode pour afficher l'image brute depuis la bdd
     public function view($id) {
-        // nettoyage de l'id
+        // nettoyage de l'id pour la sécurité
         $id = (int)$id;
 
         if ($id <= 0) {
@@ -83,23 +101,24 @@ class ImagesController extends Controller {
         }
 
         $model = new ImagesModel();
-        // récupération de l'image (jointure image + customerimage)
+        // récupération de l'image
         $image = $model->getImageById($id);
 
-        // si pas d'image trouvée ou pas de données binaires
+        // si l'image n'existe pas ou est vide
         if (!$image || empty($image->file)) {
             http_response_code(404);
-            // image par défaut ou vide
             exit;
         }
+        
+        // on vide le tampon de sortie pour éviter la corruption de l'image
         if (ob_get_level()) {
             ob_end_clean();
         }
 
-        // on définit le type de contenu (ex: image/png)
+        // définition du header content-type correct
         header("Content-Type: " . $image->file_type);
         
-        // on affiche les données brutes
+        // affichage des données binaires
         echo $image->file;
         exit;
     }

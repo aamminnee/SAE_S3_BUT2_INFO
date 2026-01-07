@@ -112,9 +112,29 @@ class UsersModel extends Model {
         return $this->requete("UPDATE Customer SET etat = 'valide' WHERE id_Customer = ?", [$id_user]);
     }
 
-    // met à jour le mot de passe
-    public function setPassword($id_user, $password) {
-        $hashed = password_hash($password, PASSWORD_DEFAULT);
-        return $this->requete("UPDATE Customer SET password = ? WHERE id_Customer = ?", [$hashed, $id_user]);
+   // // méthode pour valider le nouveau mot de passe
+    public function validateNewPassword($userId, $plainPassword) {
+        // // règles cnil : 12 caractères, majuscule, minuscule, chiffre, caractère spécial
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{12,}$/', $plainPassword)) {
+            return "Le mot de passe doit contenir 12 caractères min, majuscule, minuscule, chiffre, caractère spécial.";
+        }
+
+        // // on vérifie que le mot de passe est différent de l'actuel
+        $sql = "SELECT password FROM Customer WHERE id_Customer = ?";
+        $stmt = $this->requete($sql, [$userId]);
+        $currentHash = $stmt->fetchColumn();
+
+        if ($currentHash && password_verify($plainPassword, $currentHash)) {
+            return "Le nouveau mot de passe doit être différent de l'ancien.";
+        }
+
+        return true;
+    }
+
+    // // méthode pour mettre à jour le mot de passe
+    public function updatePassword($userId, $plainPassword) {
+        $newHash = password_hash($plainPassword, PASSWORD_DEFAULT);
+        $sql = "UPDATE Customer SET password = ? WHERE id_Customer = ?";
+        $this->requete($sql, [$newHash, $userId]);
     }
 }

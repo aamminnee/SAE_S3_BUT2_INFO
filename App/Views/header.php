@@ -1,38 +1,61 @@
 <?php
+// on récupère l'url de base
+$baseUrl = $_ENV['BASE_URL'];
 
-// vérification de connexion pour le menu
+// on vérifie si l'utilisateur est connecté et son rôle
 $isLoggedIn = isset($_SESSION['user_id']);
+$isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 
-// on s'assure que base_url est disponible
-$baseUrl = $_ENV['BASE_URL'] ?? '';
+// logique pour le lien du logo
+// si admin, on redirige vers la vue admin, sinon vers la page d'accueil (images)
+if ($isAdmin) {
+    $logoLink = $baseUrl . '/user/admin';
+} else {
+    $logoLink = $baseUrl . '/index.php';
+}
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lego Mosaic</title>
+    <link rel="stylesheet" href="<?= $baseUrl ?>/CSS/header.css">
+    <?php if (isset($css)): ?>
+        <link rel="stylesheet" href="<?= $baseUrl ?>/CSS/<?= htmlspecialchars($css) ?>">
+    <?php endif; ?>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            
+            <a href="<?= $logoLink ?>" class="logo">
+                <img src="<?= $baseUrl ?>/images/logo.png" alt="Logo">
+            </a>
 
-<header>
-    <div class="header-container">
-        <a href="<?= $_ENV['BASE_URL'] ?? '' ?>/index.php" class="logo">
-            <img src="<?= $_ENV['BASE_URL'] ?? '' ?>/img/logo.png" alt="Img2Brick Logo">
-        </a>
-
-        <nav class="main-nav">
-            <ul>
-                <?php if (isset($_SESSION['user_id'])): ?>
-                    <li class="profile-menu">
-                        <div class="profile-trigger">
-                            <span><?= htmlspecialchars($_SESSION['user_name'] ?? 'Mon Compte') ?></span>
-                            <img src="<?= $_ENV['BASE_URL'] ?? '' ?>/img/default_avatar.png" alt="Avatar" class="avatar-mini" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['user_name'] ?? 'User') ?>&background=random'">
-                        </div>
-                        <ul class="dropdown">
-                            <li><a href="<?= $baseUrl ?>/setting"><?= isset($t) ? ($t['mon_profil'] ?? 'Settings') : 'Settings' ?></a></li>
-                            <li><a href="<?= $_ENV['BASE_URL'] ?? '' ?>/commande"><?= isset($t) ? ($t['mes_commandes'] ?? 'Mes Commandes') : 'Mes Commandes' ?></a></li>
-                            <li class="separator"></li>
-                            <li><a href="<?= $_ENV['BASE_URL'] ?? '' ?>/user/logout" class="logout-btn"><?= isset($t) ? ($t['deconnexion'] ?? 'Déconnexion') : 'Déconnexion' ?></a></li>
-                        </ul>
-                    </li>
+            <nav class="nav-menu">
+                <?php if ($isAdmin): ?>
+                    <a href="<?= $baseUrl ?>/admin/stats" class="nav-link">Statistiques</a>
+                    <a href="<?= $baseUrl ?>/admin/supplier" class="nav-link">Fournisseur</a>
+                    <a href="<?= $baseUrl ?>/stock">Inventaire</a>
+                    <a href="<?= $baseUrl ?>/setting" class="nav-link">Paramètres</a>
                 <?php else: ?>
-                    <li><a href="<?= $_ENV['BASE_URL'] ?? '' ?>/user/login" class="nav-link"><?= isset($t) ? ($t['connexion'] ?? 'Connexion') : 'Connexion' ?></a></li>
-                    <li><a href="<?= $_ENV['BASE_URL'] ?? '' ?>/user/register" class="btn-header"><?= isset($t) ? ($t['inscription'] ?? 'Inscription') : 'Inscription' ?></a></li>
+                    <a href="<?= $baseUrl ?>/setting" class="nav-link">Paramètres</a>
+                    <?php if ($isLoggedIn): ?>
+                        <a href="<?= $baseUrl ?>/commande/list" class="nav-link">Mes Commandes</a>
+                    <?php endif; ?>
                 <?php endif; ?>
-            </ul>
-        </nav>
-    </div>
-</header>
+            </nav>
+
+            <div class="user-actions">
+                <?php if ($isLoggedIn): ?>
+                    <li><a href="<?= $_ENV['BASE_URL'] ?>/compte">Mon compte</a></li>
+                    <a href="<?= $baseUrl ?>/user/logout" class="btn-outline">Déconnexion</a>
+                <?php else: ?>
+                    <a href="<?= $baseUrl ?>/user/login" class="btn-outline">Connexion</a>
+                    <a href="<?= $baseUrl ?>/user/register" class="btn-primary">Inscription</a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </header>
