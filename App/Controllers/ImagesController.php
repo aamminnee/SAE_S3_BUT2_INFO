@@ -21,7 +21,9 @@ class ImagesController extends Controller {
         }
 
         $this->render('images_views', [
-            't' => $this->translations
+            't' => $this->translations,
+            'css' => 'images_views.css'
+
         ]);
     }
 

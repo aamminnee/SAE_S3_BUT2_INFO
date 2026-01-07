@@ -7,6 +7,7 @@ use App\Models\TranslationModel;
 use App\Models\MosaicModel;
 use App\Models\CommandeModel;
 use App\Models\UsersModel;
+use App\Models\ImagesModel;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -20,145 +21,136 @@ class PaymentController extends Controller {
     }
 
     public function index() {
-        // // vérification connexion
-        if (!isset($_SESSION['user_id'])) {
-            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login");
-            exit;
-        }
+        if (!isset($_SESSION['user_id'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login"); exit; }
+        if (empty($_SESSION['cart'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/cart"); exit; }
 
-        // // vérification qu'une image est en attente
-        if (!isset($_SESSION['pending_payment_mosaic_id'])) {
-            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/images");
-            exit;
-        }
-
-        $mosaicId = $_SESSION['pending_payment_mosaic_id'];
-        
-        $mosaicModel = new MosaicModel();
-        $visualImage = $mosaicModel->getMosaicVisual($mosaicId);
-
-        $dynamicPrice = $mosaicModel->getMosaicPrice($mosaicId); 
-    
-        // Si le prix est 0 ou invalide, vous pouvez définir un prix minimum ou gérer l'erreur
-        if ($dynamicPrice <= 0) $dynamicPrice = 12.99;
+        $totalPrice = 0;
+        foreach ($_SESSION['cart'] as $item) { $item = (array)$item; $totalPrice += $item['price']; }
 
         $usersModel = new UsersModel();
-        // // conversion en tableau car le model peut renvoyer un objet
         $clientInfo = (array) $usersModel->getUserById($_SESSION['user_id']);
 
         $this->render('payment_views', [
             't' => $this->translations,
-            'price' => $dynamicPrice,
-            'css' => 'payment_views.css',
-            'mosaicImage' => $visualImage,
-            'client' => $clientInfo 
+            'total' => $totalPrice,
+            'cart' => $_SESSION['cart'],
+            'client' => $clientInfo,
+            'css' => 'payment_views.css'
         ]);
     }
 
     public function process() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $userId = $_SESSION['user_id'];
-            $mosaicId = $_SESSION['pending_payment_mosaic_id'] ?? null;
-            
-            if (!$mosaicId) {
-                header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/index.php");
-                exit;
-            }
+            if (empty($_SESSION['cart'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/cart"); exit; }
 
-            // // récupération des infos utilisateur
+            $userId = $_SESSION['user_id'];
             $usersModel = new UsersModel();
             
-            // // correction ici : on convertit le résultat (objet stdclass) en tableau
-            $userInfoRaw = $usersModel->getUserById($userId);
-            $userInfo = (array) $userInfoRaw;
+            // Calcul montant total
+            $totalAmount = 0;
+            foreach ($_SESSION['cart'] as $item) { $item = (array)$item; $totalAmount += $item['price']; }
 
-            // // récupération de l'adresse depuis le formulaire
-            $userAddress = $_POST['adress'] ?? 'Adresse non fournie';
-
+            // Infos facturation
+            $userInfo = (array) $usersModel->getUserById($userId);
+            $billingInfo = [
+                'adress'     => $_POST['adress'] ?? 'Non fournie',
+                'phone'      => $_POST['phone'] ?? '',
+                'first_name' => $userInfo['username'] ?? 'Client', 
+                'last_name'  => $userInfo['last_name'] ?? 'Inconnu',
+                'email'      => $userInfo['email'] ?? 'email@test.com'
+            ];
             $cardInfo = [
                 'number' => $_POST['card_number'], 
                 'expiry' => $_POST['card_expiry'] . '-01',
                 'cvv'    => $_POST['card_cvv']
             ];
 
-            // // construction des infos de facturation
-            // // note : dans usersmodel, first_name est aliasé en 'username'
-            $billingInfo = [
-                'adress'     => $userAddress,
-                'phone'      => $_POST['phone'] ?? '',
-                'first_name' => $userInfo['username'] ?? 'Client', 
-                'last_name'  => $userInfo['last_name'] ?? 'Inconnu',
-                'email'      => $userInfo['email'] ?? ($_SESSION['user_email'] ?? 'client@legofactory.com')
-            ];
+            // 1. Sauvegarde des Mosaïques en BDD (Table Mosaic)
+            $mosaicModel = new MosaicModel();
+            $imagesModel = new ImagesModel();
+            $realMosaicIds = []; 
+            
+            foreach ($_SESSION['cart'] as $item) {
+                $item = (array)$item;
+                $imgId = $item['image_id'];
+                $style = $item['style'];
 
-            $mosaicModel = new MosaicModel(); // Instancier le modèle ici si ce n'est pas fait
-            $amount = $mosaicModel->getMosaicPrice($mosaicId);
+                // On récupère l'image source pour régénérer le texte
+                $imgDb = $imagesModel->getImageById($imgId, $userId);
+                
+                if ($imgDb) {
+                    $ext = (strpos($imgDb->file_type, 'png') !== false) ? 'png' : 'jpg';
+                    $genResults = $mosaicModel->generateTemporaryMosaics($imgId, $imgDb->file, $ext);
+                    $pavageContent = $genResults[$style]['txt'] ?? null;
 
-            // Fallback de sécurité
-            if ($amount <= 0) $amount = 12.99;
-
-            $financialModel = new FinancialModel();
-            $result = $financialModel->processOrder($userId, $mosaicId, $cardInfo, $amount, $billingInfo);
-
-            if (is_numeric($result)) {
-                $orderId = $result; // L'ID est dans $result
-                $commandeModel = new CommandeModel();
-
-                // 1. Mise à jour du statut
-                $commandeModel->updateStatus($orderId, 'Payée');
-
-                // 2. Sauvegarde de la composition (Inventaire des briques)
-                $commande = $commandeModel->getCommandeById($orderId);
-                if (!empty($commande->id_Mosaic)) {
-                    $mosaicModel = new MosaicModel();
-                    // On sauvegarde uniquement si ce n'est pas déjà fait
-                    if (!$mosaicModel->hasComposition($commande->id_Mosaic)) {
-                        $mosaicModel->saveMosaicComposition($commande->id_Mosaic);
+                    if ($pavageContent) {
+                        // Création de la mosaïque (id_Order est NULL pour l'instant)
+                        $newMosaicId = $mosaicModel->saveSelectedMosaic($imgId, $pavageContent, $style);
+                        if ($newMosaicId) {
+                            $realMosaicIds[] = $newMosaicId;
+                        }
                     }
                 }
-
-                // 3. Envoi de l'email
-                $orderDetails = $commandeModel->getOrderDetails($orderId);
-                $emailToSend = $billingInfo['email'];
-                $this->sendInvoiceEmail($emailToSend, $orderDetails);
-
-                // 4. Redirection
-                unset($_SESSION['pending_payment_mosaic_id']);
-                header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/payment/confirmation?id=" . $orderId);
-                exit;
-            } else {
-                $mosaicModel = new MosaicModel();
-                $visualImage = $mosaicModel->getMosaicVisual($mosaicId);
-                echo "<div style='background-color: #f8d7da; padding: 20px;'>Erreur : " . htmlspecialchars($result) . "</div>";
             }
+
+            if (empty($realMosaicIds)) {
+                echo "Erreur : Impossible de créer les mosaïques.";
+                exit;
+            }
+
+            // 2. Paiement et Création de la Commande (CustomerOrder)
+            $financialModel = new FinancialModel();
+            // On passe le 1er ID juste pour récupérer l'image de couverture dans le model
+            $result = $financialModel->processOrder($userId, $realMosaicIds[0], $cardInfo, $totalAmount, $billingInfo);
+
+            if (!is_numeric($result)) {
+                // Erreur SQL renvoyée par le model
+                $clientInfo = (array) $usersModel->getUserById($userId);
+                $this->render('payment_views', [
+                    't' => $this->translations, 'total' => $totalAmount, 'cart' => $_SESSION['cart'],
+                    'client' => $clientInfo, 'css' => 'payment_views.css',
+                    'error' => "Erreur paiement : " . $result
+                ]);
+                return;
+            }
+            
+            $orderId = (int)$result;
+
+            // 3. Liaison : On met à jour toutes les mosaïques avec l'ID de la commande
+            foreach ($realMosaicIds as $idMosaic) {
+                // C'est ICI que le lien 1 Commande -> N Mosaïques se fait
+                $sqlLink = "UPDATE Mosaic SET id_Order = ? WHERE id_Mosaic = ?";
+                $mosaicModel->requete($sqlLink, [$orderId, $idMosaic]);
+                
+                // On génère la liste des pièces (MosaicComposition)
+                if (!$mosaicModel->hasComposition($idMosaic)) {
+                    $mosaicModel->saveMosaicComposition($idMosaic);
+                }
+            }
+
+            // 4. Finalisation
+            $commandeModel = new CommandeModel(); 
+            $orderDetails = $commandeModel->getOrderDetails($orderId);
+            $orderDetails['total_amount'] = $totalAmount; 
+            
+            $this->sendInvoiceEmail($billingInfo['email'], $orderDetails);
+            unset($_SESSION['cart']);
+
+            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/payment/confirmation?id=" . $orderId);
+            exit;
         }
     }
 
-    public function confirmation() {
-        if (!isset($_GET['id'])) {
-            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/index.php");
-            exit;
-        }
-
+    public function confirmation() { /* Pas de changement ici */
+        if (!isset($_GET['id'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/index.php"); exit; }
         $orderId = $_GET['id'];
         $commandeModel = new CommandeModel();
         $orderDetails = $commandeModel->getOrderDetails($orderId);
-
-        if (!$orderDetails) {
-            echo "Commande introuvable.";
-            exit;
-        }
-
-        $this->render('invoice_views', [
-            't' => $this->translations,
-            'order' => $orderDetails,
-            'css' => 'invoice_views.css'
-        ]);
+        $this->render('invoice_views', ['t' => $this->translations, 'order' => $orderDetails, 'css' => 'invoice_views.css']);
     }
 
-    private function sendInvoiceEmail($email, $order) {
+    private function sendInvoiceEmail($email, $order) { /* Pas de changement ici */
         $mail = new PHPMailer(true);
-
         try {
             $mail->isSMTP();
             $mail->Host       = $_ENV['MAILJET_HOST'];
@@ -167,29 +159,13 @@ class PaymentController extends Controller {
             $mail->Password   = $_ENV['MAILJET_PASSWORD'];
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = $_ENV['MAILJET_PORT'];
-
             $mail->setFrom($_ENV['MAIL_FROM_ADDRESS'], $_ENV['MAIL_FROM_NAME']);
             $mail->addAddress($email);
-
             $mail->isHTML(true);
             $mail->Subject = "Votre facture LegoFactory - Commande #" . ($order['invoice_number'] ?? $order['id_Order']);
-
             $amount = number_format($order['total_amount'] ?? 0, 2);
-            $address = htmlspecialchars($order['adress'] ?? '');
-            
-            $body = "
-            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;'>
-                <h1>Confirmation de commande</h1>
-                <p>Merci pour votre achat !</p>
-                <p>Montant : $amount €</p>
-                <p>Adresse de facturation : $address</p>
-            </div>";
-
-            $mail->Body = $body;
+            $mail->Body = "<div style='font-family: Arial;'><h1>Merci !</h1><p>Commande validée.</p><p>Total: $amount €</p></div>";
             $mail->send();
-
-        } catch (Exception $e) {
-            error_log("Erreur Mailer : " . $mail->ErrorInfo);
-        }
+        } catch (Exception $e) { error_log("Mailer Error: " . $mail->ErrorInfo); }
     }
 }

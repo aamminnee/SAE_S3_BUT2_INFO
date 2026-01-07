@@ -1,7 +1,11 @@
 <?php
-// fichier : SAE_S3_BUT2_INFO/Public/index.php
+// 1. DÉMARRAGE DE SESSION OBLIGATOIRE (Tout en haut)
+// Sans ça, le panier est vidé à chaque changement de page !
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// activation de l'affichage des erreurs pour le débogage
+// 2. Affichage des erreurs (Pour le développement)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -9,21 +13,18 @@ error_reporting(E_ALL);
 use App\Core\Main;
 use Dotenv\Dotenv;
 
-// on définit la racine du projet (le dossier parent de public)
+// 3. Définition des chemins
 define('ROOT', dirname(__DIR__));
 
-// on charge l'autoloader de composer
+// 4. Chargement des librairies
 require_once ROOT . '/vendor/autoload.php';
 
-// on charge les variables d'environnement du fichier .env
-// vérifie que le fichier .env existe pour éviter les erreurs
+// 5. Chargement de la configuration (.env)
 if (file_exists(ROOT . '/.env')) {
     $dotenv = Dotenv::createImmutable(ROOT);
     $dotenv->load();
 }
 
-// on instancie le routeur (la classe main du cœur de l'app)
+// 6. Lancement du site
 $app = new Main();
-
-// on démarre l'application
 $app->start();

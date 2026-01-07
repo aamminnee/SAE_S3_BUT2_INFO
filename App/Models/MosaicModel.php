@@ -332,4 +332,93 @@ class MosaicModel extends Model {
         // Arrondir
         return floor($finalPrice) + 0.99;
     }
+
+    // App/Models/MosaicModel.php
+
+    /**
+     * Calcule le prix estimé à partir du contenu brut du fichier de pavage.
+     * Utilise la même formule que getMosaicPrice.
+     */
+    public function calculatePriceFromContent($pavageContent) {
+        if (empty($pavageContent)) {
+            return 0.00;
+        }
+
+        // On récupère la première ligne qui contient le coût brut (ex: "COST 12.50")
+        $lines = explode("\n", $pavageContent);
+        $firstLine = trim($lines[0]);
+        $parts = preg_split('/\s+/', $firstLine);
+
+        $rawCost = 0.00;
+
+        // On suppose que le coût est le 2ème élément (index 1) de la première ligne
+        if (isset($parts[1]) && is_numeric($parts[1])) {
+            $rawCost = (float) $parts[1];
+        }
+
+        // Prix minimum de sécurité
+        if ($rawCost <= 0) {
+            return 19.99;
+        }
+
+        // Application de la formule de rentabilité
+        // Note : Assurez-vous que les constantes (MARGIN_COEFF, etc.) sont bien définies dans la classe
+        $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE + self::DELIVERY;
+
+        // Arrondi commercial (ex: 29.99)
+        return floor($finalPrice) + 0.99;
+    }
+
+    // App/Models/MosaicModel.php
+
+    /**
+     * Compte le nombre de briques à partir du contenu du fichier texte.
+     * Plus fiable que le parsing du fichier inventory séparé.
+     */
+    public function countPiecesFromContent($pavageContent) {
+        if (empty($pavageContent)) {
+            return 0;
+        }
+
+        $lines = explode("\n", $pavageContent);
+        $count = 0;
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            // On ignore les lignes vides
+            if (empty($line)) continue;
+            
+            // On ignore la ligne de coût ou les en-têtes (qui ne contiennent généralement pas de '/')
+            // Format attendu d'une brique : "2x4/ff0000 10 20 0"
+            if (strpos($line, '/') === false) continue;
+
+            $count++;
+        }
+
+        return $count;
+    }
+
+    public function getMosaicsByOrderId($orderId) {
+        $sql = "SELECT m.id_Mosaic, m.pavage, i.file, i.file_type 
+                FROM Mosaic m
+                LEFT JOIN CustomerImage i ON m.id_Image = i.id_Image
+                WHERE m.id_Order = ?";
+        
+        // --- CORRECTION ICI : 'requete' au lieu de 'query' ---
+        $results = $this->requete($sql, [$orderId])->fetchAll();
+        
+        // Traitement pour l'affichage (Conversion Blob -> Base64)
+        foreach ($results as $row) {
+            if (!empty($row->file)) {
+                $row->visuel = "data:" . $row->file_type . ";base64," . base64_encode($row->file);
+            } else {
+                $row->visuel = null;
+            }
+            // Valeurs par défaut
+            $row->size = 64; 
+            $row->style = 'Standard';
+        }
+        
+        return $results;
+    }
 }

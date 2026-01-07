@@ -1,156 +1,316 @@
+/* --- 1. CONFIGURATION GLOBALE --- */
+:root {
+    --lego-red: #D92328;
+    --lego-red-dark: #b31217;
+    --lego-blue: #006CB7;
+    --lego-blue-dark: #004c82;
+    --lego-yellow: #FFCF00;
+    --lego-green: #00852B; 
+    
+    --text-dark: #1e293b;
+    --text-grey: #64748b;
+    --bg-base: #f4f7f6;
+    
+    --font-heading: 'Fredoka', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --header-height: 90px;
+}
+
+body {
+    background-color: var(--bg-base);
+    /* Texture tenons subtile */
+    background-image: radial-gradient(#e2e8f0 2px, transparent 2.5px);
+    background-size: 30px 30px;
+    font-family: var(--font-body);
+    color: var(--text-dark);
+}
+
+/* --- 2. CONTENEUR --- */
 .orders-container {
     max-width: 1000px;
-    margin: 40px auto;
-    padding: 0 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0 auto;
+    padding: 60px 20px;
+    min-height: calc(100vh - var(--header-height));
+}
+
+/* --- 3. EN-TÊTE DE PAGE --- */
+.btn-home-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text-grey);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 10px 20px;
+    background-color: white;
+    border-radius: 50px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-home-back:hover {
+    color: var(--lego-blue);
+    transform: translateX(-5px);
+    border-color: var(--lego-blue);
+    box-shadow: 0 6px 15px rgba(0, 108, 183, 0.1);
 }
 
 .page-title {
     text-align: center;
-    color: #333;
-    margin-bottom: 40px;
-    font-size: 2em;
-    border-bottom: 2px solid #ffcc00; /* couleur lego */
-    display: inline-block;
-    padding-bottom: 10px;
+    color: var(--text-dark);
+    margin: 40px 0 60px 0;
+    font-family: var(--font-heading);
+    font-size: 2.8rem;
+    position: relative;
+    display: block;
 }
 
+/* Soulignement Brique */
+.page-title::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 6px;
+    background-color: var(--lego-yellow);
+    margin: 15px auto 0;
+    border-radius: 3px;
+}
+
+/* --- 4. LISTE DES COMMANDES (GRID) --- */
 .orders-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
 }
 
+/* --- 5. CARTE COMMANDE (STYLE MODERNE) --- */
 .order-card {
-    display: flex;
+    display: grid;
+    grid-template-columns: 180px 1fr 200px; /* Image | Infos | Actions */
     background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    transition: transform 0.2s;
+    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.03);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .order-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+    border-color: var(--lego-blue);
 }
 
+/* ZONE IMAGE (GAUCHE) */
 .order-visual {
-    width: 150px;
-    background: #f9f9f9;
+    background-color: #f1f5f9;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-right: 1px solid #eee;
+    padding: 15px;
+    border-right: 1px solid #e2e8f0;
 }
 
 .order-visual img {
-    max-width: 100%;
-    max-height: 100px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
+    max-height: 140px;
+    border-radius: 8px;
+    /* Ombre portée sur l'image elle-même */
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    transition: transform 0.3s;
 }
 
+.order-card:hover .order-visual img {
+    transform: scale(1.05);
+}
+
+.no-image {
+    color: var(--text-grey);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* ZONE INFOS (CENTRE) */
 .order-info {
-    flex: 1;
-    padding: 20px;
+    padding: 25px 30px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 10px;
 }
 
 .info-header {
     display: flex;
     justify-content: space-between;
-    font-weight: bold;
-    color: #555;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #f1f5f9;
 }
+
+.order-ref {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    color: var(--text-dark);
+}
+
+.order-date {
+    font-size: 0.9rem;
+    color: var(--text-grey);
+    background: #f8fafc;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+/* BADGES STATUT */
+.info-status { margin-bottom: 15px; }
 
 .status-badge {
-    padding: 5px 10px;
-    border-radius: 12px;
-    font-size: 0.85em;
-    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.status-payée { background-color: #d4edda; color: #155724; }
-.status-en_cours { background-color: #fff3cd; color: #856404; }
-.status-annulée { background-color: #f8d7da; color: #721c24; }
+/* Couleurs dynamiques */
+.status-payée, .status-paid { 
+    background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; 
+}
+.status-en_cours, .status-pending { 
+    background-color: #fef9c3; color: #854d0e; border: 1px solid #fde047; 
+}
+.status-annulée, .status-cancelled { 
+    background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; 
+}
 
 .info-price {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #333;
+    font-size: 1rem;
+    color: var(--text-grey);
 }
 
+.price-val {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--text-dark);
+    margin-left: 5px;
+}
+
+/* ZONE ACTIONS (DROITE) */
 .order-actions {
-    padding: 20px;
+    background-color: #fcfcfc;
+    border-left: 1px solid #e2e8f0;
+    padding: 25px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 10px;
-    border-left: 1px solid #eee;
-    background: #fafafa;
+    gap: 15px;
 }
 
 .btn-details, .btn-invoice {
-    display: inline-block;
-    padding: 8px 15px;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9em;
-    transition: background 0.3s;
-}
-
-.btn-details {
-    background-color: #007bff;
-    color: white;
-}
-.btn-details:hover { background-color: #0056b3; }
-
-.btn-invoice {
-    background-color: #6c757d;
-    color: white;
-}
-.btn-invoice:hover { background-color: #545b62; }
-
-@media (max-width: 600px) {
-    .order-card { flex-direction: column; }
-    .order-visual { width: 100%; height: 150px; border-right: none; border-bottom: 1px solid #eee; }
-    .order-visual img { max-height: 140px; }
-    .order-actions { flex-direction: row; border-left: none; border-top: 1px solid #eee; }
-}
-
-/* --- Bouton Retour Accueil --- */
-.btn-home-back {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 8px; /* Espace entre la flèche et le texte */
+    justify-content: center;
     text-decoration: none;
-    color: #4a5568; /* Gris moderne (Gray 700) */
+    padding: 12px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 0.95rem;
-    padding: 10px 16px;
-    border-radius: 8px;
-    background-color: transparent;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-bottom: 20px; /* Espace sous le bouton avant le titre */
-    border: 1px solid transparent; /* Pour éviter le saut au hover si on met une bordure */
+    transition: all 0.2s;
+    text-align: center;
 }
 
-/* Effet au survol */
-.btn-home-back:hover {
-    color: #2b6cb0; /* Bleu pro */
-    background-color: #ebf8ff; /* Bleu très pâle */
-    transform: translateX(-5px); /* Petite animation de recul vers la gauche */
+/* Bouton Détails (Bleu 3D) */
+.btn-details {
+    background-color: var(--lego-blue);
+    color: white;
+    box-shadow: 0 4px 0 var(--lego-blue-dark);
+    border: none;
+}
+.btn-details:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--lego-blue-dark);
+}
+.btn-details:active {
+    transform: translateY(2px);
+    box-shadow: none;
 }
 
-/* Focus pour l'accessibilité (navigation clavier) */
-.btn-home-back:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
-    border-color: #63b3ed;
+/* Bouton Facture (Blanc contour) */
+.btn-invoice {
+    background-color: white;
+    color: var(--text-grey);
+    border: 2px solid #e2e8f0;
+}
+.btn-invoice:hover {
+    border-color: var(--lego-red);
+    color: var(--lego-red);
+    background-color: #fff5f5;
+}
+
+/* --- 6. EMPTY STATE (VIDE) --- */
+.empty-state {
+    text-align: center;
+    background: white;
+    padding: 80px 20px;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.empty-state p {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--text-grey);
+    margin-bottom: 30px;
+}
+
+.btn-action {
+    display: inline-block;
+    background-color: var(--lego-red);
+    color: white;
+    padding: 15px 40px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 0 var(--lego-red-dark);
+    transition: all 0.2s;
+}
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--lego-red-dark);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 900px) {
+    .order-card {
+        grid-template-columns: 1fr; /* Empile tout */
+        grid-template-rows: auto auto auto;
+    }
+
+    .order-visual {
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+        height: 200px;
+    }
+    .order-visual img { max-height: 180px; }
+
+    .order-actions {
+        border-left: none;
+        border-top: 1px solid #e2e8f0;
+        flex-direction: row; /* Boutons côte à côte sur mobile */
+    }
+    .btn-details, .btn-invoice { flex: 1; }
+    
+    .info-header { flex-direction: column; align-items: flex-start; gap: 5px; }
 }

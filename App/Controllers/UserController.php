@@ -189,7 +189,9 @@ class UserController extends Controller {
                 $this->render('reset_password_views', ['message' => $message]);
             }
         } else {
-            $this->render('reset_password_views');
+            $this->render('reset_password_views', [
+                'css' => 'reset_password_views.css'
+            ]);
         }
     }
 
@@ -197,15 +199,50 @@ class UserController extends Controller {
     public function resetPassword() {
         $baseUrl = $_ENV['BASE_URL'] ?? '';
 
-        if (!isset($_SESSION['user_id'])) {
-            header("Location: $baseUrl/user/login");
+        // Cas 1 : Soumission du formulaire avec l'email
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['email'])) {
+            $email = trim($_POST['email']);
+            
+            // On cherche l'utilisateur avec la nouvelle méthode du modèle
+            $user = $this->user_model->getUserByEmail($email);
+
+            if ($user) {
+                // Gestion objet/tableau selon PDO
+                $userId = is_object($user) ? $user->id_user : $user['id_user'];
+                $userEmail = is_object($user) ? $user->email : $user['email'];
+
+                // On stocke l'email en session temporairement pour l'envoi
+                $_SESSION['email'] = $userEmail; 
+
+                // Génération et envoi du token
+                $token = $this->token_model->generateToken($userId, "reinitialisation");
+                $this->sendVerificationEmail($userEmail, $token);
+
+                // Redirection vers la page de saisie du code
+                header("Location: $baseUrl/user/verify");
+                exit;
+            } else {
+                // Pour la sécurité, on peut afficher un message générique ou une erreur
+                $message = "Aucun compte associé à cet email.";
+                $this->render('forgot_password_views', [
+                    'message' => $message,
+                    'css' => 'login_views.css' // On réutilise le CSS du login
+                ]);
+            }
+        }
+        // Cas 2 : L'utilisateur est déjà connecté (demande depuis son espace)
+        elseif (isset($_SESSION['user_id'])) {
+            $token = $this->token_model->generateToken($_SESSION['user_id'], "reinitialisation");
+            $this->sendVerificationEmail($_SESSION['email'], $token);
+            header("Location: $baseUrl/user/verify");
             exit;
         }
-        $token = $this->token_model->generateToken($_SESSION['user_id'], "reinitialisation");
-        $this->sendVerificationEmail($_SESSION['email'], $token);
-        
-        header("Location: $baseUrl/user/verify");
-        exit;
+        // Cas 3 : Affichage du formulaire pour entrer l'email (Utilisateur non connecté)
+        else {
+            $this->render('forgot_password_views', [
+                'css' => 'login_views.css'
+            ]);
+        }
     }
 
     // méthode pour gérer la page de vérification de code
@@ -287,7 +324,9 @@ class UserController extends Controller {
             }
         } else {
             // affichage simple du formulaire de vérification
-            $this->render('verify_views');
+            $this->render('verify_views', [
+                'css' => 'verify_views.css'
+            ]);
         }
     }
 

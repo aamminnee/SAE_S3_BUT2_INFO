@@ -18,13 +18,13 @@
         <div class="setting-section">
             <h3><?= $trans['security_title'] ?? 'Sécurité' ?></h3>
             
-            <div class="2fa-toggle">
+            <div class="security-toggle">
                 <p>Double authentification (2FA) : 
-                    <strong><?= ($_SESSION['mode'] === '2FA') ? 'Activé' : 'Désactivé' ?></strong>
+                    <strong><?= (($_SESSION['mode'] ?? '') === '2FA') ? 'Activé' : 'Désactivé' ?></strong>
                 </p>
                 
                 <form action="<?= $_ENV['BASE_URL'] ?>/user/toggle2FA" method="POST">
-                    <?php if ($_SESSION['mode'] === '2FA'): ?>
+                    <?php if (($_SESSION['mode'] ?? '') === '2FA'): ?>
                         <input type="hidden" name="mode" value="disable">
                         <button type="submit" class="btn-warning">Désactiver 2FA</button>
                     <?php else: ?>

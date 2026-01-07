@@ -70,11 +70,9 @@ CREATE TABLE `CustomerOrder` (
   `total_amount` decimal(10,2) NOT NULL,
   `id_Customer` int NOT NULL,
   `id_Image` int DEFAULT NULL,
-  `id_Mosaic` int DEFAULT NULL,
   PRIMARY KEY (`id_Order`),
   KEY `id_Customer` (`id_Customer`),
-  KEY `id_Image` (`id_Image`),
-  KEY `id_Mosaic` (`id_Mosaic`)
+  KEY `id_Image` (`id_Image`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 DROP TABLE IF EXISTS `FactoryOrder`;
@@ -134,8 +132,10 @@ CREATE TABLE `Mosaic` (
   `pavage` longblob NOT NULL,
   `generation_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `id_Image` int DEFAULT NULL,
+  `id_Order` int DEFAULT NULL,
   PRIMARY KEY (`id_Mosaic`),
-  KEY `fk_mosaic_image` (`id_Image`)
+  KEY `fk_mosaic_image` (`id_Image`),
+  KEY `fk_mosaic_order` (`id_Order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 DROP TABLE IF EXISTS `MosaicComposition`;
@@ -11734,8 +11734,7 @@ ALTER TABLE `Customer`
 
 ALTER TABLE `CustomerOrder`
   ADD CONSTRAINT `CustomerOrder_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`),
-  ADD CONSTRAINT `CustomerOrder_ibfk_2` FOREIGN KEY (`id_Image`) REFERENCES `CustomerImage` (`id_Image`),
-  ADD CONSTRAINT `CustomerOrder_ibfk_3` FOREIGN KEY (`id_Mosaic`) REFERENCES `Mosaic` (`id_Mosaic`);
+  ADD CONSTRAINT `CustomerOrder_ibfk_2` FOREIGN KEY (`id_Image`) REFERENCES `CustomerImage` (`id_Image`);
 
 ALTER TABLE `FactoryOrder`
   ADD CONSTRAINT `FactoryOrder_ibfk_1` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
@@ -11753,7 +11752,8 @@ ALTER TABLE `Item`
   ADD CONSTRAINT `pieces_ibfk_2` FOREIGN KEY (`color_id`) REFERENCES `Colors` (`id_color`) ON UPDATE CASCADE;
 
 ALTER TABLE `Mosaic`
-  ADD CONSTRAINT `fk_mosaic_image` FOREIGN KEY (`id_Image`) REFERENCES `Image` (`id_Image`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_mosaic_image` FOREIGN KEY (`id_Image`) REFERENCES `Image` (`id_Image`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_mosaic_order` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`) ON DELETE CASCADE;
 
 ALTER TABLE `MosaicComposition`
   ADD CONSTRAINT `fk_composition_mosaic` FOREIGN KEY (`id_Mosaic`) REFERENCES `Mosaic` (`id_Mosaic`) ON DELETE CASCADE,

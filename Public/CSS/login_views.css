@@ -1,163 +1,227 @@
-/* --- Conteneur Global (Centrage parfait) --- */
-body {
-    background-color: #f8f9fa; /* Si pas déjà défini globalement */
+/* =========================================
+   1. VARIABLES & RESET GLOBAL
+   ========================================= */
+:root {
+    /* Palette Lego & UI */
+    --lego-red: #D92328;       /* Rouge Brique */
+    --lego-red-hover: #b91c20;
+    --lego-blue: #006CB7;      /* Bleu Lego (Ton header) */
+    --lego-blue-hover: #005596;
+    --lego-yellow: #FFD500;    /* Jaune Lego (Accents) */
+    
+    --text-dark: #1a1a1a;
+    --text-grey: #666666;
+    --bg-color: #f8f9fa;
+    --border-color: #e2e8f0;
+    --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.08);
+    
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --header-height: 80px;
 }
 
-/* La carte de connexion */
-.login-container {
-    background-color: white;
+* {
+    box-sizing: border-box; /* Crucial pour la mise en page */
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-main);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    
+    /* CORRECTION DU LAYOUT : Colonne verticale */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Le MAIN prend toute la place restante pour centrer le login */
+.main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
     width: 100%;
-    max-width: 420px; /* Largeur optimale pour un login */
-    margin: 60px auto;
+}
+
+/* =========================================
+   3. MENU PROFIL (Dropdown)
+   ========================================= */
+.profile-menu {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 30px;
+    transition: background 0.2s;
+}
+
+.profile-trigger:hover {
+    background-color: #f1f5f9;
+}
+
+.profile-trigger span {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.avatar-mini {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Le Menu Déroulant */
+.dropdown {
+    position: absolute;
+    top: calc(100% - 10px); /* Juste sous le header */
+    right: 0;
+    background: white;
+    width: 200px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+    display: flex !important; /* Force flex pour écraser le CSS précédent */
+    flex-direction: column !important;
+    padding: 8px 0 !important;
+    border: 1px solid var(--border-color);
+    z-index: 1100;
+}
+
+/* Affichage au survol */
+.profile-menu:hover .dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown li {
+    width: 100%;
+}
+
+.dropdown a {
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s;
+}
+
+.dropdown a:hover {
+    background-color: #f8f9fa;
+    color: var(--lego-blue);
+}
+
+.separator {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 5px 0;
+}
+
+.logout-btn:hover {
+    color: var(--lego-red) !important;
+    background-color: #fff1f2 !important;
+}
+
+/* =========================================
+   4. LOGIN CARD (Consolidé)
+   ========================================= */
+.login-container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 400px; /* Un peu plus compact */
     padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    font-family: 'Segoe UI', sans-serif;
-    text-align: center;
-    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0,0,0,0.02);
+    /* Animation d'entrée */
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .login-container h2 {
-    color: #1a202c;
-    font-weight: 800;
-    margin-bottom: 30px;
-    font-size: 2rem;
+    margin-top: 0;
+    text-align: center;
+    color: var(--text-dark);
 }
 
-/* Messages d'erreur */
-.error-msg {
-    background-color: #fff5f5;
-    color: #e53e3e;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #fed7d7;
-    margin-bottom: 20px;
-    font-size: 0.9rem;
-    animation: shake 0.4s ease-in-out;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-
-/* --- Formulaire --- */
-.form-group {
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #718096;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; }
 .form-group input {
     width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     font-size: 1rem;
-    transition: all 0.2s;
-    box-sizing: border-box; /* Important pour ne pas dépasser */
 }
-
 .form-group input:focus {
-    border-color: #3182ce;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    border-color: var(--lego-blue); /* Focus bleu pour changer du rouge */
+    box-shadow: 0 0 0 4px rgba(0, 108, 183, 0.15);
 }
 
-/* --- Section Captcha --- */
+/* Captcha stylisé */
 .captcha-group {
-    background-color: #f7fafc;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    border: 1px solid #edf2f7;
-}
-
-.captcha-visual {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-#captcha-canvas {
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    background-color: white !important; /* Force le fond blanc propre */
-}
-
-#captcha-refresh {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background-color: #e2e8f0;
-    color: #4a5568;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-#captcha-refresh:hover {
-    background-color: #cbd5e0;
-    transform: rotate(180deg);
-}
-
-.captcha-input {
-    width: 100%;
+    background: #f8f9fa;
     padding: 10px;
-    border: 2px solid #e2e8f0;
     border-radius: 8px;
-    text-align: center;
-    letter-spacing: 2px;
-    font-weight: bold;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
 }
+.captcha-visual { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.captcha-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
 
-/* --- Bouton Soumettre --- */
+/* Bouton Login (Rouge) */
 .btn-submit {
     width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+    background-color: var(--lego-red);
     color: white;
+    padding: 12px;
     border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 700;
+    border-radius: 8px;
+    font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 6px rgba(49, 130, 206, 0.3);
+    font-size: 1rem;
+    transition: background 0.2s;
 }
+.btn-submit:hover { background-color: var(--lego-red-hover); }
 
-.btn-submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(49, 130, 206, 0.4);
-}
+/* Footer du login */
+.login-footer { margin-top: 20px; text-align: center; font-size: 0.85rem; color: var(--text-grey); }
+.login-footer a { color: var(--lego-blue); text-decoration: none; font-weight: 600; }
+.login-footer a:hover { text-decoration: underline; }
 
-/* --- Liens bas de page --- */
-.register-link, .forgot-link {
-    margin-top: 20px;
-    font-size: 0.95rem;
-    color: #718096;
-}
-
-.register-link a, .forgot-link a {
-    color: #3182ce;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.register-link a:hover, .forgot-link a:hover {
-    text-decoration: underline;
+/* =========================================
+   5. RESPONSIVE
+   ========================================= */
+@media (max-width: 768px) {
+    .header-container { padding: 0 15px; }
+    .logo img { height: 40px; }
+    
+    /* Cache le menu sur mobile (à remplacer par un burger menu plus tard) */
+    .main-nav ul { gap: 10px; }
+    .nav-link { display: none; } /* On cache les liens texte sur mobile pour l'instant */
+    
+    .btn-header { padding: 8px 16px; font-size: 0.8rem; }
 }

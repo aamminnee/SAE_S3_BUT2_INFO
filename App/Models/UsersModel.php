@@ -117,4 +117,14 @@ class UsersModel extends Model {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         return $this->requete("UPDATE Customer SET password = ? WHERE id_Customer = ?", [$hashed, $id_user]);
     }
+
+    // Récupère l'ID de l'utilisateur via son email
+    public function getUserByEmail($email) {
+        $sql = "SELECT c.id_Customer as id_user, s.email 
+                FROM Customer c 
+                JOIN SaveCustomer s ON c.id_SaveCustomer = s.id_SaveCustomer 
+                WHERE s.email = ?";
+        
+        return $this->requete($sql, [$email])->fetch();
+    }
 }

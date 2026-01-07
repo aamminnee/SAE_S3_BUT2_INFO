@@ -36,12 +36,13 @@ class ReviewImagesController extends Controller {
 
         $previews = [];
         $counts = [];
+        $prices = [];
         $error = null; // Variable pour stocker l'erreur
         
         $sessionKey = 'mosaics_' . $imageId;
-        
+        $mosaicModel = new MosaicModel();
+
         if (!isset($_SESSION[$sessionKey]) || empty($_SESSION[$sessionKey])) {
-            $mosaicModel = new MosaicModel();
             try {
                 $extension = ($image['file_type'] === 'image/png') ? 'png' : 'jpg';
                 $results = $mosaicModel->generateTemporaryMosaics($image['id_Image'], $image['file'], $extension);
@@ -61,29 +62,36 @@ class ReviewImagesController extends Controller {
         // Récupération des prévisualisations si elles existent
         if (isset($_SESSION[$sessionKey])) {
             foreach ($_SESSION[$sessionKey] as $type => $data) {
+                // 1. Image
                 if (isset($data['img'])) {
                     $previews[$type] = $data['img'];
+                }
+                
+                // 2. Prix ET Nombre de pièces (Calculés depuis le fichier texte)
+                if (isset($data['txt'])) {
+                    // Calcul du prix
+                    $prices[$type] = $mosaicModel->calculatePriceFromContent($data['txt']);
+                    
+                    // [CORRECTION] Calcul du nombre de pièces via le contenu texte
+                    // On écrase la valeur potentiellement vide de $data['count']
+                    $counts[$type] = $mosaicModel->countPiecesFromContent($data['txt']);
+                } else {
+                    $prices[$type] = 0;
+                    // Fallback si pas de texte : on essaie de prendre l'ancien count, sinon 0
+                    $counts[$type] = isset($data['count']) ? $data['count'] : 0;
                 }
             }
         }
 
-        if (isset($_SESSION[$sessionKey])) {
-            foreach ($_SESSION[$sessionKey] as $type => $data) {
-                if (isset($data['img'])) {
-                    $previews[$type] = $data['img'];
-                }
-                // Récupération du nombre de briques
-                if (isset($data['count'])) {
-                    $counts[$type] = $data['count'];
-                }
-            }
-        }
+        $_SESSION['mosaic_prices_' . $imageId] = $prices;
+        $_SESSION['mosaic_counts_' . $imageId] = $counts;
 
         $this->render('review_images_views', [
             't' => $this->translations,
             'image' => $image,
             'previews' => $previews,
             'counts' => $counts,
+            'prices' => $prices,
             'css' => 'review_images_views.css',
             'error_msg' => $error // On passe l'erreur à la vue
         ]);
