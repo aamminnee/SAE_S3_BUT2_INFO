@@ -52,7 +52,8 @@
                             <div class="card-info">
                                 <div class="info-top">
                                     <h3>Mosaïque Personnalisée</h3>
-                                    <span class="badge badge-<?= $i_style ?>"><?= ucfirst($i_style) ?></span>
+                                    <span class="badge badge-<?= $i_style ?>"><?= ucfirst($item['style'] ?? 'Standard') ?></span>
+
                                 </div>
                                 
                                 <div class="specs-grid">
@@ -86,32 +87,25 @@
                         <h3>Récapitulatif</h3>
                         
                         <div class="summary-row">
-                            <span class="label">Sous-total</span>
-                            <span class="value"><?= number_format($total, 2, ',', ' ') ?> €</span>
+                            <span class="label">Sous-total (<?= count($items) ?> articles)</span>
+                            <span class="value"><?= number_format($subTotal, 2) ?> €</span>
                         </div>
                         
                         <div class="summary-row highlight">
-                            <span class="label">Livraison</span>
-                            <span class="value free">4,99 €</span>
+                            <span class="label">Livraison standard</span>
+                            <span class="value">4,99 €</span>
                         </div>
 
                         <div class="divider"></div>
 
                         <div class="summary-total">
                             <span>Total à payer</span>
-                            <span class="total-amount"><?= number_format($total, 2, ',', ' ') ?> €</span>
+                            <span class="total-amount"><?= number_format($total, 2) ?> €</span>
                         </div>
 
-                        <a href="<?= $_ENV['BASE_URL'] ?>/payment" class="btn-checkout">
-                            Payer maintenant
-                        </a>
-                        
-                        <div class="secure-info">
-                            Paiement (mode simulé)
-                        </div>
+                        <a href="<?= $_ENV['BASE_URL'] ?>/payment" class="btn-checkout">Payer maintenant</a>
                     </div>
                 </div>
-
             </div>
         <?php endif; ?>
     </div>

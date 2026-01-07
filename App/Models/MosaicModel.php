@@ -10,13 +10,13 @@ class MosaicModel extends Model {
     protected $table = 'Mosaic';
 
     // Coefficient multiplicateur de marge sur la matière première
-    private const MARGIN_COEFF = 2;
+    public const MARGIN_COEFF = 2;
 
     // Frais fixes (emballage, logistique)
-    private const HANDLING_FEE = 5.99;
+    public const HANDLING_FEE = 5.99;
 
     // Frais de livraison
-    private const DELIVERY = 4.99;
+    public const DELIVERY_FEE = 4.99;
 
     // // génération des mosaïques (code existant)
     public function generateTemporaryMosaics($idImage, $blobData, $extension) {
@@ -327,7 +327,7 @@ class MosaicModel extends Model {
         }
 
         // Formule de rentabilité
-        $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE + self::DELIVERY;
+        $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE;
 
         // Arrondir
         return floor($finalPrice) + 0.99;
@@ -340,32 +340,19 @@ class MosaicModel extends Model {
      * Utilise la même formule que getMosaicPrice.
      */
     public function calculatePriceFromContent($pavageContent) {
-        if (empty($pavageContent)) {
-            return 0.00;
-        }
+        if (empty($pavageContent)) return 0.00;
 
-        // On récupère la première ligne qui contient le coût brut (ex: "COST 12.50")
         $lines = explode("\n", $pavageContent);
         $firstLine = trim($lines[0]);
         $parts = preg_split('/\s+/', $firstLine);
 
-        $rawCost = 0.00;
+        $rawCost = (isset($parts[1]) && is_numeric($parts[1])) ? (float)$parts[1] : 0.00;
+        if ($rawCost <= 0) return 19.99;
 
-        // On suppose que le coût est le 2ème élément (index 1) de la première ligne
-        if (isset($parts[1]) && is_numeric($parts[1])) {
-            $rawCost = (float) $parts[1];
-        }
+        // Formule : (Coût briques * 2) + 4.99€ d'emballage
+        // Le client voit ça comme le prix du produit
+        $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE;
 
-        // Prix minimum de sécurité
-        if ($rawCost <= 0) {
-            return 19.99;
-        }
-
-        // Application de la formule de rentabilité
-        // Note : Assurez-vous que les constantes (MARGIN_COEFF, etc.) sont bien définies dans la classe
-        $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE + self::DELIVERY;
-
-        // Arrondi commercial (ex: 29.99)
         return floor($finalPrice) + 0.99;
     }
 
@@ -420,5 +407,139 @@ class MosaicModel extends Model {
         }
         
         return $results;
+    }
+
+    // Dans App/Models/MosaicModel.php
+
+    public function getMosaicGridHtml($idMosaic) {
+        $db = \App\Core\Db::getInstance();
+        $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
+        $stmt->execute([$idMosaic]);
+        $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$res || empty($res['pavage'])) return "Contenu introuvable";
+
+        $lines = explode("\n", trim($res['pavage']));
+        $bricksData = [];
+        $maxX = 0; $maxY = 0;
+        $colorToSymbol = []; // Pour associer une couleur à une lettre (A, B, C...)
+        $symbolIndex = 0;
+        $symbols = range('A', 'Z'); // On utilise des lettres
+
+        // 1. Analyse et préparation des symboles
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line) || strpos($line, '/') === false) continue;
+
+            $parts = preg_split('/\s+/', $line);
+            $info = explode('/', $parts[0]);
+            $color = "#" . $info[1];
+            
+            // On assigne un symbole unique par couleur
+            if (!isset($colorToSymbol[$color])) {
+                $colorToSymbol[$color] = $symbols[$symbolIndex % 26] . (floor($symbolIndex / 26) ?: '');
+                $symbolIndex++;
+            }
+
+            $size = explode('x', $info[0]);
+            $w = (int)$size[0]; $h = (int)$size[1];
+            $x = (int)$parts[1]; $y = (int)$parts[2];
+
+            $bricksData[] = ['x' => $x, 'y' => $y, 'w' => $w, 'h' => $h, 'color' => $color, 'symbol' => $colorToSymbol[$color]];
+            if ($x + $w > $maxX) $maxX = $x + $w;
+            if ($y + $h > $maxY) $maxY = $y + $h;
+        }
+
+        // 2. Création de la grille
+        $grid = array_fill(0, $maxY, array_fill(0, $maxX, ['color' => '#ffffff', 'symbol' => '']));
+        foreach ($bricksData as $b) {
+            for ($i = 0; $i < $b['h']; $i++) {
+                for ($j = 0; $j < $b['w']; $j++) {
+                    if (isset($grid[$b['y'] + $i][$b['x'] + $j])) {
+                        $grid[$b['y'] + $i][$b['x'] + $j] = ['color' => $b['color'], 'symbol' => $b['symbol']];
+                    }
+                }
+            }
+        }
+
+        // 3. Génération du HTML compact
+        // On utilise des unités 'pt' pour que la taille soit fixe sur le PDF
+        $cellSize = '10pt'; 
+        $html = '<div style="display: inline-grid; grid-template-columns: repeat('.$maxX.', '.$cellSize.'); border: 2px solid #333; line-height: 0;">';
+        
+        foreach ($grid as $row) {
+            foreach ($row as $cell) {
+                $html .= '<div style="
+                    width:'.$cellSize.'; 
+                    height:'.$cellSize.'; 
+                    background:'.$cell['color'].'; 
+                    border:0.1pt solid rgba(0,0,0,0.2); 
+                    display:flex; 
+                    align-items:center; 
+                    justify-content:center; 
+                    font-size:5pt; 
+                    font-weight:bold; 
+                    color: rgba(0,0,0,0.5);
+                    box-sizing: border-box;
+                ">'.$cell['symbol'].'</div>';
+            }
+        }
+        $html .= '</div>';
+
+        return ['html' => $html, 'legend' => $colorToSymbol];
+    }
+
+    // Dans App/Models/MosaicModel.php
+
+    // Ajoute ceci dans App/Models/MosaicModel.php
+
+    public function getMosaicPlanData($idMosaic) {
+        $db = \App\Core\Db::getInstance();
+        $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
+        $stmt->execute([$idMosaic]);
+        $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$res || empty($res['pavage'])) return null;
+
+        $lines = explode("\n", trim($res['pavage']));
+        $bricks = [];
+        $maxX = 0; $maxY = 0;
+        $colorToSymbol = [];
+        $symbols = range('A', 'Z');
+        $symbolIndex = 0;
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line) || strpos($line, '/') === false) continue;
+
+            $parts = preg_split('/\s+/', $line);
+            $info = explode('/', $parts[0]);
+            $color = "#" . $info[1];
+            
+            // Attribution d'une lettre unique par couleur
+            if (!isset($colorToSymbol[$color])) {
+                $colorToSymbol[$color] = $symbols[$symbolIndex % 26] . (floor($symbolIndex / 26) ?: '');
+                $symbolIndex++;
+            }
+
+            $size = explode('x', $info[0]);
+            $w = (int)$size[0]; $h = (int)$size[1];
+            $x = (int)$parts[1]; $y = (int)$parts[2];
+
+            $bricks[] = [
+                'x' => $x, 'y' => $y, 'w' => $w, 'h' => $h, 
+                'color' => $color, 'symbol' => $colorToSymbol[$color]
+            ];
+
+            if ($x + $w > $maxX) $maxX = $x + $w;
+            if ($y + $h > $maxY) $maxY = $y + $h;
+        }
+
+        return [
+            'width' => $maxX,
+            'height' => $maxY,
+            'bricks' => $bricks,
+            'legend' => $colorToSymbol
+        ];
     }
 }

@@ -125,14 +125,13 @@ class CommandeController extends Controller {
 
         $output = fopen('php://output', 'w');
         fputs($output, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) )); // BOM UTF-8
-        fputcsv($output, ['Couleur', 'Taille', 'Quantité', 'Référence (Est.)'], ';');
+        fputcsv($output, ['Couleur', 'Taille', 'Quantité'], ';');
 
         foreach ($briques as $b) {
             fputcsv($output, [
                 strtoupper($b['color']), 
                 $b['size'], 
                 $b['count'],
-                'LEGO-' . strtoupper(substr($b['color'], 1, 3)) . '-' . str_replace('x', '', $b['size'])
             ], ';');
         }
         fclose($output);
@@ -140,35 +139,28 @@ class CommandeController extends Controller {
     }
 
     // 2. Télécharger l'image finale
-    public function downloadImage($id) {
-        $this->checkAuth();
-        $mosaicModel = new MosaicModel();
+    // Ajoute ceci dans App/Controllers/CommandeController.php
 
-        // Récupère l'image en base64
-        $dataUri = $mosaicModel->getMosaicVisual((int)$id);
-        
-        if ($dataUri && preg_match('/^data:image\/(\w+);base64,/', $dataUri, $type)) {
-            $data = substr($dataUri, strpos($dataUri, ',') + 1);
-            $type = strtolower($type[1]); 
-            $data = base64_decode($data);
+    public function downloadPlan($id) {
+        if (!isset($_SESSION['user_id'])) { header("Location: /user/login"); exit; }
 
-            if ($data === false) { die('Erreur de décodage image.'); }
+        $mosaicModel = new \App\Models\MosaicModel();
+        $planData = $mosaicModel->getMosaicPlanData((int)$id);
 
-            header('Content-Type: image/' . $type);
-            header('Content-Disposition: attachment; filename="Mosaique_' . $id . '.' . $type . '"');
-            echo $data;
+        if (!$planData) {
+            header("Location: " . $_ENV['BASE_URL'] . "/commande");
             exit;
         }
-        die("Image introuvable.");
-    }
 
-    // 3. Télécharger le Plan (Placeholder)
-    public function downloadPlan($id) {
-        $this->checkAuth();
-        echo "<script>window.print();</script>";
-        echo "<h1>Impression du plan en cours...</h1>";
-        // Idéalement, générer un vrai PDF ici
+        // On passe un 3ème paramètre (le layout) qui n'existe pas ou qui est vide
+        // pour éviter d'afficher le header.php et footer.html du site
+        $this->render('plan_views', [
+            'id' => $id,
+            'plan' => $planData
+        ], 'empty'); 
     }
+    // 3. Télécharger le Plan (Placeholder)
+    // Dans App/Controllers/CommandeController.php
 
     private function checkAuth() {
         if (!isset($_SESSION['user_id'])) {

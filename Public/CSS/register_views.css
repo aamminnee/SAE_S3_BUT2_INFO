@@ -1,35 +1,56 @@
+/* =========================================
+   1. VARIABLES & RESET GLOBAL
+   ========================================= */
 :root {
-    --lego-red: #D92328;
+    /* Palette Lego & UI */
+    --lego-red: #D92328;       /* Rouge Brique */
     --lego-red-hover: #b91c20;
-    --lego-blue: #006CB7; /* Couleur focus */
-    --bg-light: #f8f9fa;
+    --lego-blue: #006CB7;      /* Bleu Lego */
+    --lego-blue-hover: #005596;
+    --lego-yellow: #FFD500;    /* Jaune Lego */
+    
     --text-dark: #1a1a1a;
-    --text-muted: #64748b;
+    --text-grey: #666666;
+    --bg-color: #f8f9fa;
     --border-color: #e2e8f0;
-    --header-height: 90px; /* Important pour le calcul */
+    --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.08);
+    
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --header-height: 80px;
 }
 
-/* --- LE WRAPPER --- */
-/* C'est lui qui gère l'espace sous le header */
-.register-wrapper {
+* { box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-main);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Le MAIN prend toute la place restante */
+.main-content, .main-container {
+    flex: 1;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* flex-start pour éviter que ça coupe sur petits écrans si le form est long */
+    align-items: center;
+    padding: 40px 20px;
     width: 100%;
-    min-height: calc(100vh - var(--header-height));
-    background-color: var(--bg-light);
-    padding: 40px 20px; /* Un peu d'air en haut et en bas */
-    box-sizing: border-box;
 }
 
-/* --- LA CARTE D'INSCRIPTION --- */
-.register-container {
+/* =========================================
+   LOGIN & REGISTER CARD
+   ========================================= */
+.login-container, .register-container {
     background: #ffffff;
     width: 100%;
-    max-width: 480px; /* Un peu plus large que le login */
+    max-width: 420px;
     padding: 40px;
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-soft);
     border: 1px solid rgba(0,0,0,0.02);
     animation: slideUp 0.5s ease-out;
 }
@@ -39,133 +60,90 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-.register-container h2 {
+h2 {
     margin-top: 0;
-    margin-bottom: 25px;
+    margin-bottom: 10px;
     text-align: center;
-    font-size: 1.8rem;
-    font-weight: 800; /* Plus gras pour le style Lego */
     color: var(--text-dark);
-    letter-spacing: -0.5px;
+    font-size: 1.8rem;
+    font-weight: 700;
 }
 
-/* --- MESSAGES D'ERREUR --- */
-.alert.error-msg {
-    background-color: #fee2e2;
-    color: #991b1b;
+.error-msg {
+    background-color: #fff5f5;
+    color: #e53e3e;
     padding: 12px;
     border-radius: 8px;
     font-size: 0.9rem;
-    margin-bottom: 20px;
-    border-left: 4px solid #ef4444; /* Petite barre rouge décorative */
     text-align: center;
+    border: 1px solid #fed7d7;
+    margin-bottom: 20px;
 }
 
-/* --- FORMULAIRE --- */
-.form-group {
-    margin-bottom: 20px;
-}
+.form-group { margin-bottom: 18px; }
 
 .form-group label {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
     font-size: 0.9rem;
-    color: #475569;
+    color: var(--text-dark);
 }
 
 .form-group input {
     width: 100%;
     padding: 12px 16px;
-    font-size: 1rem;
-    color: var(--text-dark);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    box-sizing: border-box;
-    background-color: #fff;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    background-color: #fcfcfc;
 }
 
-/* Effet Focus Lego Bleu */
 .form-group input:focus {
     outline: none;
     border-color: var(--lego-blue);
-    box-shadow: 0 0 0 3px rgba(0, 108, 183, 0.1);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(0, 108, 183, 0.1);
 }
 
-.form-group input::placeholder {
-    color: #cbd5e1;
-}
-
-/* --- TEXTE D'AIDE (PASSWORD) --- */
-.password-hint {
+.form-group small {
     display: block;
-    margin-top: 8px;
+    margin-top: 5px;
+    color: var(--text-grey);
     font-size: 0.8rem;
-    color: var(--text-muted);
-    line-height: 1.4;
-    font-style: italic;
 }
 
-/* --- BOUTON D'ACTION --- */
+/* Captcha */
+.captcha-group {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+.captcha-visual { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+.captcha-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; text-align: center; }
+#captcha-refresh { border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: var(--lego-blue); }
+
+/* Boutons */
 .btn-submit {
     width: 100%;
-    margin-top: 10px;
     background-color: var(--lego-red);
     color: white;
     padding: 14px;
-    font-size: 1rem;
-    font-weight: 700;
     border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    box-shadow: 0 4px 6px rgba(217, 35, 40, 0.2);
-}
-
-.btn-submit:hover {
-    background-color: var(--lego-red-hover);
-    transform: translateY(-2px);
-}
-
-.btn-submit:active {
-    transform: translateY(0);
-}
-
-/* --- PIED DE CARTE (LIENS) --- */
-.form-footer {
-    margin-top: 25px;
-    text-align: center;
-    border-top: 1px solid #f1f5f9; /* Séparateur subtil */
-    padding-top: 20px;
-}
-
-.login-link {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    margin: 0;
-}
-
-.login-link a {
-    color: var(--lego-blue);
+    border-radius: 10px;
     font-weight: 600;
-    text-decoration: none;
-    transition: color 0.2s;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 10px;
 }
+.btn-submit:hover { background-color: var(--lego-red-hover); transform: translateY(-1px); }
 
-.login-link a:hover {
-    color: #005596;
-    text-decoration: underline;
-}
-
-/* --- RESPONSIVE MOBILE --- */
-@media (max-width: 768px) {
-    .register-wrapper {
-        min-height: calc(100vh - 70px); /* Ajustement si le header change de taille */
-        padding: 20px 15px;
-    }
-
-    .register-container {
-        padding: 25px;
-    }
-}
+/* Footer Links */
+.login-footer { margin-top: 25px; text-align: center; font-size: 0.9rem; color: var(--text-grey); border-top: 1px solid var(--border-color); padding-top: 20px; }
+.login-footer p { margin: 8px 0; }
+.login-footer a { color: var(--lego-blue); text-decoration: none; font-weight: 600; }
+.login-footer a:hover { text-decoration: underline; }

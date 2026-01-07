@@ -1,4 +1,4 @@
-<div class="register-wrapper">
+<main class="main-content">
     <div class="register-container">
         <h2><?= $trans['register_title'] ?? 'Inscription' ?></h2>
 
@@ -31,15 +31,17 @@
             <div class="form-group">
                 <label for="password"><?= $trans['label_password'] ?? 'Mot de passe' ?></label>
                 <input type="password" id="password" name="password" required placeholder="••••••••">
-                <small><?= $trans['password_requirements'] ?? 'Doit contenir 8 caractères min., 1 majuscule, 1 chiffre et 1 caractère spécial.' ?></small>
+                <small><?= $trans['password_requirements'] ?? 'Min. 8 caractères, 1 majuscule, 1 chiffre et 1 caractère spécial.' ?></small>
             </div>
 
             <button type="submit" class="btn-submit"><?= $trans['btn_register'] ?? "Créer mon compte" ?></button>
         </form>
 
-        <p class="login-link">
-            <?= $trans['have_account'] ?? 'Déjà un compte ?' ?> 
-            <a href="<?= $_ENV['BASE_URL'] ?>/user/login"><?= $trans['link_login'] ?? 'Se connecter' ?></a>
-        </p>
+        <div class="login-footer">
+            <p>
+                <?= $trans['have_account'] ?? 'Déjà un compte ?' ?> 
+                <a href="<?= $_ENV['BASE_URL'] ?>/user/login"><?= $trans['link_login'] ?? 'Se connecter' ?></a>
+            </p>
+        </div>
     </div>
-</div>
+</main>

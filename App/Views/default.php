@@ -16,7 +16,7 @@
         <link rel="stylesheet" href="<?=$_ENV['BASE_URL']?>/CSS/<?= $css ?>">
     <?php endif; ?>
     
-    <link rel="icon" href="<?=$_ENV['BASE_URL']?>/images/logo.png">
+    <link rel="icon" href="<?=$_ENV['BASE_URL']?>/img/logo.png">
 </head>
 <body>
     

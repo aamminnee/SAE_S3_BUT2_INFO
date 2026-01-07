@@ -24,8 +24,11 @@ class PaymentController extends Controller {
         if (!isset($_SESSION['user_id'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login"); exit; }
         if (empty($_SESSION['cart'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/cart"); exit; }
 
-        $totalPrice = 0;
-        foreach ($_SESSION['cart'] as $item) { $item = (array)$item; $totalPrice += $item['price']; }
+        $subTotal = 0;
+        foreach ($_SESSION['cart'] as $item) { $item = (array)$item; $subTotal += $item['price']; }
+
+        $delivery = 4.99;
+        $totalPrice = $subTotal + $delivery;
 
         $usersModel = new UsersModel();
         $clientInfo = (array) $usersModel->getUserById($_SESSION['user_id']);
@@ -46,9 +49,11 @@ class PaymentController extends Controller {
             $userId = $_SESSION['user_id'];
             $usersModel = new UsersModel();
             
-            // Calcul montant total
-            $totalAmount = 0;
-            foreach ($_SESSION['cart'] as $item) { $item = (array)$item; $totalAmount += $item['price']; }
+            $subTotal = 0;
+            foreach ($_SESSION['cart'] as $item) { $item = (array)$item; $subTotal += $item['price']; }
+            
+            $delivery = \App\Models\MosaicModel::DELIVERY_FEE;
+            $totalAmount = $subTotal + $delivery;
 
             // Infos facturation
             $userInfo = (array) $usersModel->getUserById($userId);
@@ -141,16 +146,112 @@ class PaymentController extends Controller {
         }
     }
 
-    public function confirmation() { /* Pas de changement ici */
+    public function confirmation() {
         if (!isset($_GET['id'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/index.php"); exit; }
-        $orderId = $_GET['id'];
+        
+        $orderId = (int)$_GET['id'];
         $commandeModel = new CommandeModel();
+        $mosaicModel = new MosaicModel();
+        
+        // 1. Récupération de la commande
         $orderDetails = $commandeModel->getOrderDetails($orderId);
-        $this->render('invoice_views', ['t' => $this->translations, 'order' => $orderDetails, 'css' => 'invoice_views.css']);
+        if (!$orderDetails) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/index.php"); exit; }
+        $orderDetails = (array) $orderDetails; 
+
+        // 2. Récupération des articles
+        $items = $mosaicModel->getMosaicsByOrderId($orderId);
+        
+        $totalHandling = 0;
+        $itemsTotalTTC = 0; // Somme des articles en TTC
+        $handlingUnit = \App\Models\MosaicModel::HANDLING_FEE; 
+
+        foreach ($items as $item) {
+            $pavage = is_object($item) ? $item->pavage : $item['pavage'];
+            
+            $price = $mosaicModel->calculatePriceFromContent($pavage);
+            $pieces = $mosaicModel->countPiecesFromContent($pavage);
+            
+            if (is_object($item)) {
+                $item->price = $price;
+                $item->pieces = $pieces;
+            } else {
+                $item['price'] = $price;
+                $item['pieces'] = $pieces;
+            }
+            
+            $totalHandling += $handlingUnit;
+            $itemsTotalTTC += $price; 
+        }
+
+        // 3. --- CALCULS FINANCIERS DÉTAILLÉS (TVA 20%) ---
+        $deliveryTTC = \App\Models\MosaicModel::DELIVERY_FEE; // 4.99
+        $totalTTC = $itemsTotalTTC + $deliveryTTC;
+
+        // Coefficient TVA (20% => 1.2)
+        $tvaRate = 0.20;
+        $coeff = 1 + $tvaRate;
+
+        // Calcul des Hors Taxes (HT)
+        $itemsHT = $itemsTotalTTC / $coeff;       // Total articles HT
+        $deliveryHT = $deliveryTTC / $coeff;      // Port HT
+        $totalHT = $totalTTC / $coeff;            // Total HT global
+
+        // Calcul de la TVA
+        $totalTVA = $totalTTC - $totalHT;
+
+        // 4. Envoi à la vue
+        $this->render('invoice_views', [
+            't' => $this->translations, 
+            'order' => $orderDetails,   
+            'items' => $items,
+            
+            // Infos transparence
+            'totalHandling' => $totalHandling,
+            'handlingUnit' => $handlingUnit,
+            
+            // Infos Financières Complètes
+            'itemsTotalTTC' => $itemsTotalTTC,
+            'itemsHT' => $itemsHT,
+            'deliveryTTC' => $deliveryTTC,
+            'deliveryHT' => $deliveryHT,
+            'totalHT' => $totalHT,
+            'totalTVA' => $totalTVA,
+            'totalTTC' => $totalTTC,
+            
+            'css' => 'invoice_views.css'
+        ]);
     }
 
-    private function sendInvoiceEmail($email, $order) { /* Pas de changement ici */
+    private function sendInvoiceEmail($email, $order) {
         $mail = new PHPMailer(true);
+        $mosaicModel = new MosaicModel();
+        
+        // Récupération des items pour le mail
+        $items = $mosaicModel->getMosaicsByOrderId($order['id_Order']);
+        $pieces = $mosaicModel->countPiecesFromContent($item->pavage); // AJOUT
+        // Construction du tableau HTML pour le mail
+        $handlingUnit = \App\Models\MosaicModel::HANDLING_FEE;
+
+        $rowsHtml = '';
+        foreach ($items as $item) {
+            $price = $mosaicModel->calculatePriceFromContent($item->pavage);
+            $rowsHtml .= '<tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+                    Mosaïque LEGO®<br>
+                    <small style="color:#666; font-size: 11px;">Dont '.$handlingUnit.'€ préparation inclus</small>
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">1</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">'.number_format($price, 2).' €</td>
+            </tr>';
+        }
+
+        $delivery = \App\Models\MosaicModel::DELIVERY_FEE;
+        $rowsHtml .= '
+            <tr style="background-color: #fdfdfd;">
+                <td colspan="2" style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; color: #555;">Livraison</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">'.number_format($delivery, 2).' €</td>
+            </tr>';
+
         try {
             $mail->isSMTP();
             $mail->Host       = $_ENV['MAILJET_HOST'];
@@ -162,9 +263,39 @@ class PaymentController extends Controller {
             $mail->setFrom($_ENV['MAIL_FROM_ADDRESS'], $_ENV['MAIL_FROM_NAME']);
             $mail->addAddress($email);
             $mail->isHTML(true);
-            $mail->Subject = "Votre facture LegoFactory - Commande #" . ($order['invoice_number'] ?? $order['id_Order']);
-            $amount = number_format($order['total_amount'] ?? 0, 2);
-            $mail->Body = "<div style='font-family: Arial;'><h1>Merci !</h1><p>Commande validée.</p><p>Total: $amount €</p></div>";
+            $mail->CharSet = 'UTF-8';
+            
+            $invoiceNum = $order['invoice_number'] ?? $order['id_Order'];
+            $mail->Subject = "Votre facture LegoFactory - Commande #$invoiceNum";
+            
+            $total = number_format($order['total_amount'] ?? 0, 2);
+            
+            // Template Mail amélioré
+            $mail->Body = "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;'>
+                <h1 style='color: #006CB7;'>Merci pour votre commande !</h1>
+                <p>Voici le récapitulatif de votre commande <strong>#$invoiceNum</strong>.</p>
+                
+                <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
+                    <thead>
+                        <tr style='background-color: #f8f9fa;'>
+                            <th style='padding: 10px; text-align: left;'>Article</th>
+                            <th style='padding: 10px; text-align: right;'>Qté</th>
+                            <th style='padding: 10px; text-align: right;'>Prix</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        $rowsHtml
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan='2' style='padding: 10px; text-align: right; font-weight: bold;'>TOTAL</td>
+                            <td style='padding: 10px; text-align: right; font-weight: bold; color: #D92328;'>$total €</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>";
+            
             $mail->send();
         } catch (Exception $e) { error_log("Mailer Error: " . $mail->ErrorInfo); }
     }

@@ -22,22 +22,22 @@ class CartController extends Controller {
 
     // AFFICHER LE PANIER
     public function index() {
-        if (!isset($_SESSION['user_id'])) {
-            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login");
-            exit;
-        }
+        if (!isset($_SESSION['user_id'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login"); exit; }
 
         $items = $_SESSION['cart'];
-        
-        // Calcul du total
-        $total = 0;
+        $subTotal = 0;
         foreach ($items as $item) {
-            $total += $item['price'];
+            $subTotal += $item['price']; // Prix (70€ par ex)
         }
+
+        $delivery = \App\Models\MosaicModel::DELIVERY_FEE; // 4.99€
+        $total = $subTotal + $delivery; // 70 + 4.99 = 74.99€
 
         $this->render('cart_views', [
             't' => $this->translations,
             'items' => $items,
+            'subTotal' => $subTotal,
+            'delivery' => $delivery,
             'total' => $total,
             'css' => 'cart_views.css'
         ]);
@@ -79,7 +79,7 @@ class CartController extends Controller {
 
         $_SESSION['cart'][] = $newItem;
 
-        $_SESSION['success_message'] = "La mosaïque a été ajoutée au panier ! 🛒";
+        $_SESSION['success_message'] = "La mosaïque a été ajoutée au panier !";
 
         session_write_close();
         // 2. On redirige vers la page de review (on reste sur la même page)

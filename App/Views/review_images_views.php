@@ -105,7 +105,7 @@
                         <form action="<?= ($_ENV['BASE_URL'] ?? '') ?>/cart/add" method="POST" class="card-action-form">
                             <input type="hidden" name="image_id" value="<?= $image['id_Image'] ?>">
                             <button type="submit" name="choice" value="<?= $key ?>" class="btn-select">
-                                <span class="icon">🛒</span> Ajouter au panier
+                                Ajouter au panier
                             </button>
                         </form>
                     </div>
