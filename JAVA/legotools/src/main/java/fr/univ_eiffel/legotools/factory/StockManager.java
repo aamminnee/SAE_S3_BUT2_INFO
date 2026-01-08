@@ -248,4 +248,30 @@ public class StockManager {
             e.printStackTrace();
         }
     }
+
+    // récupère la liste de toutes les briques référencées en base, même si le stock est vide
+    public List<String> getAllBrickTypes() {
+        List<String> types = new ArrayList<>();
+        String sql = """
+            SELECT s.name, c.hex_color 
+            FROM Item i
+            JOIN Shapes s ON i.shape_id = s.id_shape
+            JOIN Colors c ON i.color_id = c.id_color
+        """;
+        
+        try (Connection conn = getConnection(); 
+             Statement stmt = conn.createStatement(); 
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                // // construction de la clé unique type "2-2/c9cae2"
+                String shape = rs.getString("name");
+                String color = rs.getString("hex_color").replace("#", "").toLowerCase();
+                types.add(shape + "/" + color);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return types;
+    }
 }
