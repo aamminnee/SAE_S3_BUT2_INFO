@@ -52,12 +52,7 @@ public class PavingService {
             throw new IOException("Le programme C a échoué (Code " + exitCode + ")");
         }
 
-        String suffix = algoName;
-        if ("v4_libre".equals(algoName)) {
-            suffix = "v4_forme_libre";
-        }
-        
-        String resultFileName = "pavage_" + suffix + ".txt";
+        String resultFileName = "pavage_" + algoName + ".txt";
         File resultFile = new File(outputDir, resultFileName);
 
         if (!resultFile.exists()) {

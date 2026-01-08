@@ -59,7 +59,7 @@ public class App {
         System.out.println("  1. Recharger le compte : java -jar legotools.jar refill");
         System.out.println("  2. Redimensionner : java -jar legotools.jar resize <input> <output> <WxH> [strategy]");
         System.out.println("  3. Paver : java -jar legotools.jar pave <input> <output_base> <exe_c> [algo|all]");
-        System.out.println("     Algos disponibles : v4_stock, v4_libre, v4_rupture, v4_rentable, all");
+        System.out.println("     Algos disponibles : stock, libre, minimisation, rentabilite, all");
         System.out.println("  4. Commander : java -jar legotools.jar order");
         System.out.println("  5. Visualiser : java -jar legotools.jar visualize <input_txt> <output_png>");
     }
@@ -119,7 +119,7 @@ public class App {
         // // liste des algorithmes à exécuter
         List<String> algos;
         if ("all".equalsIgnoreCase(algoArg)) {
-            algos = List.of("v4_stock", "v4_libre", "v4_rupture", "v4_rentable");
+            algos = List.of("stock", "libre", "minimisation", "rentabilite");
         } else {
             algos = List.of(algoArg);
         }

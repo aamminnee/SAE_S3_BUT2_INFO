@@ -138,8 +138,34 @@ class CommandeController extends Controller {
         exit;
     }
 
-    // 2. Télécharger l'image finale
-    // Ajoute ceci dans App/Controllers/CommandeController.php
+    // Dans App/Controllers/CommandeController.php
+
+    public function downloadImage($idMosaic) {
+        // 1. On récupère les données de la mosaïque
+        $mosaicModel = new \App\Models\MosaicModel();
+        
+        // 2. On utilise la méthode qui appelle le JAR Java pour recréer le visuel
+        // Cette méthode lit le texte en BDD et génère un base64
+        $imageDataBase64 = $mosaicModel->getMosaicVisual($idMosaic); 
+        
+        if ($imageDataBase64) {
+            // 3. Extraction du binaire (on enlève l'entête data:image/png;base64,)
+            $parts = explode(',', $imageDataBase64);
+            $binary = base64_decode($parts[1]);
+            
+            // 4. Envoi des headers pour forcer le téléchargement du navigateur
+            header('Content-Type: image/png');
+            header('Content-Disposition: attachment; filename="mosaique_lego_'.$idMosaic.'.png"');
+            header('Content-Length: ' . strlen($binary));
+            
+            echo $binary;
+            exit;
+        } else {
+            $_SESSION['error_message'] = "Impossible de générer l'image pour le téléchargement.";
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+    }
 
     public function downloadPlan($id) {
         if (!isset($_SESSION['user_id'])) { header("Location: /user/login"); exit; }

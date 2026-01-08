@@ -6,11 +6,21 @@
     <div class="cart-container">
         
         <div class="cart-header">
-            <h1>Mon Panier</h1>
+            <h1><?= $t['cart_page_title'] ?? 'Mon Panier' ?></h1>
             <p>
                 <?php 
                 $count = is_array($items) ? count($items) : 0;
-                echo $count > 0 ? "Vous avez $count création(s) en attente." : "Votre panier est vide.";
+                
+                // On prépare les phrases par défaut si la traduction manque
+                $defaultEmpty = "Votre panier est vide.";
+                $defaultCount = "Vous avez %s création(s) en attente.";
+                
+                if ($count > 0) {
+                    // sprintf remplace %s par $count dans la phrase traduite
+                    echo sprintf($t['cart_msg_count'] ?? $defaultCount, $count);
+                } else {
+                    echo $t['cart_msg_empty'] ?? $defaultEmpty;
+                }
                 ?>
             </p>
         </div>
@@ -21,10 +31,10 @@
                 <div class="empty-illustration">
                     🧱
                 </div>
-                <h3>C'est bien vide ici !</h3>
-                <p>Commencez par créer votre première mosaïque personnalisée.</p>
+                <h3><?= $t['cart_empty_block_title'] ?? "C'est bien vide ici !" ?></h3>
+                <p><?= $t['cart_empty_block_text'] ?? 'Commencez par créer votre première mosaïque personnalisée.' ?></p>
                 <a href="<?= $_ENV['BASE_URL'] ?>/images" class="btn-create">
-                    <span class="icon">+</span> Créer une Mosaïque
+                    <span class="icon">+</span> <?= $t['cart_btn_create'] ?? 'Créer une Mosaïque' ?>
                 </a>
             </div>
 
@@ -51,18 +61,18 @@
                             
                             <div class="card-info">
                                 <div class="info-top">
-                                    <h3>Mosaïque Personnalisée</h3>
+                                    <h3><?= $t['cart_product_title'] ?? 'Mosaïque Personnalisée' ?></h3>
                                     <span class="badge badge-<?= $i_style ?>"><?= ucfirst($item['style'] ?? 'Standard') ?></span>
 
                                 </div>
                                 
                                 <div class="specs-grid">
                                     <div class="spec">
-                                        <span class="label">Taille</span>
+                                        <span class="label"><?= $t['cart_label_size'] ?? 'Taille' ?></span>
                                         <span class="val"><?= $i_size ?>x<?= $i_size ?></span>
                                     </div>
                                     <div class="spec">
-                                        <span class="label">Pièces</span>
+                                        <span class="label"><?= $t['cart_label_pieces'] ?? 'Pièces' ?></span>
                                         <span class="val"><?= $i_pieces ?></span>
                                     </div>
                                 </div>
@@ -73,7 +83,7 @@
                                 
                                 <form action="<?= $_ENV['BASE_URL'] ?>/cart/remove" method="POST">
                                     <input type="hidden" name="cart_id" value="<?= $i_id ?>">
-                                    <button type="submit" class="btn-remove" title="Supprimer">
+                                    <button type="submit" class="btn-remove" title="<?= $t['cart_tooltip_delete'] ?? 'Supprimer' ?>">
                                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </form>
@@ -84,26 +94,26 @@
 
                 <div class="cart-summary">
                     <div class="summary-card">
-                        <h3>Récapitulatif</h3>
+                        <h3><?= $t['cart_summary_title'] ?? 'Récapitulatif' ?></h3>
                         
                         <div class="summary-row">
-                            <span class="label">Sous-total (<?= count($items) ?> articles)</span>
+                            <span class="label"><?= $t['cart_label_subtotal'] ?? 'Sous-total' ?> (<?= count($items) ?> articles)</span>
                             <span class="value"><?= number_format($subTotal, 2) ?> €</span>
                         </div>
                         
                         <div class="summary-row highlight">
-                            <span class="label">Livraison standard</span>
+                            <span class="label"><?= $t['cart_label_shipping'] ?? 'Livraison standard' ?></span>
                             <span class="value">4,99 €</span>
                         </div>
 
                         <div class="divider"></div>
 
                         <div class="summary-total">
-                            <span>Total à payer</span>
+                            <span><?= $t['cart_label_total'] ?? 'Total à payer' ?></span>
                             <span class="total-amount"><?= number_format($total, 2) ?> €</span>
                         </div>
 
-                        <a href="<?= $_ENV['BASE_URL'] ?>/payment" class="btn-checkout">Payer maintenant</a>
+                        <a href="<?= $_ENV['BASE_URL'] ?>/payment" class="btn-checkout"><?= $t['cart_btn_checkout'] ?? 'Payer maintenant' ?></a>
                     </div>
                 </div>
             </div>

@@ -30,6 +30,8 @@ class MosaicModel extends Model {
             throw new Exception("Erreur de permissions sur les dossiers input/output.");
         }
 
+        $this->updateBriquesFile($inputDir . '/briques.txt');
+
         $inputFilename = 'image_' . $idImage . '.' . $extension;
         $outputFilename = 'image_' . $idImage . '.' . $extension;
         $inputPath = $inputDir . '/' . $inputFilename;
@@ -61,11 +63,12 @@ class MosaicModel extends Model {
                 $type = 'default';
                 
                 // Détection du type
-                if (strpos($filename, 'rupture') !== false) $type = 'rupture';
-                elseif (strpos($filename, 'cheap') !== false || strpos($filename, 'rentable') !== false) $type = 'cheap';
+                // Remplacer le bloc de détection (lignes 70-75) par celui-ci :
+                if (strpos($filename, 'minimisation') !== false) $type = 'minimisation';
+                elseif (strpos($filename, 'rentabilite') !== false || strpos($filename, 'rentable') !== false) $type = 'rentabilite';
                 elseif (strpos($filename, 'stock') !== false) $type = 'stock';
-                elseif (strpos($filename, 'libre') !== false) $type = 'default'; // 'v4_libre' = default
-
+                elseif (strpos($filename, 'libre') !== false) $type = 'libre';
+                else $type = 'libre'; // Valeur par défaut pour éviter le type 'default'
                 if (!isset($results[$type])) {
                     $results[$type] = ['img' => null, 'txt' => null, 'count' => 0];
                 }
@@ -411,6 +414,8 @@ class MosaicModel extends Model {
 
     // Dans App/Models/MosaicModel.php
 
+// Dans App/Models/MosaicModel.php
+
     public function getMosaicGridHtml($idMosaic) {
         $db = \App\Core\Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -422,11 +427,10 @@ class MosaicModel extends Model {
         $lines = explode("\n", trim($res['pavage']));
         $bricksData = [];
         $maxX = 0; $maxY = 0;
-        $colorToSymbol = []; // Pour associer une couleur à une lettre (A, B, C...)
+        $colorToSymbol = [];
         $symbolIndex = 0;
-        $symbols = range('A', 'Z'); // On utilise des lettres
+        $symbols = range('A', 'Z');
 
-        // 1. Analyse et préparation des symboles
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line) || strpos($line, '/') === false) continue;
@@ -435,54 +439,56 @@ class MosaicModel extends Model {
             $info = explode('/', $parts[0]);
             $color = "#" . $info[1];
             
-            // On assigne un symbole unique par couleur
             if (!isset($colorToSymbol[$color])) {
                 $colorToSymbol[$color] = $symbols[$symbolIndex % 26] . (floor($symbolIndex / 26) ?: '');
                 $symbolIndex++;
             }
 
             $size = explode('x', $info[0]);
-            $w = (int)$size[0]; $h = (int)$size[1];
-            $x = (int)$parts[1]; $y = (int)$parts[2];
+            $w = (int)$size[0]; 
+            $l = (int)$size[1];
+            $x = (int)$parts[1]; 
+            $y = (int)$parts[2];
+            $rot = (int)($parts[3] ?? 0);
 
-            $bricksData[] = ['x' => $x, 'y' => $y, 'w' => $w, 'h' => $h, 'color' => $color, 'symbol' => $colorToSymbol[$color]];
-            if ($x + $w > $maxX) $maxX = $x + $w;
-            if ($y + $h > $maxY) $maxY = $y + $h;
+            // --- CORRECTION CRUCIALE DE LA ROTATION ---
+            // Si rot = 1, on inverse largeur et longueur pour le dessin
+            $finalW = ($rot == 1) ? $l : $w;
+            $finalH = ($rot == 1) ? $w : $l;
+
+            $bricksData[] = [
+                'x' => $x, 'y' => $y, 'w' => $finalW, 'h' => $finalH, 
+                'color' => $color, 'symbol' => $colorToSymbol[$color]
+            ];
+
+            if ($x + $finalW > $maxX) $maxX = $x + $finalW;
+            if ($y + $finalH > $maxY) $maxY = $y + $finalH;
         }
 
-        // 2. Création de la grille
-        $grid = array_fill(0, $maxY, array_fill(0, $maxX, ['color' => '#ffffff', 'symbol' => '']));
-        foreach ($bricksData as $b) {
-            for ($i = 0; $i < $b['h']; $i++) {
-                for ($j = 0; $j < $b['w']; $j++) {
-                    if (isset($grid[$b['y'] + $i][$b['x'] + $j])) {
-                        $grid[$b['y'] + $i][$b['x'] + $j] = ['color' => $b['color'], 'symbol' => $b['symbol']];
-                    }
-                }
-            }
-        }
-
-        // 3. Génération du HTML compact
-        // On utilise des unités 'pt' pour que la taille soit fixe sur le PDF
-        $cellSize = '10pt'; 
-        $html = '<div style="display: inline-grid; grid-template-columns: repeat('.$maxX.', '.$cellSize.'); border: 2px solid #333; line-height: 0;">';
+        // Taille d'un tenon (scale) pour le PDF
+        $scale = 12; 
         
-        foreach ($grid as $row) {
-            foreach ($row as $cell) {
-                $html .= '<div style="
-                    width:'.$cellSize.'; 
-                    height:'.$cellSize.'; 
-                    background:'.$cell['color'].'; 
-                    border:0.1pt solid rgba(0,0,0,0.2); 
-                    display:flex; 
-                    align-items:center; 
-                    justify-content:center; 
-                    font-size:5pt; 
-                    font-weight:bold; 
-                    color: rgba(0,0,0,0.5);
-                    box-sizing: border-box;
-                ">'.$cell['symbol'].'</div>';
-            }
+        // Conteneur en position relative
+        $html = '<div style="position: relative; width: '.($maxX * $scale).'pt; height: '.($maxY * $scale).'pt; background: #ffffff; border: 1pt solid #333;">';
+        
+        foreach ($bricksData as $b) {
+            $html .= '<div style="
+                position: absolute;
+                left: '.($b['x'] * $scale).'pt;
+                top: '.($b['y'] * $scale).'pt;
+                width: '.($b['w'] * $scale).'pt;
+                height: '.($b['h'] * $scale).'pt;
+                background-color: '.$b['color'].';
+                border: 0.2pt solid rgba(0,0,0,0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 6pt;
+                font-weight: bold;
+                color: rgba(0,0,0,0.5);
+                box-sizing: border-box;
+                overflow: hidden;
+            ">'.$b['symbol'].'</div>';
         }
         $html .= '</div>';
 
@@ -494,7 +500,7 @@ class MosaicModel extends Model {
     // Ajoute ceci dans App/Models/MosaicModel.php
 
     public function getMosaicPlanData($idMosaic) {
-        $db = \App\Core\Db::getInstance();
+        $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
         $stmt->execute([$idMosaic]);
         $res = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -502,37 +508,59 @@ class MosaicModel extends Model {
         if (!$res || empty($res['pavage'])) return null;
 
         $lines = explode("\n", trim($res['pavage']));
+        
         $bricks = [];
-        $maxX = 0; $maxY = 0;
+        $maxX = 0; 
+        $maxY = 0;
+        
         $colorToSymbol = [];
-        $symbols = range('A', 'Z');
+        $symbols = range('A', 'Z'); // A, B, C...
         $symbolIndex = 0;
 
         foreach ($lines as $line) {
             $line = trim($line);
+            // On ignore les lignes vides ou les entêtes (celles qui n'ont pas de '/')
             if (empty($line) || strpos($line, '/') === false) continue;
 
+            // Format ligne : 1x12/078bc9 1 0 1  (Dim/Coul X Y Rot)
             $parts = preg_split('/\s+/', $line);
             $info = explode('/', $parts[0]);
-            $color = "#" . $info[1];
             
-            // Attribution d'une lettre unique par couleur
-            if (!isset($colorToSymbol[$color])) {
-                $colorToSymbol[$color] = $symbols[$symbolIndex % 26] . (floor($symbolIndex / 26) ?: '');
+            $colorHex = "#" . $info[1];
+            
+            // Attribution d'un symbole unique par couleur
+            if (!isset($colorToSymbol[$colorHex])) {
+                // Gestion de plus de 26 couleurs (A..Z, puis A1..Z1, etc.)
+                $suffix = floor($symbolIndex / 26) > 0 ? floor($symbolIndex / 26) : '';
+                $colorToSymbol[$colorHex] = $symbols[$symbolIndex % 26] . $suffix;
                 $symbolIndex++;
             }
 
             $size = explode('x', $info[0]);
-            $w = (int)$size[0]; $h = (int)$size[1];
-            $x = (int)$parts[1]; $y = (int)$parts[2];
+            $w = (int)$size[0]; // Largeur brute
+            $h = (int)$size[1]; // Hauteur brute
+            
+            $x = (int)$parts[1]; 
+            $y = (int)$parts[2];
+            $rot = (int)($parts[3] ?? 0); // Rotation (0 ou 1)
+
+            // --- C'EST ICI QUE LE BUG EST CORRIGÉ ---
+            // Si la brique est tournée (rot=1), on inverse sa largeur et sa hauteur pour le dessin
+            $finalW = ($rot == 1) ? $h : $w;
+            $finalH = ($rot == 1) ? $w : $h;
 
             $bricks[] = [
-                'x' => $x, 'y' => $y, 'w' => $w, 'h' => $h, 
-                'color' => $color, 'symbol' => $colorToSymbol[$color]
+                'x' => $x,
+                'y' => $y,
+                'w' => $finalW,
+                'h' => $finalH,
+                'color' => $colorHex,
+                'symbol' => $colorToSymbol[$colorHex]
             ];
 
-            if ($x + $w > $maxX) $maxX = $x + $w;
-            if ($y + $h > $maxY) $maxY = $y + $h;
+            // Calcul des dimensions totales du canevas
+            if ($x + $finalW > $maxX) $maxX = $x + $finalW;
+            if ($y + $finalH > $maxY) $maxY = $y + $finalH;
         }
 
         return [
@@ -541,5 +569,86 @@ class MosaicModel extends Model {
             'bricks' => $bricks,
             'legend' => $colorToSymbol
         ];
+    }
+
+    /**
+     * Génère le fichier briques.txt formaté pour le programme C
+     */
+    /**
+     * Génère briques.txt en utilisant les dimensions réelles de la BDD.
+     * Format : Largeur-Longueur[-Hole] (ex: 1-1-14)
+     */
+    /**
+     * Génère briques.txt avec toutes les pièces distinctes (par ID).
+     */
+    private function updateBriquesFile($filePath) {
+        $stockModel = new StockModel();
+        $items = $stockModel->getFullStockDetails(); 
+
+        // Listes ordonnées pour générer les indices
+        $shapesList = []; // Liste des définitions "W-H-T"
+        $colorsList = []; // Liste des codes Hex (peut contenir des doublons visuels)
+        
+        // Maps pour retrouver l'index rapidement
+        // Clé = Definition de forme (ex: "2-4") => Valeur = Index (0, 1...)
+        $shapeMap = []; 
+        // Clé = ID Couleur (ex: 58) => Valeur = Index (0, 1...)
+        $colorMap = []; 
+
+        $brickLines = [];
+
+        foreach ($items as $item) {
+            // --- 1. Gestion de la Forme ---
+            $shapeDef = $item['width'] . '-' . $item['length'];
+            if (!empty($item['hole'])) {
+                $shapeDef .= '-' . $item['hole'];
+            }
+
+            if (!isset($shapeMap[$shapeDef])) {
+                $shapeMap[$shapeDef] = count($shapesList);
+                $shapesList[] = $shapeDef;
+            }
+            $sIdx = $shapeMap[$shapeDef];
+
+            // --- 2. Gestion de la Couleur (Par ID et non par Hex) ---
+            $cId = $item['id_color'];
+            $cHex = str_replace('#', '', $item['hex_color']);
+
+            if (!isset($colorMap[$cId])) {
+                $colorMap[$cId] = count($colorsList);
+                $colorsList[] = $cHex; // On stocke le hex, même s'il existe déjà pour un autre ID
+            }
+            $cIdx = $colorMap[$cId];
+
+            // --- 3. Préparation de la ligne Brique ---
+            // Format : IndexForme/IndexCouleur Prix Stock
+            $price = $item['price'];
+            $qty = max(0, intval($item['current_stock']));
+            
+            $brickLines[] = "$sIdx/$cIdx $price $qty";
+        }
+        
+        // --- 4. Écriture du fichier ---
+        $content = "";
+        
+        // Entête : NbFormes NbCouleurs NbBriques
+        $content .= count($shapesList) . " " . count($colorsList) . " " . count($brickLines) . "\n";
+
+        // Liste des formes
+        foreach ($shapesList as $s) {
+            $content .= "$s\n";
+        }
+
+        // Liste des couleurs
+        foreach ($colorsList as $c) {
+            $content .= "$c\n";
+        }
+
+        // Liste des briques
+        foreach ($brickLines as $line) {
+            $content .= "$line\n";
+        }
+
+        file_put_contents($filePath, $content);
     }
 }

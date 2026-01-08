@@ -210,9 +210,9 @@
     top: 0; left: 0; right: 0; height: 8px;
     background-color: var(--text-grey);
 }
-.style-cheap .card-top-bar { background-color: var(--lego-green); }
-.style-rupture .card-top-bar { background-color: var(--lego-blue); }
-.style-default .card-top-bar { background-color: var(--lego-red); }
+.style-rentabilite .card-top-bar { background-color: var(--lego-green); }
+.style-minimisation .card-top-bar { background-color: var(--lego-blue); }
+.style-libre .card-top-bar { background-color: var(--lego-red); }
 .style-stock .card-top-bar { background-color: var(--lego-yellow); }
 
 .option-card h3 {
@@ -267,12 +267,12 @@
     cursor: pointer; transition: all 0.1s;
     text-transform: uppercase; letter-spacing: 0.5px;
 }
-.style-cheap .btn-select { background-color: var(--lego-green); box-shadow: 0 5px 0 #00601f; }
-.style-cheap .btn-select:hover { background-color: #009e33; transform: translateY(-2px); }
-.style-rupture .btn-select { background-color: var(--lego-blue); box-shadow: 0 5px 0 var(--lego-blue-dark); }
-.style-rupture .btn-select:hover { background-color: #007bd1; transform: translateY(-2px); }
-.style-default .btn-select { background-color: var(--lego-red); box-shadow: 0 5px 0 var(--lego-red-dark); }
-.style-default .btn-select:hover { background-color: #e6262c; transform: translateY(-2px); }
+.style-rentabilite .btn-select { background-color: var(--lego-green); box-shadow: 0 5px 0 #00601f; }
+.style-rentabilite .btn-select:hover { background-color: #009e33; transform: translateY(-2px); }
+.style-minimisation .btn-select { background-color: var(--lego-blue); box-shadow: 0 5px 0 var(--lego-blue-dark); }
+.style-minimisation .btn-select:hover { background-color: #007bd1; transform: translateY(-2px); }
+.style-libre .btn-select { background-color: var(--lego-red); box-shadow: 0 5px 0 var(--lego-red-dark); }
+.style-libre .btn-select:hover { background-color: #e6262c; transform: translateY(-2px); }
 .style-stock .btn-select { background-color: var(--lego-yellow); color: var(--text-dark); box-shadow: 0 5px 0 #dcb200; }
 .style-stock .btn-select:hover { background-color: #ffdb4d; transform: translateY(-2px); }
 .btn-select:active { transform: translateY(3px) !important; box-shadow: none !important; }

@@ -77,12 +77,23 @@ CREATE TABLE `CustomerOrder` (
 
 DROP TABLE IF EXISTS `FactoryOrder`;
 CREATE TABLE `FactoryOrder` (
-  `id_FactoryOrder` int NOT NULL AUTO_INCREMENT,
+  `id_FactoryOrder` varchar(64) NOT NULL,
   `id_Item` int NOT NULL,
   `quantity` int NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `order_date` date NOT NULL DEFAULT (curdate()),
   PRIMARY KEY (`id_FactoryOrder`),
+  KEY `id_Item` (`id_Item`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `FactoryOrderDetails`;
+CREATE TABLE `FactoryOrderDetails` (
+  `id_Detail` int NOT NULL AUTO_INCREMENT,
+  `id_FactoryOrder` varchar(64) NOT NULL,
+  `id_Item` int NOT NULL,
+  `quantity` int NOT NULL,
+  PRIMARY KEY (`id_Detail`),
+  KEY `id_FactoryOrder` (`id_FactoryOrder`),
   KEY `id_Item` (`id_Item`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -11500,46 +11511,46 @@ INSERT INTO `SaveCustomer` (`id_SaveCustomer`, `first_name`, `last_name`, `email
 (1, 'aissyne', 'AISSYNE', 'amine.aissyne06@icloud.com', NULL, '2026-01-01 20:31:19');
 
 INSERT INTO `Shapes` (`id_shape`, `width`, `length`, `hole`, `name`) VALUES
-(1, 1, 1, NULL, 'Brick 1x1'),
-(2, 1, 2, NULL, 'Brick 1x2'),
-(3, 1, 3, NULL, 'Brick 1x3'),
-(4, 1, 4, NULL, 'Brick 1x4'),
-(5, 1, 5, NULL, 'Brick 1x5'),
-(6, 1, 6, NULL, 'Brick 1x6'),
-(7, 2, 2, NULL, 'Brick 2x2'),
-(8, 2, 2, 1, 'Brick 2x2 in L'),
-(9, 1, 8, NULL, 'Brick 1x8'),
-(10, 2, 3, NULL, 'Brick 2x3'),
-(11, 2, 3, 1, 'Brick 2x3 in U'),
-(12, 1, 10, NULL, 'Brick 1x10'),
-(13, 1, 12, NULL, 'Brick 1x12'),
-(14, 2, 4, NULL, 'Brick 2x4'),
-(15, 3, 3, NULL, 'Brick 3x3'),
-(16, 3, 3, 268, 'Brick 3x3 in +'),
-(17, 3, 3, 1245, 'Brick 3x3 in L'),
-(18, 2, 6, NULL, 'Brick 2x6'),
-(19, 2, 8, NULL, 'Brick 2x8'),
-(20, 4, 4, NULL, 'Brick 4x4'),
-(21, 4, 4, 2367, 'Brick 4x4 in L'),
-(22, 2, 10, NULL, 'Brick 2x10'),
-(23, 2, 12, NULL, 'Brick 2x12'),
-(24, 4, 6, NULL, 'Brick 4x6'),
-(25, 2, 14, NULL, 'Brick 2x14'),
-(26, 2, 16, NULL, 'Brick 2x16'),
-(27, 4, 8, NULL, 'Brick 4x8'),
-(28, 6, 6, NULL, 'Brick 6x6'),
-(29, 4, 10, NULL, 'Brick 4x10'),
-(30, 4, 12, NULL, 'Brick 4x12'),
-(31, 6, 8, NULL, 'Brick 6x8'),
-(32, 6, 10, NULL, 'Brick 6x10'),
-(33, 8, 8, NULL, 'Brick 8x8'),
-(34, 6, 12, NULL, 'Brick 6x12'),
-(35, 6, 14, NULL, 'Brick 6x14'),
-(36, 8, 11, NULL, 'Brick 8x11'),
-(37, 6, 16, NULL, 'Brick 6x16'),
-(38, 8, 16, NULL, 'Brick 8x16'),
-(39, 6, 24, NULL, 'Brick 6x24'),
-(40, 16, 16, NULL, 'Brick 16x16');
+(1, 1, 1, NULL, '1-1'),
+(2, 1, 2, NULL, '1-2'),
+(3, 1, 3, NULL, '1-3'),
+(4, 1, 4, NULL, '1-4'),
+(5, 1, 5, NULL, '1-5'),
+(6, 1, 6, NULL, '1-6'),
+(7, 2, 2, NULL, '2-2'),
+(8, 2, 2, 1, '2-2_L'),
+(9, 1, 8, NULL, '1-8'),
+(10, 2, 3, NULL, '2-3'),
+(11, 2, 3, 1, '2-3_U'),
+(12, 1, 10, NULL, '1-10'),
+(13, 1, 12, NULL, '1-12'),
+(14, 2, 4, NULL, '2-4'),
+(15, 3, 3, NULL, '3-3'),
+(16, 3, 3, 268, '3-3_Plus'),
+(17, 3, 3, 1245, '3-3_L'),
+(18, 2, 6, NULL, '2-6'),
+(19, 2, 8, NULL, '2-8'),
+(20, 4, 4, NULL, '4-4'),
+(21, 4, 4, 2367, '4-4_L'),
+(22, 2, 10, NULL, '2-10'),
+(23, 2, 12, NULL, '2-12'),
+(24, 4, 6, NULL, '4-6'),
+(25, 2, 14, NULL, '2-14'),
+(26, 2, 16, NULL, '2-16'),
+(27, 4, 8, NULL, '4-8'),
+(28, 6, 6, NULL, '6-6'),
+(29, 4, 10, NULL, '4-10'),
+(30, 4, 12, NULL, '4-12'),
+(31, 6, 8, NULL, '6-8'),
+(32, 6, 10, NULL, '6-10'),
+(33, 8, 8, NULL, '8-8'),
+(34, 6, 12, NULL, '6-12'),
+(35, 6, 14, NULL, '6-14'),
+(36, 8, 11, NULL, '8-11'),
+(37, 6, 16, NULL, '6-16'),
+(38, 8, 16, NULL, '8-16'),
+(39, 6, 24, NULL, '6-24'),
+(40, 16, 16, NULL, '16-16');
 
 INSERT INTO `Customer` (`id_Customer`, `password`, `phone`, `id_SaveCustomer`, `etat`, `mode`) VALUES
 (1, '$2y$10$l8IOLlTYzV/r8jM9GWeUP.BpIEqeFHAIq0on3pQrQgOABPTvGLe6G', NULL, 1, 'invalide', NULL);
@@ -11738,6 +11749,10 @@ ALTER TABLE `CustomerOrder`
 
 ALTER TABLE `FactoryOrder`
   ADD CONSTRAINT `FactoryOrder_ibfk_1` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
+
+ALTER TABLE `FactoryOrderDetails`
+  ADD CONSTRAINT `FactoryOrderDetails_ibfk_1` FOREIGN KEY (`id_FactoryOrder`) REFERENCES `FactoryOrder` (`id_FactoryOrder`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FactoryOrderDetails_ibfk_2` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`) ON DELETE CASCADE;
 
 ALTER TABLE `Image`
   ADD CONSTRAINT `Image_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`) ON DELETE CASCADE;

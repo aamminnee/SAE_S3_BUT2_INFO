@@ -1,6 +1,6 @@
 <main class="main-content">
     <div class="register-container">
-        <h2><?= $trans['register_title'] ?? 'Inscription' ?></h2>
+        <h2><?= $t['register_title'] ?? 'Inscription' ?></h2>
 
         <?php if (isset($_SESSION['register_message'])): ?>
             <p class="error-msg"><?= $_SESSION['register_message'] ?></p>
@@ -14,33 +14,37 @@
         <form action="<?= $_ENV['BASE_URL'] ?>/user/register" method="POST">
             
             <div class="form-group">
-                <label for="username"><?= $trans['label_username'] ?? "Nom d'utilisateur" ?></label>
-                <input type="text" id="username" name="username" required placeholder="Choisis ton pseudo">
+                <label for="username"><?= $t['register_label_username'] ?? "Nom d'utilisateur" ?></label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="<?= $t['register_placeholder_username'] ?? 'Choisis ton pseudo' ?>">
             </div>
 
             <div class="form-group">
-                <label for="lastname">Nom de famille</label>
-                <input type="text" name="lastname" id="lastname" required placeholder="Ton nom de famille">
+                <label for="lastname"><?= $t['register_label_lastname'] ?? 'Nom de famille' ?></label>
+                <input type="text" name="lastname" id="lastname" required 
+                       placeholder="<?= $t['register_placeholder_lastname'] ?? 'Ton nom de famille' ?>">
             </div>
 
             <div class="form-group">
-                <label for="email">Adresse Email</label>
-                <input type="email" id="email" name="email" required placeholder="exemple@email.com">
+                <label for="email"><?= $t['register_label_email'] ?? 'Adresse Email' ?></label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="<?= $t['register_placeholder_email'] ?? 'exemple@email.com' ?>">
             </div>
             
             <div class="form-group">
-                <label for="password"><?= $trans['label_password'] ?? 'Mot de passe' ?></label>
-                <input type="password" id="password" name="password" required placeholder="••••••••">
-                <small><?= $trans['password_requirements'] ?? 'Min. 8 caractères, 1 majuscule, 1 chiffre et 1 caractère spécial.' ?></small>
+                <label for="password"><?= $t['register_label_password'] ?? 'Mot de passe' ?></label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="<?= $t['register_placeholder_password'] ?? '••••••••' ?>">
+                <small><?= $t['register_password_req'] ?? 'Min. 8 caractères, 1 majuscule, 1 chiffre et 1 caractère spécial.' ?></small>
             </div>
 
-            <button type="submit" class="btn-submit"><?= $trans['btn_register'] ?? "Créer mon compte" ?></button>
+            <button type="submit" class="btn-submit"><?= $t['register_btn_submit'] ?? "Créer mon compte" ?></button>
         </form>
 
         <div class="login-footer">
             <p>
-                <?= $trans['have_account'] ?? 'Déjà un compte ?' ?> 
-                <a href="<?= $_ENV['BASE_URL'] ?>/user/login"><?= $trans['link_login'] ?? 'Se connecter' ?></a>
+                <?= $t['register_have_account'] ?? 'Déjà un compte ?' ?> 
+                <a href="<?= $_ENV['BASE_URL'] ?>/user/login"><?= $t['register_link_login'] ?? 'Se connecter' ?></a>
             </p>
         </div>
     </div>

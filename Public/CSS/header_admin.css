@@ -1,0 +1,105 @@
+/* --- STYLE SPÉCIFIQUE ADMIN (.header-admin) --- */
+
+/* Le conteneur principal du header admin */
+.header-admin {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb; /* Ligne grise subtile */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Ombre douce */
+    padding: 0 20px;
+    height: 70px; /* Hauteur fixe pour la régularité */
+    display: flex;
+    align-items: center;
+    position: sticky; /* Reste en haut lors du scroll */
+    top: 0;
+    z-index: 1000;
+}
+
+/* Ajustement du conteneur interne */
+.header-admin .header-container {
+    width: 100%;
+    max-width: 1400px; /* S'aligne avec le wrapper admin */
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Logo Admin : un peu plus petit ou ajusté */
+.header-admin .logo img {
+    height: 60px; /* Taille optimale pour un dashboard */
+    width: auto;
+    transition: transform 0.2s;
+}
+
+.header-admin .logo:hover img {
+    transform: scale(1.05);
+}
+
+/* Navigation principale */
+.header-admin .main-nav {
+    display: flex;
+    align-items: center;
+    gap: 30px; /* Espace entre les liens */
+}
+
+/* Liens de navigation (Statistiques, Fournisseur...) */
+.header-admin .nav-link {
+    text-decoration: none;
+    color: #6b7280; /* Gris pro (text-gray) */
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 8px 0;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.header-admin .nav-link:hover {
+    color: #006CB7; /* Bleu Lego au survol */
+}
+
+/* Petit effet de ligne sous le lien au survol */
+.header-admin .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #006CB7;
+    transition: width 0.3s;
+}
+
+.header-admin .nav-link:hover::after {
+    width: 100%;
+}
+
+/* Bouton Déconnexion (Outline rouge pour l'admin) */
+.header-admin .btn-outline {
+    border: 1px solid #e5e7eb;
+    background-color: transparent;
+    color: #D92328; /* Rouge Lego */
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.header-admin .btn-outline:hover {
+    background-color: #FEF2F2; /* Fond rouge très pâle */
+    border-color: #D92328;
+}
+
+/* Responsive : Menu burger simplifié si besoin (pour mobile) */
+@media (max-width: 768px) {
+    .header-admin .main-nav {
+        gap: 15px;
+    }
+    .header-admin .nav-link {
+        font-size: 0.85rem;
+    }
+    .header-admin .logo img {
+        height: 30px;
+    }
+}

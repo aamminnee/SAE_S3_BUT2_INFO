@@ -243,6 +243,47 @@ header {
     background-color: #fff5f5 !important;
 }
 
+/* --- SÉLECTEUR DE LANGUE DANS LE HEADER --- */
+.lang-switch-container {
+    display: flex;
+    align-items: center;
+    margin-left: 15px; /* Un peu d'espace après le bouton inscription */
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.lang-link {
+    text-decoration: none;
+    color: #888; /* Gris par défaut */
+    transition: color 0.3s ease;
+    padding: 0 4px;
+}
+
+.lang-link:hover {
+    color: #333;
+}
+
+/* La langue active est en couleur (Rouge Lego ou Noir selon votre choix) */
+.lang-link.active {
+    color: #D92328; /* Rouge Lego */
+    font-weight: bold;
+    cursor: default; /* Pas de curseur main sur la langue active */
+}
+
+.lang-sep {
+    color: #ccc;
+    font-weight: 300;
+    font-size: 0.8rem;
+}
+
+/* Petit ajustement pour mobile si nécessaire */
+@media (max-width: 768px) {
+    .lang-switch-container {
+        justify-content: center;
+        margin: 10px 0;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .header-container { padding: 0 15px; }

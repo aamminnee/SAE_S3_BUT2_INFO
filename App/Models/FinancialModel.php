@@ -70,4 +70,38 @@ class FinancialModel extends Model {
             return "Erreur SQL : " . $e->getMessage();
         }
     }
+
+    // Retourne le Chiffre d'Affaires total
+    public function getTotalRevenue() {
+        $sql = "SELECT SUM(total_amount) as total FROM CustomerOrder WHERE status != 'Annulée'";
+        $res = \App\Core\Db::getInstance()->query($sql)->fetch();
+        return $res->total ?? 0;
+    }
+
+    // Compte le nombre de commandes
+    public function countOrders() {
+        $sql = "SELECT COUNT(*) as total FROM CustomerOrder";
+        $res = \App\Core\Db::getInstance()->query($sql)->fetch();
+        return $res->total ?? 0;
+    }
+
+    // Récupère les X dernières commandes avec le nom du client
+    public function getLastOrders($limit = 5) {
+        $sql = "SELECT 
+                    o.id_Order as id, 
+                    o.order_date as date, 
+                    o.total_amount as amount, 
+                    o.status,
+                    CONCAT(c.first_name, ' ', c.last_name) as user
+                FROM CustomerOrder o
+                JOIN Customer cust ON o.id_Customer = cust.id_Customer
+                JOIN SaveCustomer c ON cust.id_Customer = c.id_SaveCustomer -- Ou jointure directe selon ta BDD
+                ORDER BY o.order_date DESC 
+                LIMIT $limit";
+        
+        // Note : Adapte la jointure (JOIN) selon si tu utilises SaveCustomer ou Customer directement pour le nom
+        // Si le nom est dans Customer : JOIN Customer c ON o.id_Customer = c.id_Customer
+        
+        return \App\Core\Db::getInstance()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

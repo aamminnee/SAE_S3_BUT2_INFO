@@ -24,6 +24,11 @@ abstract class Controller
 
     public function render(string $file, array $data = [], string $template = 'default')
     {
+
+        if (!isset($data['t'])) {
+            $data['t'] = $this->trans;
+        }
+        
         // on ajoute les traductions aux données envoyées à la vue
         $data['trans'] = $this->trans;
 

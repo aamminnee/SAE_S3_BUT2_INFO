@@ -22,7 +22,7 @@
             
             <div class="header-left">
                 <h2><?= $t['review_title'] ?? 'Choisissez votre finition' ?></h2>
-                <p class="subtitle">Sélectionnez le style qui correspond le mieux à votre projet.</p>
+                <p class="subtitle"><?= $t['review_subtitle'] ?? 'Sélectionnez le style qui correspond le mieux à votre projet.' ?></p>
                 
                 <div class="lego-scatter">
                     <div class="brick b-red b-2x4"></div>
@@ -36,7 +36,7 @@
             <?php if (isset($image) && !empty($image)): ?>
                 <div class="user-image-preview post-it-style">
                     <div class="pin-icon">📍</div>
-                    <h3><?= $t['your_original_image'] ?? 'Original' ?></h3>
+                    <h3><?= $t['review_original_label'] ?? 'Original' ?></h3>
                     <div class="img-frame">
                         <img src="data:<?= $image['file_type'] ?>;base64,<?= base64_encode($image['file']) ?>" 
                              alt="Original" 
@@ -51,11 +51,12 @@
             <div class="mosaic-options">
                 
                 <?php 
+                // Tableau de configuration
                 $styles = [
-                    'cheap'   => ['label' => 'Économique', 'desc' => 'Optimisé pour réduire le coût des pièces.', 'color' => 'var(--lego-green)'],
-                    'rupture' => ['label' => 'Classique', 'desc' => 'L\'équilibre parfait entre détail et coût.', 'color' => 'var(--lego-blue)'],
-                    'default' => ['label' => 'Avancée', 'desc' => 'Structure renforcée, minimise les lignes droites.', 'color' => 'var(--lego-red)'],
-                    'stock'   => ['label' => 'Stock', 'desc' => 'Basé uniquement sur notre inventaire actuel.', 'color' => 'var(--lego-yellow)']
+                    'rentabilite'   => ['label' => 'Économique', 'desc' => 'Ce mode est optimisé pour votre portefeuille. L\'algorithme choisit intelligemment les briques les moins chères pour réduire le coût total du projet. En contrepartie, la mosaïque sera légèrement dégradée.', 'color' => 'var(--lego-green)'],
+                    'minimisation' => ['label' => 'Classique', 'desc' => 'Le parfait équilibre entre qualité et facilité. Cet algorithme privilégie la fidélité des détails de votre photo tout en utilisant des pièces standards. C\'est le meilleur choix pour un rendu visuel optimal et un montage agréable.', 'color' => 'var(--lego-blue)'],
+                    'libre' => ['label' => 'Renforcé', 'desc' => 'Idéal pour les grandes surfaces. Cet algorithme force l\'utilisation des plus grandes briques possibles pour remplir les zones de couleur.', 'color' => 'var(--lego-red)'],
+                    'stock'   => ['label' => 'Express', 'desc' => 'Pas d\'attente ! Ce rendu est généré exclusivement à partir des pièces physiquement présentes dans notre entrepôt. Si vous commandez ce modèle, l\'expédition est immédiate car nous n\'avons pas besoin de commander les pièces.', 'color' => 'var(--lego-yellow)']
                 ];
                 ?>
 
@@ -64,7 +65,7 @@
                         <div class="card-top-bar"></div>
 
                         <div class="card-header-row">
-                            <h3><?= $t['style_' . $key] ?? $info['label'] ?></h3>
+                            <h3><?= $t['style_' . $key . '_label'] ?? $info['label'] ?></h3>
                         </div>
 
                         <div class="preview-box">
@@ -80,7 +81,7 @@
 
                         <div class="card-stats">
                             <div class="stat-item">
-                                <span class="stat-label">Prix estimé</span>
+                                <span class="stat-label"><?= $t['review_stat_price'] ?? 'Prix estimé' ?></span>
                                 <span class="stat-value price">
                                     <?php 
                                         if (isset($prices[$key]) && $prices[$key] > 0) {
@@ -93,19 +94,19 @@
                             </div>
                             <div class="stat-divider"></div>
                             <div class="stat-item">
-                                <span class="stat-label">Pièces</span>
+                                <span class="stat-label"><?= $t['review_stat_pieces'] ?? 'Pièces' ?></span>
                                 <span class="stat-value pieces">
                                     <?= (isset($counts[$key]) && $counts[$key] > 0) ? $counts[$key] : '----' ?> p.
                                 </span>
                             </div>
                         </div>
 
-                        <p class="desc"><?= $info['desc'] ?></p>
+                        <p class="desc"><?= $t['style_' . $key . '_desc'] ?? $info['desc'] ?></p>
                         
                         <form action="<?= ($_ENV['BASE_URL'] ?? '') ?>/cart/add" method="POST" class="card-action-form">
                             <input type="hidden" name="image_id" value="<?= $image['id_Image'] ?>">
                             <button type="submit" name="choice" value="<?= $key ?>" class="btn-select">
-                                Ajouter au panier
+                                <?= $t['review_btn_add'] ?? 'Ajouter au panier' ?>
                             </button>
                         </form>
                     </div>
@@ -116,8 +117,8 @@
         <?php else: ?>
             <div class="empty-state">
                 <div class="alert-box warning">
-                    <p><?= $t['error_no_image'] ?? "Erreur de chargement." ?></p>
-                    <a href="/images" class="btn-retry"><?= $t['btn_retry'] ?? 'Réessayer' ?></a>
+                    <p><?= $t['review_error_no_image'] ?? "Erreur de chargement." ?></p>
+                    <a href="/images" class="btn-retry"><?= $t['review_btn_retry'] ?? 'Réessayer' ?></a>
                 </div>
             </div>
         <?php endif; ?>
