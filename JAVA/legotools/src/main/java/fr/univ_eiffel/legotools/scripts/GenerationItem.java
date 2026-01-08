@@ -18,33 +18,34 @@ public class GenerationItem {
 
     public static void main(String[] args) {
 
-        // // chargement manuel du fichier .env
-        // // assurez-vous de lancer le programme depuis la racine du projet (dossier legotools)
+        // chargement des variables de configuration depuis le fichier .env
         loadEnv(".env");
 
-        // // récupération des variables sans valeur par défaut (comme demandé)
+        // récupération des paramètres de connexion à la base de données
         String host = ENV.get("DB_HOST");
         String dbName = ENV.get("DB_NAME");
         String user = ENV.get("DB_USER");
         String password = ENV.get("DB_PASSWORD");
 
-        // // vérification de sécurité pour éviter les erreurs de connexion nulles
+        // vérification de la présence des informations de l'hôte
         if (host == null) {
             System.err.println("Erreur : DB_HOST manquant dans le fichier .env");
             return;
         }
+        // vérification de la présence du nom de la base de données
         if (dbName == null) {
             System.err.println("Erreur : DB_NAME manquant dans le fichier .env");
             return;
         }
+        // vérification de la présence de l'utilisateur
         if (user == null) {
             System.err.println("Erreur : DB_USER manquant dans le fichier .env");
             return;
         }
-        // // gère le cas où le mot de passe est vide (cas fréquent en local)
+        // gestion du mot de passe vide par défaut
         if (password == null) password = "";
 
-        // // construction de l'url jdbc avec les variables du .env
+        // construction de la chaîne de connexion jdbc
         String url = "jdbc:mysql://" + host + ":3306/" + dbName;
         
         System.out.println("Connexion à la BDD : " + url + " (User: " + user + ")");
@@ -57,9 +58,10 @@ public class GenerationItem {
 
         List<String> piecesLines = new ArrayList<>();
 
-        // // utilisation des variables chargées pour la connexion
+        // connexion et extraction des données via les procédures stockées
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             
+            // récupération et indexation des formes de briques
             try (CallableStatement csShapes = conn.prepareCall("{call get_export_shapes()}");
                  ResultSet rsShapes = csShapes.executeQuery()) {
                 
@@ -69,6 +71,8 @@ public class GenerationItem {
                     shapesList.add(rsShapes.getInt("width") + "-" + rsShapes.getInt("length"));
                 }
             }
+            
+            // récupération et indexation des couleurs disponibles
             try (CallableStatement csColors = conn.prepareCall("{call get_export_colors()}");
                  ResultSet rsColors = csColors.executeQuery()) {
                 
@@ -79,6 +83,7 @@ public class GenerationItem {
                 }
             }
 
+            // extraction des items en stock avec leurs prix
             try (CallableStatement csItems = conn.prepareCall("{call get_export_items_stock()}");
                  ResultSet rsItems = csItems.executeQuery()) {
                 
@@ -98,6 +103,7 @@ public class GenerationItem {
                 }
             }
 
+            // génération du fichier briques.txt pour le module de pavage en c
             try (BufferedWriter writer = new BufferedWriter(new FileWriter("C/input/briques.txt"))) {
                 writer.write(shapesList.size() + " " + colorsList.size() + " " + piecesLines.size());
                 writer.newLine();
@@ -125,26 +131,24 @@ public class GenerationItem {
         }
     }
 
-    // // méthode manquante ajoutée pour parser le fichier .env
+    // lit le fichier .env et remplit la map de configuration
     private static void loadEnv(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                // // ignore les lignes vides ou les commentaires
+                // ignore les lignes vides ou les commentaires
                 if (line.isEmpty() || line.startsWith("#")) continue;
                 
                 String[] parts = line.split("=", 2);
                 if (parts.length >= 2) {
                     ENV.put(parts[0].trim(), parts[1].trim());
                 } else if (parts.length == 1) {
-                    // // gère le cas DB_PASSWORD= (vide)
                     ENV.put(parts[0].trim(), "");
                 }
             }
         } catch (IOException e) {
             System.err.println("Erreur : Impossible de lire le fichier " + filePath);
-            System.err.println("Vérifiez que vous êtes bien dans le dossier 'legotools' lors de l'exécution.");
         }
     }
 }

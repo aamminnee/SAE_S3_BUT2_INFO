@@ -1,18 +1,21 @@
 package fr.univ_eiffel.legotools.model;
 
 public class LegoBrick {
-    // Position (x, y) en pixels/tenons
+    // position x en pixels ou tenons
     private int x;
+    // position y en pixels ou tenons
     private int y;
-    // Dimensions
+    // largeur de la brique
     private int width;
+    // hauteur de la brique
     private int height;
-    // Couleur (Hexadécimal, ex: "FF0000")
+    // couleur hexadécimale de la brique
     private String color;
 
-    // Constructeur vide pour Gson
+    // constructeur par défaut pour la désérialisation
     public LegoBrick() {}
 
+    // constructeur complet pour initialiser une brique
     public LegoBrick(int x, int y, int width, int height, String color) {
         this.x = x;
         this.y = y;
@@ -21,10 +24,22 @@ public class LegoBrick {
         this.color = color;
     }
 
-    // Getters
-    public int getX() { return x; }
-    public int getY() { return y; }
-    public int getWidth() { return width; }
-    public int getHeight() { return height; }
-    public String getColor() { return color; }
+    public int getX() { 
+        return x; 
+    }
+
+    public int getY() { 
+        return y; 
+    }
+
+    public int getWidth() { 
+        return width; 
+    }
+    public int getHeight() { 
+        return height; 
+    }
+
+    public String getColor() { 
+        return color; 
+    }
 }

@@ -6,16 +6,21 @@ import java.util.List;
 import java.util.Map;
 
 public interface LegoFactory {
+    // récupère le solde actuel du compte
     long getBalance() throws IOException;
+    // recharge le compte avec un montant minimum
     void rechargeAccount(long amountNeeded) throws IOException;
     
-    // // modification : la méthode retourne maintenant un objet quote (id + prix)
+    // demande un devis pour une liste d'articles
     Quote requestQuote(Map<String, Integer> items) throws IOException;
     
+    // accepte et paie un devis spécifique
     void acceptQuote(String quoteId) throws IOException;
+    // récupère les briques livrées pour une commande
     List<FactoryBrick> retrieveOrder(String quoteId) throws IOException;
+    // vérifie l'authenticité d'une brique
     boolean verifyBrick(FactoryBrick brick);
 
-    // // définition de l'objet quote directement dans l'interface pour qu'il soit partagé
+    // représente un devis avec son identifiant et son prix total
     record Quote(String id, float price) {}
 }

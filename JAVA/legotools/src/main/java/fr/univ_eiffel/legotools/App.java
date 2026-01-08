@@ -22,6 +22,7 @@ public class App {
 
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
+    // récupère une variable d'environnement depuis le fichier .env ou le système
     private static String getEnv(String key) {
         String value = dotenv.get(key);
         if (value == null) {
@@ -58,6 +59,7 @@ public class App {
         }
     }
 
+    // affiche les instructions d'utilisation de l'application
     private static void printUsage() {
         System.out.println("Usage :");
         System.out.println("  1. Recharger le compte : java -jar legotools.jar refill");
@@ -70,6 +72,7 @@ public class App {
         System.out.println("  8. Achat ciblé : java -jar legotools.jar buy <ref> <qty>");
     }
 
+    // lance la procédure de recharge de crédits pour l'usine
     private static void runRefill() throws IOException {
         var email = getEnv("LEGOFACTORY_EMAIL");
         var key = getEnv("LEGOFACTORY_KEY");
@@ -82,6 +85,7 @@ public class App {
         System.out.println("Nouveau solde : " + refiller.refill());
     }
 
+    // gère le redimensionnement d'une image avec une stratégie choisie
     private static void runResize(String[] args) throws IOException {
         if (args.length < 4) {
             System.out.println("Usage: resize <input> <output> <WxH> [strategy]");
@@ -98,8 +102,7 @@ public class App {
         switch (algo) {
             case "bilinear" -> processor.setStrategy(new BilinearStrategy());
             case "bicubic" -> processor.setStrategy(new BicubicStrategy());
-            case "lanczos" -> processor.setStrategy(new LanczosStrategy()); // // ajout accès direct
-            // // modification ici : on ajoute lanczosstrategy à la liste et on passe à 4 étapes
+            case "lanczos" -> processor.setStrategy(new LanczosStrategy());
             case "stepwise" -> processor.setStrategy(new StepwiseStrategy(List.of(
                 new NearestNeighborStrategy(),
                 new BilinearStrategy(),
@@ -112,6 +115,7 @@ public class App {
         processor.processImage(input, output, w, h);
     }
 
+    // exécute l'algorithme de pavage en appelant le programme externe en c
     private static void runPave(String[] args) throws IOException, InterruptedException {
         if (args.length < 4) {
             System.out.println("Usage: pave <input> <output_prefix> <exe_c> [algo|all]");
@@ -156,6 +160,7 @@ public class App {
         }
     }
 
+    // passe une commande simple auprès de l'usine
     private static void runOrder() {
         var email = getEnv("LEGOFACTORY_EMAIL");
         var key = getEnv("LEGOFACTORY_KEY");
@@ -171,16 +176,13 @@ public class App {
 
             Map<String, Integer> panier = Map.of("2-2/c9cae2", 1);
             
-            // // récupération de l'objet quote (id + prix) pour stockage
             LegoFactory.Quote quote = factory.requestQuote(panier);
             
             factory.acceptQuote(quote.id());
             
-            // // enregistrement correct de la commande en base avec id et prix
             stock.recordFactoryOrder(quote.id(), quote.price(), panier);
             
             System.out.println("Attente livraison...");
-            // // appel mis à jour avec quantité 1
             processDelivery(factory, stock, quote.id(), 1);
 
         } catch (Exception e) {
@@ -188,6 +190,7 @@ public class App {
         }
     }
 
+    // analyse les besoins et commande automatiquement les pièces les plus vendues
     private static void runProactiveOrder() {
         var email = getEnv("LEGOFACTORY_EMAIL");
         var key = getEnv("LEGOFACTORY_KEY");
@@ -225,16 +228,13 @@ public class App {
         
         try {
             System.out.println("Demande de devis pour réapprovisionnement...");
-            // // récupération de l'objet quote avec le prix
             LegoFactory.Quote quote = factory.requestQuote(toOrder);
             
             System.out.println("Validation commande " + quote.id());
             factory.acceptQuote(quote.id());
             
-            // // enregistrement correct de la commande
             stockManager.recordFactoryOrder(quote.id(), quote.price(), toOrder);
             
-            // // calcul du total attendu
             int totalExpected = toOrder.values().stream().mapToInt(Integer::intValue).sum();
             processDelivery(factory, stockManager, quote.id(), totalExpected);
             
@@ -243,16 +243,14 @@ public class App {
         }
     }
     
-    // // méthode mise à jour pour attendre la quantité exacte
+    // attend la livraison complète et vérifie la validité des briques reçues
     private static void processDelivery(HttpRestFactory factory, StockManager stock, String quoteId, int expectedQuantity) throws IOException, InterruptedException {
         List<FactoryBrick> briques = new ArrayList<>();
         
-        // // on boucle tant que la quantité reçue est inférieure à celle commandée
         while (briques.size() < expectedQuantity) {
             briques = factory.retrieveOrder(quoteId);
             
             if (briques.size() < expectedQuantity) {
-                // // affichage de progression
                 System.out.print("\rAttente livraison... (" + briques.size() + "/" + expectedQuantity + ")");
                 Thread.sleep(1000);
             }
@@ -273,6 +271,7 @@ public class App {
         }
     }
 
+    // crée une image à partir d'un fichier de données de pavage existant
     private static void runVisualize(String[] args) throws IOException {
         if (args.length < 3) {
             System.out.println("Usage: visualize <input_txt> <output_png>");
@@ -286,6 +285,7 @@ public class App {
         System.out.println("Visualisation générée : " + outputPath);
     }
 
+    // commande un stock important pour toutes les briques référencées en base
     private static void runFullRestock() {
         var email = getEnv("LEGOFACTORY_EMAIL");
         var key = getEnv("LEGOFACTORY_KEY");
@@ -296,7 +296,6 @@ public class App {
 
         System.out.println("Préparation de la commande massive (75 unités par brique)...");
 
-        // // récupération de tous les types de briques possibles
         List<String> allTypes = stock.getAllBrickTypes();
         
         if (allTypes.isEmpty()) {
@@ -304,7 +303,6 @@ public class App {
             return;
         }
 
-        // // on découpe la commande en lots de 50 pour éviter de tout bloquer sur une erreur
         int BATCH_SIZE = 50;
         Map<String, Integer> currentBatch = new HashMap<>();
         
@@ -319,7 +317,6 @@ public class App {
             }
         }
         
-        // // traiter le reste du dernier lot
         if (!currentBatch.isEmpty()) {
             processBatch(factory, stock, currentBatch);
         }
@@ -327,28 +324,24 @@ public class App {
         System.out.println("Restockage terminé.");
     }
 
-    // // méthode utilitaire pour gérer les erreurs sur un lot
+    // traite une commande par lot et gère les erreurs potentielles sur les références
     private static void processBatch(HttpRestFactory factory, StockManager stock, Map<String, Integer> batch) {
         try {
-            // // tentative de commande en bloc
             LegoFactory.Quote quote = factory.requestQuote(batch);
             factory.acceptQuote(quote.id());
             stock.recordFactoryOrder(quote.id(), quote.price(), batch);
             System.out.println("// Lot de " + batch.size() + " références commandé avec succès.");
             
-            // // calcul du total pour le lot
             int total = batch.values().stream().mapToInt(Integer::intValue).sum();
             processDelivery(factory, stock, quote.id(), total);
             
         } catch (Exception e) {
             System.err.println("// Erreur sur le lot (" + e.getMessage() + "). Filtrage des items invalides...");
             
-            // // en cas d'erreur, on identifie les items valides un par un
             Map<String, Integer> safeBatch = new HashMap<>();
             
             for (Map.Entry<String, Integer> entry : batch.entrySet()) {
                 try {
-                    // // on demande un devis pour un seul item pour vérifier s'il existe
                     factory.requestQuote(Map.of(entry.getKey(), entry.getValue()));
                     safeBatch.put(entry.getKey(), entry.getValue());
                 } catch (Exception ex) {
@@ -356,7 +349,6 @@ public class App {
                 }
             }
             
-            // // si on a trouvé des items valides, on relance la commande pour eux
             if (!safeBatch.isEmpty()) {
                 try {
                     LegoFactory.Quote quote = factory.requestQuote(safeBatch);
@@ -364,7 +356,6 @@ public class App {
                     stock.recordFactoryOrder(quote.id(), quote.price(), safeBatch);
                     System.out.println("// Lot corrigé (" + safeBatch.size() + " références) commandé.");
                     
-                    // // calcul du total pour le lot sécurisé
                     int totalSafe = safeBatch.values().stream().mapToInt(Integer::intValue).sum();
                     processDelivery(factory, stock, quote.id(), totalSafe);
                     
@@ -375,7 +366,7 @@ public class App {
         }
     }
 
-    // // fonction pour acheter une quantité spécifique d'un item donné par sa référence
+    // effectue l'achat d'une brique spécifique en quantité demandée
     private static void runBuy(String[] args) {
         if (args.length < 3) {
             System.out.println("Usage: buy <reference> <quantité>");
@@ -405,19 +396,15 @@ public class App {
             
             Map<String, Integer> itemToOrder = Map.of(reference, quantity);
             
-            // // demande de devis pour cet item spécifique
             LegoFactory.Quote quote = factory.requestQuote(itemToOrder);
             System.out.println("Devis reçu : " + quote.price() + " crédits");
             
-            // // validation de la commande
             factory.acceptQuote(quote.id());
             
-            // // enregistrement dans la base de données
             stock.recordFactoryOrder(quote.id(), quote.price(), itemToOrder);
             
             System.out.println("Commande validée. En attente de livraison...");
             
-            // // réception et ajout au stock avec la quantité
             processDelivery(factory, stock, quote.id(), quantity);
             
         } catch (Exception e) {

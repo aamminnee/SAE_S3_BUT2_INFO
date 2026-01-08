@@ -23,10 +23,10 @@ public class StockManager {
         String dbName = dotenv.get("DB_NAME", "SAE_S3_BUT2_INFO");
         
         this.url = "jdbc:mysql://" + host + ":" + port + "/" + dbName;
-        this.user = dotenv.get("DB_USER", "root");
+        this.user = dotenv.get("DB_USER", "admin");
         this.password = dotenv.get("DB_PASSWORD", "");
         
-        // // initialisation de la table spécifique au composant java
+        // initialisation de la table spécifique au composant java
         initTables();
     }
 

@@ -34,12 +34,14 @@ public class HttpRestFactory implements LegoFactory {
         this.apiKey = apiKey;
     }
 
+    // définit la stratégie de paiement à utiliser
     public void setPaymentStrategy(PaymentStrategy strategy) {
         this.paymentStrategy = strategy;
     }
 
     private final ApiSender apiSender = this::sendRequest;
 
+    // envoie une requête http à l'api de l'usine
     private String sendRequest(String endpoint, String method, String jsonBody) throws IOException {
         URL url = URI.create(BASE_URL + endpoint).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -91,13 +93,10 @@ public class HttpRestFactory implements LegoFactory {
         Map<String, Object> quoteMap = gson.fromJson(response, type);
         
         String id = (String) quoteMap.get("id");
-        
-        // // correction : conversion robuste du prix (string ou nombre)
         Object priceObj = quoteMap.get("price");
         float price = Float.parseFloat(priceObj.toString());
         
-        System.out.println("// devis reçu : " + price + " crédits (id: " + id + ")");
-        // // on retourne le record défini dans l'interface
+        System.out.println("devis reçu : " + price + " crédits (id: " + id + ")");
         return new LegoFactory.Quote(id, price);
     }
 
@@ -107,7 +106,7 @@ public class HttpRestFactory implements LegoFactory {
             sendRequest("/ordering/order/" + quoteId, "POST", null);
         } catch (IOException e) {
             if (e.getMessage().contains("HTTP_402")) {
-                System.out.println("// erreur 402 : solde insuffisant. tentative de rechargement...");
+                System.out.println("erreur 402 : solde insuffisant. tentative de rechargement...");
                 rechargeAccount(1000); 
                 sendRequest("/ordering/order/" + quoteId, "POST", null);
             } else if (e.getMessage().contains("HTTP_404")) {
@@ -133,11 +132,12 @@ public class HttpRestFactory implements LegoFactory {
             sendRequest("/verify", "POST", body);
             return true;
         } catch (IOException e) {
-            System.err.println("// vérification en ligne échouée (" + e.getMessage() + "), tentative hors-ligne...");
+            System.err.println("vérification en ligne échouée (" + e.getMessage() + "), tentative hors-ligne...");
             return verifyBrickOffline(brick);
         }
     }
 
+    // vérifie la signature de la brique sans connexion réseau
     public boolean verifyBrickOffline(FactoryBrick brick) {
         try {
             if (cachedPublicKey == null) {
@@ -166,11 +166,12 @@ public class HttpRestFactory implements LegoFactory {
             return sig.verify(signatureBytes);
 
         } catch (Exception e) {
-            System.err.println("// erreur vérification hors-ligne : " + e.getMessage());
+            System.err.println("erreur vérification hors-ligne : " + e.getMessage());
             return false;
         }
     }
 
+    // récupère la clé publique de l'usine pour la vérification
     private void fetchPublicKey() throws Exception {
         String json = sendRequest("/signature-public-key", "GET", null);
         String keyHex = json.replaceAll("[^a-fA-F0-9]", ""); 
@@ -180,6 +181,7 @@ public class HttpRestFactory implements LegoFactory {
         cachedPublicKey = kf.generatePublic(spec);
     }
 
+    // convertit une chaîne hexadécimale en tableau d'octets
     private byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len / 2];

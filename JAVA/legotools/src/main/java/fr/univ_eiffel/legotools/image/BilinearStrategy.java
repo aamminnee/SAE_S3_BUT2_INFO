@@ -6,12 +6,10 @@ public class BilinearStrategy implements ResolutionStrategy {
     @Override
     public BufferedImage resize(BufferedImage source, int targetWidth, int targetHeight) {
         var output = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
-        // Ratio inverse pour parcourir la source
         double xRatio = (double) (source.getWidth() - 1) / targetWidth;
         double yRatio = (double) (source.getHeight() - 1) / targetHeight;
         for (int y = 0; y < targetHeight; y++) {
             for (int x = 0; x < targetWidth; x++) {
-                // Coordonnées précises dans la source
                 double srcX = x * xRatio;
                 double srcY = y * yRatio;
                 int xBase = (int) srcX;
@@ -29,6 +27,7 @@ public class BilinearStrategy implements ResolutionStrategy {
         return output;
     }
 
+    // calcule la couleur interpolée entre quatre pixels voisins
     private int interpolateColor(int a, int b, int c, int d, double xDiff, double yDiff) {
         int[] rgbA = getRGB(a);
         int[] rgbB = getRGB(b);
@@ -36,8 +35,7 @@ public class BilinearStrategy implements ResolutionStrategy {
         int[] rgbD = getRGB(d);
 
         int[] result = new int[3];
-        for (int i = 0; i < 3; i++) { // pour R, G et B
-            // formule bilinéaire : val = A(1-x)(1-y) + B(x)(1-y) + C(1-x)(y) + D(x)(y)
+        for (int i = 0; i < 3; i++) { 
             double val = 
                 rgbA[i] * (1 - xDiff) * (1 - yDiff) +
                 rgbB[i] * xDiff * (1 - yDiff) +

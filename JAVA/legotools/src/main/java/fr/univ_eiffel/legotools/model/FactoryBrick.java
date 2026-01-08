@@ -6,21 +6,16 @@ import java.util.HexFormat;
 
 public record FactoryBrick(String name, String serial, String certificate) {
 
-    /**
-     * Extrait la couleur du nom (format attendu : "2-2/c9cae2")
-     * Si pas de séparateur, retourne une valeur par défaut ou null.
-     */
+    // extrait la couleur du nom au format hexadécimal
     public String color() {
         if (name != null && name.contains("/")) {
             return name.substring(name.lastIndexOf('/') + 1);
         }
-        // Valeur par défaut si le format est incorrect
+        // retourne noir par défaut si le format est invalide
         return "000000"; 
     }
 
-    /**
-     * Extrait le nom de la forme (ex: "2-2") sans la couleur.
-     */
+    // extrait le nom de la forme sans la partie couleur
     public String shapeName() {
         if (name != null && name.contains("/")) {
             return name.substring(0, name.lastIndexOf('/'));
@@ -28,18 +23,18 @@ public record FactoryBrick(String name, String serial, String certificate) {
         return name;
     }
 
-    // Décodage du numéro de série (128 bits / 16 octets)
+    // décode les informations de date et d'heure depuis le numéro de série
     public String getManufacturingDateInfo() {
-        // Protection contre les chaînes vides ou nulles
+        // vérifie si le numéro de série est présent et assez long
         if (serial == null || serial.length() < 10) return "Date inconnue";
 
         try {
             byte[] bytes = HexFormat.of().parseHex(serial);
             
-            // 2 octets pour le jour (depuis 01/01/2000)
+            // récupère le nombre de jours écoulés depuis le premier janvier deux mille
             int daysSince2000 = ((bytes[0] & 0xFF) << 8) | (bytes[1] & 0xFF);
             
-            // 3 octets pour les millisecondes dans le jour
+            // récupère le nombre de millisecondes écoulées dans la journée
             long msInDay = ((bytes[2] & 0xFF) << 16) | ((bytes[3] & 0xFF) << 8) | (bytes[4] & 0xFF);
 
             LocalDate baseDate = LocalDate.of(2000, 1, 1);
