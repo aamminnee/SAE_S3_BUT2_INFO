@@ -1,4 +1,3 @@
-/* --- 1. CONFIGURATION GLOBALE --- */
 :root {
     --lego-red: #D92328;
     --lego-red-dark: #b31217;
@@ -18,14 +17,12 @@
 
 body {
     background-color: var(--bg-base);
-    /* Texture tenons subtile */
     background-image: radial-gradient(#e2e8f0 2px, transparent 2.5px);
     background-size: 30px 30px;
     font-family: var(--font-body);
     color: var(--text-dark);
 }
 
-/* --- 2. CONTENEUR --- */
 .orders-container {
     max-width: 1000px;
     margin: 0 auto;
@@ -33,7 +30,6 @@ body {
     min-height: calc(100vh - var(--header-height));
 }
 
-/* --- 3. EN-TÊTE DE PAGE --- */
 .btn-home-back {
     display: inline-flex;
     align-items: center;
@@ -67,7 +63,6 @@ body {
     display: block;
 }
 
-/* Soulignement Brique */
 .page-title::after {
     content: '';
     display: block;
@@ -78,17 +73,15 @@ body {
     border-radius: 3px;
 }
 
-/* --- 4. LISTE DES COMMANDES (GRID) --- */
 .orders-list {
     display: flex;
     flex-direction: column;
     gap: 30px;
 }
 
-/* --- 5. CARTE COMMANDE (STYLE MODERNE) --- */
 .order-card {
     display: grid;
-    grid-template-columns: 180px 1fr 200px; /* Image | Infos | Actions */
+    grid-template-columns: 180px 1fr 200px;
     background: white;
     border-radius: 16px;
     overflow: hidden;
@@ -103,7 +96,6 @@ body {
     border-color: var(--lego-blue);
 }
 
-/* ZONE IMAGE (GAUCHE) */
 .order-visual {
     background-color: #f1f5f9;
     display: flex;
@@ -119,7 +111,6 @@ body {
     object-fit: contain;
     max-height: 140px;
     border-radius: 8px;
-    /* Ombre portée sur l'image elle-même */
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
     transition: transform 0.3s;
 }
@@ -136,7 +127,6 @@ body {
     text-align: center;
 }
 
-/* ZONE INFOS (CENTRE) */
 .order-info {
     padding: 25px 30px;
     display: flex;
@@ -167,7 +157,6 @@ body {
     border-radius: 6px;
 }
 
-/* BADGES STATUT */
 .info-status { margin-bottom: 15px; }
 
 .status-badge {
@@ -181,7 +170,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Couleurs dynamiques */
 .status-payée, .status-paid { 
     background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; 
 }
@@ -204,7 +192,6 @@ body {
     margin-left: 5px;
 }
 
-/* ZONE ACTIONS (DROITE) */
 .order-actions {
     background-color: #fcfcfc;
     border-left: 1px solid #e2e8f0;
@@ -228,7 +215,6 @@ body {
     text-align: center;
 }
 
-/* Bouton Détails (Bleu 3D) */
 .btn-details {
     background-color: var(--lego-blue);
     color: white;
@@ -244,7 +230,6 @@ body {
     box-shadow: none;
 }
 
-/* Bouton Facture (Blanc contour) */
 .btn-invoice {
     background-color: white;
     color: var(--text-grey);
@@ -256,7 +241,6 @@ body {
     background-color: #fff5f5;
 }
 
-/* --- 6. EMPTY STATE (VIDE) --- */
 .empty-state {
     text-align: center;
     background: white;
@@ -291,10 +275,9 @@ body {
     box-shadow: 0 6px 0 var(--lego-red-dark);
 }
 
-/* --- RESPONSIVE --- */
 @media (max-width: 900px) {
     .order-card {
-        grid-template-columns: 1fr; /* Empile tout */
+        grid-template-columns: 1fr;
         grid-template-rows: auto auto auto;
     }
 
@@ -308,7 +291,7 @@ body {
     .order-actions {
         border-left: none;
         border-top: 1px solid #e2e8f0;
-        flex-direction: row; /* Boutons côte à côte sur mobile */
+        flex-direction: row;
     }
     .btn-details, .btn-invoice { flex: 1; }
     

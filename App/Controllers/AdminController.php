@@ -7,22 +7,31 @@ use App\Models\UsersModel;
 use App\Models\FinancialModel;
 use App\Models\StockModel;
 
+/**
+ * AdminController
+ * * Manages the back-office (administration panel) of the application.
+ * It handles the main dashboard, global statistics, and supplier/factory order management.
+ * * Access to this controller is strictly restricted to users with the 'admin' role.
+ */
 class AdminController extends Controller {
     private $admin_model;
     private $user_model;
     private $financial_model;
     private $stock_model;
 
+    /**
+     * Constructor
+     * * Initializes the parent controller (session, translations) and loads necessary models.
+     * Performs a security check: redirects non-admin users to the homepage immediately.
+     */
     public function __construct() {
         parent::__construct();
         
-        // 1. Initialisation des modèles
         $this->admin_model = new AdminModel();
         $this->user_model = new UsersModel();
         $this->financial_model = new FinancialModel();
         $this->stock_model = new StockModel();
         
-        // 2. Sécurité : Seul l'admin passe
         if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
             $baseUrl = $_ENV['BASE_URL'] ?? '';
             header("Location: $baseUrl/index.php");
@@ -31,12 +40,16 @@ class AdminController extends Controller {
     }
 
     /**
-     * PAGE D'ACCUEIL DU DASHBOARD (/user/admin ou /admin)
-     * C'est ici qu'on calcule les variables $stats et $lastOrders
+     * Dashboard (Index)
+     * * Gathers Key Performance Indicators (KPIs) for the admin dashboard:
+     * - Total revenue
+     * - Number of orders
+     * - Number of registered users
+     * - Low stock alerts
+     * * It also fetches the latest 5 orders for a quick overview.
      */
     public function index() {
-        // --- ETAPE 1 : Récupérer les Stats (KPIs) ---
-        // On utilise des "ternaires" (?? 0) pour éviter les bugs si la BDD est vide
+
         $stats = [
             'revenue'      => $this->financial_model->getTotalRevenue() ?? 0,
             'orders_count' => $this->financial_model->countOrders() ?? 0,
@@ -44,27 +57,30 @@ class AdminController extends Controller {
             'low_stock'    => $this->stock_model->countLowStockItems(10) ?? 0
         ];
 
-        // --- ETAPE 2 : Récupérer les dernières commandes ---
         $lastOrders = $this->financial_model->getLastOrders(5);
         if (!$lastOrders) {
-            $lastOrders = []; // On assure que ce soit un tableau vide et pas NULL
+            $lastOrders = [];
         }
 
-        // --- ETAPE 3 : Envoyer tout ça à la Vue ---
-        // C'est cette partie qui manquait et causait l'erreur !
         $this->render('admin_views', [
-            'stats' => $stats,           // La variable $stats est envoyée ici
-            'lastOrders' => $lastOrders, // La variable $lastOrders est envoyée ici
-            'css' => 'admin_views.css'         // On charge le CSS pro
+            'stats' => $stats,
+            'lastOrders' => $lastOrders,
+            'css' => 'admin_views.css' 
         ]);
     }
 
-    // --- Page Statistiques détaillées (Menu "Statistiques") ---
     public function stats() {
-        $this->render('admin_stats_views', ['css' => 'admin_stats_views.css']);
+        $this->render('admin_stats_views', [
+            'css' => 'admin_stats_views.css'
+        ]);
     }
 
-    // --- Page Fournisseurs (Menu "Fournisseur") ---
+    /**
+     * Supplier Orders Management
+     * * Retrieves the list of orders sent to the factory (suppliers).
+     * Since the database returns flat rows (one row per item), this method
+     * groups items by 'id_FactoryOrder' to display structured orders in the view.
+     */
     public function supplier() {
         $rawOrders = $this->admin_model->getFactoryOrdersWithDetails();
         

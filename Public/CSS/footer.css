@@ -1,50 +1,43 @@
-/* --- VARIABLES (Rappel pour l'harmonie) --- */
 :root {
     --lego-red: #D92328;
     --lego-yellow: #FFD500;
-    --footer-bg: #1e293b; /* Gris anthracite très foncé (pro) */
-    --footer-text: #94a3b8; /* Gris clair pour le texte */
-    --footer-hover: #ffffff; /* Blanc au survol */
+    --footer-bg: #1e293b;
+    --footer-text: #94a3b8;
+    --footer-hover: #ffffff;
 }
 
-/* --- LE CONTENEUR FOOTER --- */
+
 footer {
     background-color: var(--footer-bg);
     color: var(--footer-text);
     padding: 30px 0;
-    margin-top: auto; /* Pousse le footer tout en bas si la page est courte */
-    
-    /* La touche de marque : Une ligne rouge Lego au sommet */
+    margin-top: auto;
     border-top: 4px solid var(--lego-red);
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
 }
 
-/* --- LE CONTENU CENTRÉ --- */
 .footer-content {
-    max-width: 1200px; /* Même largeur que ton header */
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
-    
     display: flex;
-    justify-content: space-between; /* Copyright à gauche, Liens à droite */
+    justify-content: space-between; 
     align-items: center;
 }
 
-/* --- TEXTE DU COPYRIGHT --- */
 .footer-content p {
     margin: 0;
     font-weight: 500;
     letter-spacing: 0.5px;
 }
 
-/* --- NAVIGATION DU FOOTER --- */
 footer nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
-    gap: 25px; /* Espacement entre les liens */
+    gap: 25px;
     align-items: center;
 }
 
@@ -53,7 +46,6 @@ footer nav li {
     align-items: center;
 }
 
-/* --- LES LIENS --- */
 footer a {
     color: var(--footer-text);
     text-decoration: none;
@@ -63,7 +55,6 @@ footer a {
     padding-bottom: 2px;
 }
 
-/* Effet au survol : Devient blanc avec un soulignement jaune Lego */
 footer a:hover {
     color: var(--footer-hover);
 }
@@ -75,7 +66,7 @@ footer a::after {
     height: 2px;
     bottom: 0;
     left: 0;
-    background-color: var(--lego-yellow); /* Touche de jaune */
+    background-color: var(--lego-yellow);
     transition: width 0.3s ease;
 }
 
@@ -83,17 +74,14 @@ footer a:hover::after {
     width: 100%;
 }
 
-/* --- GITHUB ICON (Optionnel si tu veux styliser le mot "SAE") --- */
-/* Rend le lien un peu plus technique */
 footer nav li {
-    font-family: monospace; /* Look code/dev */
+    font-family: monospace;
     font-size: 0.95rem;
 }
 
-/* --- RESPONSIVE MOBILE --- */
 @media (max-width: 600px) {
     .footer-content {
-        flex-direction: column; /* Empile le texte et les liens */
+        flex-direction: column;
         gap: 15px;
         text-align: center;
     }

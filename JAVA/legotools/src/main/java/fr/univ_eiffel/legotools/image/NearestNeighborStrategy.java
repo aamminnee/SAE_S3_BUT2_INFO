@@ -11,7 +11,7 @@ public class NearestNeighborStrategy implements ResolutionStrategy {
 
         for (int y = 0; y < targetHeight; y++) {
             for (int x = 0; x < targetWidth; x++) {
-                // le pixel correspondant sans interpolation
+                // sélectionne le pixel le plus proche sans calcul intermédiaire
                 int srcX = (int) (x * xRatio);
                 int srcY = (int) (y * yRatio);
                 output.setRGB(x, y, source.getRGB(srcX, srcY));

@@ -5,11 +5,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.Files; // ajout import
-import java.nio.file.StandardCopyOption; // ajout import
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import javax.imageio.ImageIO; // // ajout de l'import manquant pour imageio
+import javax.imageio.ImageIO;
 
 public class PavingService {
 
@@ -24,7 +24,7 @@ public class PavingService {
         if (!outputDir.exists()) outputDir.mkdirs();
     }
 
-    // // signature modifiée pour accepter un fichier de destination pour le txt
+    // lance le programme c pour générer un pavage et retourne l'image résultante
     public BufferedImage generatePaving(BufferedImage sourceImage, String algoName, File destTxtFile) throws IOException, InterruptedException {
         writeImageTxt(sourceImage);
 
@@ -52,14 +52,19 @@ public class PavingService {
             throw new IOException("Le programme C a échoué (Code " + exitCode + ")");
         }
 
-        String resultFileName = "pavage_" + algoName + ".txt";
+        String suffix = algoName;
+        if ("v4_libre".equals(algoName)) {
+            suffix = "v4_forme_libre";
+        }
+        
+        String resultFileName = "pavage_" + suffix + ".txt";
         File resultFile = new File(outputDir, resultFileName);
 
         if (!resultFile.exists()) {
              throw new IOException("Résultat introuvable : " + resultFile.getAbsolutePath());
         }
 
-        // // copie du fichier txt vers la destination si demandée
+        // copie le fichier de données vers la destination spécifiée
         if (destTxtFile != null) {
             Files.copy(resultFile.toPath(), destTxtFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
@@ -68,11 +73,10 @@ public class PavingService {
         return renderPreview(sourceImage.getWidth(), sourceImage.getHeight(), bricks);
     }
 
-    // // méthode publique pour générer une visualisation depuis un fichier texte existant
+    // crée une visualisation png à partir d'un fichier de pavage existant
     public void createVisualization(File inputTxt, File outputPng) throws IOException {
         List<LegoBrick> bricks = parsePavingFile(inputTxt);
         
-        // // calcul des dimensions de l'image en fonction des briques
         int maxX = 0;
         int maxY = 0;
         for (LegoBrick b : bricks) {
@@ -82,7 +86,6 @@ public class PavingService {
             if (bottom > maxY) maxY = bottom;
         }
 
-        // // gestion cas vide
         if (maxX == 0) maxX = 100;
         if (maxY == 0) maxY = 100;
 
@@ -90,6 +93,7 @@ public class PavingService {
         ImageIO.write(image, "png", outputPng);
     }
 
+    // convertit l'image en un fichier texte lisible par le programme c
     private void writeImageTxt(BufferedImage img) throws IOException {
         File file = new File(inputDir, "image.txt");
         try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
@@ -106,6 +110,7 @@ public class PavingService {
         }
     }
 
+    // analyse le fichier de sortie du programme c pour extraire la liste des briques
     private List<LegoBrick> parsePavingFile(File file) throws IOException {
         List<LegoBrick> bricks = new ArrayList<>();
 
@@ -119,7 +124,6 @@ public class PavingService {
                 line = line.trim();
                 if (line.isEmpty()) continue;
 
-                // // ex: "2x2/ff0000 0 0 0" ou "2-2/ff0000 0 0 0"
                 String[] parts = line.split(" ");
                 if (parts.length < 4) continue;
 
@@ -129,7 +133,6 @@ public class PavingService {
                 String dims = typeAndColor[0];
                 String color = typeAndColor[1];
                 
-                // // correction ici : on découpe sur '-' ou sur 'x'
                 String[] dimParts = dims.split("[-x]");
                 if (dimParts.length < 2) continue;
                 
@@ -150,6 +153,7 @@ public class PavingService {
         return bricks;
     }
 
+    // dessine une image de prévisualisation à partir de la liste des briques
     private BufferedImage renderPreview(int width, int height, List<LegoBrick> bricks) {
         int scale = 20;
         if (width > 200) scale = 5;

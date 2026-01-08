@@ -68,7 +68,6 @@
             <tbody>
                 <?php if (isset($items) && !empty($items)): ?>
                     <?php foreach ($items as $item): 
-                        // Gestion hybride objet/tableau
                         $isObj = is_object($item);
                         $price = $isObj ? ($item->price ?? 0) : ($item['price'] ?? 0);
                         $pieces = $isObj ? ($item->pieces ?? 0) : ($item['pieces'] ?? 0);

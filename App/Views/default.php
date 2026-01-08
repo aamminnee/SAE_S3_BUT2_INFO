@@ -29,7 +29,6 @@
 <body>
     
     <?php 
-    // Chargement du fichier PHP du header (la structure HTML)
     if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
         require_once ROOT . '/App/Views/header_admin.php';
     } else {

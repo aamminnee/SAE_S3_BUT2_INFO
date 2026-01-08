@@ -1,16 +1,13 @@
 :root {
-    /* Palette Admin Pro */
-    --bg-admin: #f4f6f8;       /* Fond de page gris très clair */
-    --card-bg: #ffffff;        /* Fond des cartes */
-    --primary: #006CB7;        /* Bleu Lego */
+    --bg-admin: #f4f6f8;       
+    --card-bg: #ffffff;
+    --primary: #006CB7;
     --primary-hover: #005a99;
-    --text-dark: #1e293b;      /* Noir adouci */
-    --text-gray: #64748b;      /* Gris texte */
-    --border-color: #e2e8f0;   /* Bordures subtiles */
-    --danger: #ef4444;         /* Rouge alerte */
-    --success: #10b981;        /* Vert succès */
-    
-    /* Ombres et arrondis */
+    --text-dark: #1e293b;     
+    --text-gray: #64748b;
+    --border-color: #e2e8f0;
+    --danger: #ef4444;
+    --success: #10b981;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     --radius: 12px;
@@ -22,7 +19,6 @@ body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* --- CONTENEUR PRINCIPAL --- */
 .admin-container {
     max-width: 1200px;
     margin: 40px auto;
@@ -40,7 +36,6 @@ body {
     letter-spacing: -0.5px;
 }
 
-/* --- CARTES (Panels) --- */
 .card-admin {
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -61,12 +56,11 @@ body {
     display: inline-block;
 }
 
-/* --- FORMULAIRE MODERNE --- */
 .form-admin {
     display: grid;
-    grid-template-columns: 1fr 1fr auto; /* Layout en ligne sur grand écran */
+    grid-template-columns: 1fr 1fr auto; 
     gap: 20px;
-    align-items: end; /* Aligne le bouton avec les champs */
+    align-items: end;
 }
 
 .form-group {
@@ -99,7 +93,6 @@ body {
     box-shadow: 0 0 0 3px rgba(0, 108, 183, 0.1);
 }
 
-/* Bouton d'action */
 .btn-primary {
     background-color: var(--primary);
     color: white;
@@ -109,7 +102,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
-    height: 45px; /* Pour s'aligner avec les inputs */
+    height: 45px;
 }
 
 .btn-primary:hover {
@@ -117,9 +110,8 @@ body {
     transform: translateY(-1px);
 }
 
-/* --- TABLEAU DE STOCK (Design Pro) --- */
 .table-responsive {
-    overflow-x: auto; /* Scroll horizontal sur mobile */
+    overflow-x: auto;
     border-radius: 8px;
     border: 1px solid var(--border-color);
 }
@@ -157,27 +149,22 @@ body {
 }
 
 .table-stock tr:hover {
-    background-color: #f8fafc; /* Effet de survol subtil */
+    background-color: #f8fafc; 
 }
 
-/* Stylisation de la case couleur */
 .table-stock td div {
-    border-radius: 4px; /* Carré arrondi */
+    border-radius: 4px;
     box-shadow: inset 0 0 2px rgba(0,0,0,0.2);
 }
 
-/* Séparateur (hr) */
 .separator {
     border: 0;
     height: 1px;
     background: var(--border-color);
     margin: 30px 0;
-    display: none; /* Masqué car les cartes font déjà la séparation visuelle */
+    display: none;
 }
 
-/* --- AMÉLIORATIONS TABLEAU ET FILTRES --- */
-
-/* Entête de carte flexible (Titre à gauche, Filtres à droite) */
 .card-header-flex {
     display: flex;
     justify-content: space-between;
@@ -218,7 +205,6 @@ body {
     border-color: var(--primary);
 }
 
-/* Badges de stock (Pastilles colorées) */
 .badge {
     padding: 4px 10px;
     border-radius: 12px;
@@ -236,7 +222,6 @@ body {
     box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
 }
 
-/* --- PAGINATION --- */
 .pagination-container {
     display: flex;
     justify-content: center;
@@ -269,10 +254,9 @@ body {
     font-weight: 500;
 }
 
-/* --- RESPONSIVE --- */
 @media (max-width: 768px) {
     .form-admin {
-        grid-template-columns: 1fr; /* Empile le formulaire sur mobile */
+        grid-template-columns: 1fr;
     }
     
     .btn-primary {

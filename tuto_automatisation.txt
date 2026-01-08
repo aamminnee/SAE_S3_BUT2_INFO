@@ -1,0 +1,10 @@
+pour tester manuellemtn et creer le .log : 
+
+/bin/bash /var/www/html/SAE_S3_BUT2_INFO/automate_lego.sh >> /var/www/html/SAE_S3_BUT2_INFO/automation.log 2>&1
+/bin/bash /var/www/html/SAE_S3_BUT2_INFO/clean_tokens.sh >> /var/www/html/SAE_S3_BUT2_INFO/tokens.log 2>&1
+
+pour l'automatiser : 
+
+crontab -e
+0 */12 * * * /bin/bash /var/www/html/SAE_S3_BUT2_INFO/automate_lego.sh >> /var/www/html/SAE_S3_BUT2_INFO/automation.log 2>&1
+* * * * * /bin/bash /var/www/html/SAE_S3_BUT2_INFO/clean_tokens.sh >> /var/www/html/SAE_S3_BUT2_INFO/tokens.log 2>&1

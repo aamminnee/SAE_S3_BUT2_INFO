@@ -1,10 +1,8 @@
 <?php
-// --- CONFIGURATION DE BASE ---
-// On calcule l'url de base (identique au header classique pour garder la cohérence)
+
 $baseUrl = $_ENV['BASE_URL'] ?? dirname($_SERVER['SCRIPT_NAME']);
 $baseUrl = rtrim($baseUrl, '/\\');
 
-// Vérification de sécurité (optionnelle ici si gérée par le contrôleur)
 $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 ?>
 

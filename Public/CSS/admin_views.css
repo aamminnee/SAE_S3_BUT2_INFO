@@ -1,22 +1,20 @@
 :root {
-    /* --- PALETTE DE COULEURS PRO (SaaS Moderne) --- */
-    --primary: #006CB7;        /* Bleu Lego */
-    --primary-light: #e0f2fe;  /* Bleu très clair (survol) */
-    --secondary: #64748b;      /* Gris froid (textes secondaires) */
-    --accent: #D92328;         /* Rouge Lego (actions/alertes) */
-    --success: #10b981;        /* Vert succès */
-    --success-bg: #d1fae5;     /* Fond vert pâle */
-    --warning: #f59e0b;        /* Orange */
-    --warning-bg: #fef3c7;     /* Fond orange pâle */
+    --primary: #006CB7;  
+    --primary-light: #e0f2fe; 
+    --secondary: #64748b;     
+    --accent: #D92328;     
+    --success: #10b981;     
+    --success-bg: #d1fae5; 
+    --warning: #f59e0b;     
+    --warning-bg: #fef3c7;  
     
-    --bg-body: #f1f5f9;        /* Gris très pâle (fond de page) */
-    --bg-card: #ffffff;        /* Blanc pur (fond des cartes) */
+    --bg-body: #f1f5f9;       
+    --bg-card: #ffffff;      
     
-    --text-main: #1e293b;      /* Noir adouci (plus agréable que #000) */
-    --text-muted: #94a3b8;     /* Gris clair pour les détails */
+    --text-main: #1e293b;    
+    --text-muted: #94a3b8;  
     
-    /* --- ÉLÉMENTS UI --- */
-    --radius: 16px;            /* Arrondis modernes */
+    --radius: 16px;      
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     
@@ -27,11 +25,10 @@ body {
     background-color: var(--bg-body);
     color: var(--text-main);
     font-family: var(--font-main);
-    -webkit-font-smoothing: antialiased; /* Rendu du texte plus net */
+    -webkit-font-smoothing: antialiased;
     margin: 0;
 }
 
-/* --- LAYOUT GÉNÉRAL --- */
 .admin-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -55,12 +52,11 @@ body {
     font-size: 0.95rem;
 }
 
-/* --- SECTION 1 : STATS (KPI) --- */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 24px;
-    margin-bottom: 0; /* On gère l'espacement via la grille du bas ou le séparateur */
+    margin-bottom: 0;
 }
 
 .stat-card {
@@ -81,7 +77,6 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* Bordures colorées à gauche pour identifier les KPI */
 .stat-card:nth-child(1) { border-left: 4px solid var(--primary); }
 .stat-card:nth-child(2) { border-left: 4px solid var(--secondary); }
 .stat-card:nth-child(3) { border-left: 4px solid var(--success); }
@@ -109,28 +104,22 @@ body {
     color: var(--secondary);
 }
 
-/* --- SÉPARATEUR --- */
 .separator {
     border: 0;
     height: 1px;
     background: #cbd5e1;
     opacity: 0.5;
-    margin: 40px 0; /* Garde une marge autour de la ligne */
+    margin: 40px 0;
 }
 
-/* --- SECTION 2 : DASHBOARD (Tableau & Actions) --- */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr; /* 2/3 tableau, 1/3 actions */
+    grid-template-columns: 2fr 1fr;
     gap: 30px;
     align-items: start;
-    
-    /* MODIFICATION ICI : On ajoute une marge supplémentaire au-dessus */
-    /* pour décoller "Dernières Commandes" et "Actions Rapides" des stats */
     margin-top: 50px; 
 }
 
-/* CARTES (Conteneurs blancs) */
 .card-admin {
     background: var(--bg-card);
     border-radius: var(--radius);
@@ -156,7 +145,6 @@ body {
     margin: 0;
 }
 
-/* Bouton "Tout voir" */
 .btn-secondary {
     background-color: transparent;
     color: var(--primary);
@@ -172,7 +160,6 @@ body {
     background-color: var(--primary-light);
 }
 
-/* --- TABLEAU --- */
 .table-responsive {
     overflow-x: auto;
 }
@@ -207,17 +194,15 @@ body {
 }
 
 .admin-table tr:hover td {
-    background-color: #f8fafc; /* Survol ligne tableau */
+    background-color: #f8fafc;
 }
 
-/* Colonne ID */
 .admin-table td:first-child {
     font-family: monospace;
     color: var(--secondary);
     font-weight: 600;
 }
 
-/* BADGES (Statut) */
 .badge {
     padding: 5px 10px;
     border-radius: 20px;
@@ -236,7 +221,6 @@ body {
     color: #92400e;
 }
 
-/* --- ACTIONS RAPIDES (Boutons de droite) --- */
 .quick-actions-list {
     display: flex;
     flex-direction: column;
@@ -288,10 +272,9 @@ body {
     color: var(--secondary);
 }
 
-/* --- RESPONSIVE --- */
 @media (max-width: 1024px) {
     .dashboard-grid {
-        grid-template-columns: 1fr; /* Une seule colonne sur tablette */
+        grid-template-columns: 1fr;
     }
     
     .stats-grid {
@@ -301,7 +284,7 @@ body {
 
 @media (max-width: 600px) {
     .stats-grid {
-        grid-template-columns: 1fr; /* Une seule colonne sur mobile */
+        grid-template-columns: 1fr;
     }
     
     .admin-container {

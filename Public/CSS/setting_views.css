@@ -1,4 +1,3 @@
-/* --- VARIABLES (Cohérence globale) --- */
 :root {
     --lego-red: #D92328;
     --lego-blue: #006CB7;
@@ -9,9 +8,8 @@
     --header-height: 90px;
 }
 
-/* --- CONTENEUR PRINCIPAL --- */
 .settings-container {
-    max-width: 800px; /* Plus étroit que le dashboard pour la lisibilité */
+    max-width: 800px;
     margin: 0 auto;
     padding: 40px 20px;
     font-family: 'Inter', sans-serif;
@@ -20,7 +18,6 @@
     background-color: var(--bg-light);
 }
 
-/* Titre de la page */
 .settings-container h1 {
     text-align: center;
     margin-bottom: 40px;
@@ -30,7 +27,6 @@
     position: relative;
 }
 
-/* Soulignement Lego */
 .settings-container h1::after {
     content: '';
     display: block;
@@ -41,7 +37,6 @@
     border-radius: 2px;
 }
 
-/* --- MESSAGES D'INFO --- */
 .info-msg {
     background-color: #d1fae5;
     color: #065f46;
@@ -59,14 +54,13 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- CARTE DE SECTION (Le bloc blanc) --- */
 .setting-section {
     background: white;
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     border: 1px solid #e2e8f0;
-    margin-bottom: 30px; /* Espace entre les cartes */
+    margin-bottom: 30px;
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -75,7 +69,6 @@
     box-shadow: 0 10px 20px rgba(0,0,0,0.05);
 }
 
-/* Titre de section */
 .setting-section h3 {
     margin-top: 0;
     margin-bottom: 25px;
@@ -88,7 +81,6 @@
     gap: 10px;
 }
 
-/* --- SÉLECTEUR DE LANGUE --- */
 .language-toggle {
     display: flex;
     gap: 15px;
@@ -105,8 +97,6 @@
     transition: all 0.2s;
 }
 
-/* --- SÉCURITÉ (2FA) --- */
-/* ATTENTION : J'utilise .security-toggle au lieu de .2fa-toggle */
 .security-toggle, .two-fa-toggle {
     display: flex;
     justify-content: space-between;
@@ -128,7 +118,6 @@
     margin-left: 5px;
 }
 
-/* --- FORMULAIRE MOT DE PASSE --- */
 .form-group {
     margin-bottom: 20px;
 }
@@ -158,8 +147,6 @@
     box-shadow: 0 0 0 3px rgba(0, 108, 183, 0.15);
 }
 
-/* --- BOUTONS --- */
-/* Style de base pour tous les boutons */
 button, .btn-primary, .btn-warning, .btn-submit {
     cursor: pointer;
     border: none;
@@ -172,7 +159,6 @@ button, .btn-primary, .btn-warning, .btn-submit {
     text-align: center;
 }
 
-/* Bleu (Action standard / Langue) */
 .btn-primary {
     background-color: var(--lego-blue);
     color: white;
@@ -183,7 +169,6 @@ button, .btn-primary, .btn-warning, .btn-submit {
     transform: translateY(-1px);
 }
 
-/* Rouge/Orange (Action sensible / Désactiver) */
 .btn-warning {
     background-color: white;
     color: var(--lego-red);
@@ -194,10 +179,9 @@ button, .btn-primary, .btn-warning, .btn-submit {
     border-color: var(--lego-red);
 }
 
-/* Vert/Bleu foncé (Valider Formulaire) */
 .btn-submit {
     width: 100%;
-    background-color: var(--text-dark); /* Noir/Gris foncé pour changer */
+    background-color: var(--text-dark);
     color: white;
     margin-top: 10px;
 }
@@ -206,7 +190,6 @@ button, .btn-primary, .btn-warning, .btn-submit {
     transform: translateY(-1px);
 }
 
-/* --- RESPONSIVE --- */
 @media (max-width: 600px) {
     .settings-container {
         padding: 20px 15px;

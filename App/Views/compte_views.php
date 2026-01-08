@@ -8,7 +8,6 @@
                 <div class="col-md-6">
                     <h4><?= $t['account_personal_info'] ?? 'Informations Personnelles' ?></h4>
                     <?php 
-                        // // gestion des objets ou tableaux selon le retour du modèle
                         $username = is_object($user) ? $user->username : ($user['username'] ?? '');
                         $email = is_object($user) ? $user->email : ($user['email'] ?? '');
                         $etat = is_object($user) ? $user->etat : ($user['etat'] ?? 'invalide');

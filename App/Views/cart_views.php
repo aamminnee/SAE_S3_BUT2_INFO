@@ -10,13 +10,9 @@
             <p>
                 <?php 
                 $count = is_array($items) ? count($items) : 0;
-                
-                // On prépare les phrases par défaut si la traduction manque
                 $defaultEmpty = "Votre panier est vide.";
                 $defaultCount = "Vous avez %s création(s) en attente.";
-                
                 if ($count > 0) {
-                    // sprintf remplace %s par $count dans la phrase traduite
                     echo sprintf($t['cart_msg_count'] ?? $defaultCount, $count);
                 } else {
                     echo $t['cart_msg_empty'] ?? $defaultEmpty;
@@ -44,13 +40,11 @@
                 
                 <div class="cart-items-list">
                     <?php foreach ($items as $item): 
-                        // Gestion si $item est un objet (BDD) ou array (Session)
                         $i_id = is_object($item) ? $item->id_cart : $item['id_unique'];
                         $i_style = is_object($item) ? $item->style : $item['style'];
                         $i_size = is_object($item) ? $item->size : $item['size'];
                         $i_pieces = is_object($item) ? $item->pieces_count : $item['pieces_count'];
                         $i_price = is_object($item) ? $item->price : $item['price'];
-                        // Pour l'image, on gère les deux cas
                         $imgData = is_object($item) ? base64_encode($item->file) : $item['image_data'];
                         $imgType = is_object($item) ? $item->file_type : $item['image_type'];
                     ?>

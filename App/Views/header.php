@@ -1,9 +1,8 @@
 <?php
-// Vérification de connexion
+
 $isLoggedIn = isset($_SESSION['user_id']);
 $baseUrl = $_ENV['BASE_URL'] ?? '';
 
-// --- LOGIQUE PANIER : Compter les articles ---
 $cartCount = 0;
 if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
     $cartCount = count($_SESSION['cart']);

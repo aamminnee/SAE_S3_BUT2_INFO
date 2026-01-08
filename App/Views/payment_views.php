@@ -1,5 +1,4 @@
 <?php 
-// Sécurité : on s'assure que $cart est un tableau
 $items = isset($cart) ? (array)$cart : [];
 ?>
 

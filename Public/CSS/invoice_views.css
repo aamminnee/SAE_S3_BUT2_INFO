@@ -1,15 +1,11 @@
-/* Public/CSS/invoice_views.css */
-
-/* 1. On s'assure que la page prend tout l'écran */
 body {
     margin: 0;
     padding: 0;
 }
 
-/* Fond global : Flexbox pour centrer parfaitement */
 .invoice-wrapper {
     background-color: #e0e0e0;
-    min-height: 100vh; /* Prend toute la hauteur de l'écran */
+    min-height: 100vh; 
     width: 100%;
     padding-top: 40px;
     padding-bottom: 40px;
@@ -18,17 +14,15 @@ body {
     
     display: flex;
     flex-direction: column;
-    align-items: center; /* C'est ICI que le centrage horizontal se fait */
+    align-items: center;
 }
 
-/* --- BOUTONS --- */
 .invoice-controls {
     width: 100%;
-    max-width: 210mm; /* Largeur A4 */
+    max-width: 210mm;
     display: flex;
     justify-content: space-between;
     margin-bottom: 20px;
-    /* Sécurité pour le centrage si le flex échoue */
     margin-left: auto;
     margin-right: auto;
 }
@@ -49,7 +43,7 @@ body {
 }
 
 .btn-download {
-    background-color: #d01012; /* Rouge Lego */
+    background-color: #d01012;
     color: white;
 }
 
@@ -57,24 +51,19 @@ body {
     background-color: #b00b0d;
 }
 
-/* --- LA FEUILLE (PAPIER) --- */
 .invoice-paper {
     background-color: white;
     width: 100%;
-    max-width: 210mm; /* Largeur standard A4 */
-    min-height: 297mm; /* Hauteur standard A4 */
-    padding: 40px; /* Attention : HTML2PDF peut couper si le padding est trop grand */
-    
-    box-sizing: border-box; /* Important pour que le padding ne dépasse pas */
+    max-width: 210mm;
+    min-height: 297mm; 
+    padding: 40px; 
+    box-sizing: border-box;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     position: relative;
-    
-    /* Sécurité centrage */
     margin-left: auto;
     margin-right: auto;
 }
 
-/* --- HEADER DU PAPIER --- */
 .paper-header {
     display: flex;
     justify-content: space-between;
@@ -105,7 +94,6 @@ body {
     color: #ddd; 
     text-align: right;
     letter-spacing: 2px;
-    /* Ajout d'une marge à droite pour éviter que le "E" soit coupé au PDF */
     padding-right: 5px; 
 }
 
@@ -127,7 +115,6 @@ body {
     margin: 20px 0 40px 0;
 }
 
-/* --- CLIENT --- */
 .client-section {
     margin-bottom: 40px;
 }
@@ -151,7 +138,6 @@ body {
     line-height: 1.5;
 }
 
-/* --- TABLEAU ARTICLES --- */
 .items-table {
     width: 100%;
     border-collapse: collapse;
@@ -177,7 +163,6 @@ body {
 .text-center { text-align: center; }
 .bold { font-weight: bold; }
 
-/* --- TOTAUX --- */
 .totals-section {
     display: flex;
     justify-content: flex-end;
@@ -209,7 +194,6 @@ body {
     color: #d01012;
 }
 
-/* --- PIED DE PAGE PAPIER --- */
 .paper-footer {
     margin-top: 80px;
     text-align: center;

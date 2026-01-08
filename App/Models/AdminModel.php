@@ -18,9 +18,6 @@ class AdminModel extends Model {
     }
 
     public function getFactoryOrdersWithDetails() {
-        // CORRECTION ICI : 
-        // 1. On utilise "fo.price AS total_price" pour que la vue s'y retrouve
-        // 2. On s'assure que la colonne en base est bien 'price' (selon votre code précédent)
         $sql = "
             SELECT 
                 fo.id_FactoryOrder,

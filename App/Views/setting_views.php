@@ -24,7 +24,6 @@
                     <?= $t['settings_2fa_label'] ?? 'Double authentification (2FA) :' ?> 
                     <strong>
                         <?php 
-                            // Traduction dynamique du statut
                             if (($_SESSION['mode'] ?? '') === '2FA') {
                                 echo $t['settings_status_enabled'] ?? 'Activé';
                             } else {

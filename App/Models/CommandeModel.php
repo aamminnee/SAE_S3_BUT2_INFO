@@ -38,12 +38,9 @@ class CommandeModel extends Model {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // C'EST ICI QUE ÇA PLANTAIT SUR LA PAGE "MES COMMANDES"
     public function getCommandeByUserId($userId) {
         $db = Db::getInstance();
         
-        // On utilise une sous-requête pour récupérer UN id_mosaic pour l'aperçu
-        // car maintenant une commande peut en avoir plusieurs.
         $sql = "SELECT 
                     co.id_Order as id_commande,
                     co.order_date as date_commande,

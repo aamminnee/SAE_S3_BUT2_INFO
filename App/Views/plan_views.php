@@ -1,9 +1,6 @@
 <?php
-// Si la variable $t n'existe pas (appel direct ou iframe), on tente de la récupérer
 if (!isset($t) || empty($t)) {
-    // Langue par défaut
     $lang = $_SESSION['lang'] ?? 'fr';
-    // On essaie de charger le modèle de traduction
     if (class_exists('\\App\\Models\\TranslationModel')) {
         $translationModel = new \App\Models\TranslationModel();
         $t = $translationModel->getTranslations($lang);

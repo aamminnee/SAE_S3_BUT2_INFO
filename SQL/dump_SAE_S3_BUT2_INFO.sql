@@ -24,9 +24,10 @@ CREATE TABLE `BankDetails` (
   `id_Bank_Details` int NOT NULL AUTO_INCREMENT,
   `id_Customer` int NOT NULL,
   `bank_name` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
-  `card_number` varchar(16) COLLATE utf8mb4_general_ci NOT NULL,
+  `last_four` varchar(4) COLLATE utf8mb4_general_ci NOT NULL,
   `expire_at` date NOT NULL,
-  `cvc` varchar(3) COLLATE utf8mb4_general_ci NOT NULL,
+  `payment_token` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `card_brand` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
   PRIMARY KEY (`id_Bank_Details`),
   KEY `id_Customer` (`id_Customer`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -11551,12 +11552,6 @@ INSERT INTO `Shapes` (`id_shape`, `width`, `length`, `hole`, `name`) VALUES
 (38, 8, 16, NULL, '8-16'),
 (39, 6, 24, NULL, '6-24'),
 (40, 16, 16, NULL, '16-16');
-
-INSERT INTO `Customer` (`id_Customer`, `password`, `phone`, `id_SaveCustomer`, `etat`, `mode`) VALUES
-(1, '$2y$10$l8IOLlTYzV/r8jM9GWeUP.BpIEqeFHAIq0on3pQrQgOABPTvGLe6G', NULL, 1, 'invalide', NULL);
-
-INSERT INTO `Tokens` (`id_Token`, `id_Customer`, `token`, `types`, `expires_at`) VALUES
-(1, 1, '240475', 'validation', '2026-01-01 19:32:19');
 
 -- --------------------------------------------------------
 -- 3. VUES

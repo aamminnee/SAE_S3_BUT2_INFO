@@ -16,7 +16,6 @@
     
     <div class="admin-card">
         <p><em><?= $t['stats_reminder'] ?? 'Rappel : Pour générer des données, naviguez sur le site en tant que visiteur.' ?></em></p>
-        
         <a href="http://localhost/matomo/index.php?module=CoreHome&action=index&idSite=1&period=day&date=yesterday#?period=day&date=yesterday&category=Dashboard_Dashboard&subcategory=1" target="_blank" class="btn-primary">
             <?= $t['stats_btn_interface'] ?? 'Interface complète Matomo' ?>
         </a>

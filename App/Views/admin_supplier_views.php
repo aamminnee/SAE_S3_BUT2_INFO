@@ -10,7 +10,6 @@
                 $orderInfo = $data['info'];
             ?>
                 <div class="admin-card">
-                    
                     <div class="order-header">
                         <div>
                             <h3>
@@ -54,6 +53,7 @@
                 </div>
             <?php endforeach; ?>
         </div>
+        
     <?php else: ?>
         <div class="admin-card">
             <p><?= $t['supplier_empty'] ?? 'Aucune commande passée à l\'usine pour le moment.' ?></p>

@@ -127,7 +127,6 @@
                 $currentPage = (int)($_GET['page'] ?? 1);
                 $totalPages = $totalPages ?? 1; 
 
-                // Fonction pour reconstruire l'URL en gardant les filtres actuels
                 function getPageLink($page) {
                     $params = $_GET; 
                     $params['page'] = $page; 
@@ -154,7 +153,6 @@
 </div>
 
 <script>
-    // Ce script permet de récupérer l'ID réel quand on sélectionne une option dans la liste
     document.getElementById('item_search').addEventListener('input', function() {
         var val = this.value;
         var opts = document.getElementById('items_list').childNodes;
@@ -162,25 +160,21 @@
         
         for (var i = 0; i < opts.length; i++) {
             if (opts[i].value === val) {
-                // On extrait l'ID (Format supposé: "ID - Label")
                 var id = val.split(' - ')[0];
                 document.getElementById('real_item_id').value = id;
                 found = true;
                 break;
             }
         }
-        // Sécurité : si l'utilisateur vide le champ, on vide l'ID
         if (!found && val === '') {
             document.getElementById('real_item_id').value = '';
         }
     });
 
-    // Validation avant envoi pour être sûr qu'un ID est sélectionné
     document.querySelector('.form-admin').addEventListener('submit', function(e) {
         var id = document.getElementById('real_item_id').value;
         if (!id) {
             e.preventDefault();
-            // Traduction de l'alerte JS via PHP
             alert("<?= $t['stock_js_alert'] ?? 'Veuillez sélectionner une pièce valide dans la liste déroulante.' ?>");
         }
     });

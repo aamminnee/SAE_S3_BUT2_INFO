@@ -22,9 +22,7 @@ public class BicubicStrategy implements ResolutionStrategy {
         return output;
     }
 
-    /**
-     * Fonction de pondération cubique
-     */
+    // définit la fonction de pondération pour l'interpolation cubique
     private double cubicKernel(double t) {
         t = Math.abs(t);
         if (t <= 1) {
@@ -35,9 +33,9 @@ public class BicubicStrategy implements ResolutionStrategy {
         return 0;
     }
 
+    // calcule la valeur d'un pixel en utilisant une grille de 4x4 pixels voisins
     private int getBicubicPixel(BufferedImage img, int xBase, int yBase, double dx, double dy) {
         double r = 0, g = 0, b = 0;
-        // On parcourt la grille 4x4 autour du pixel : m varie de -1 à 2, n varie de -1 à 2
         for (int m = -1; m <= 2; m++) {
             for (int n = -1; n <= 2; n++) {
                 int px = Math.min(Math.max(xBase + m, 0), img.getWidth() - 1);

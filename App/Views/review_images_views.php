@@ -9,7 +9,7 @@
             <div class="flash-success">
                 <?= $_SESSION['success_message'] ?>
             </div>
-            <?php unset($_SESSION['success_message']); // On le supprime après affichage ?>
+            <?php unset($_SESSION['success_message']);?>
         <?php endif; ?>
 
         <?php if (isset($error_msg) && $error_msg): ?>
@@ -51,7 +51,6 @@
             <div class="mosaic-options">
                 
                 <?php 
-                // Tableau de configuration
                 $styles = [
                     'rentabilite'   => ['label' => 'Économique', 'desc' => 'Ce mode est optimisé pour votre portefeuille. L\'algorithme choisit intelligemment les briques les moins chères pour réduire le coût total du projet. En contrepartie, la mosaïque sera légèrement dégradée.', 'color' => 'var(--lego-green)'],
                     'minimisation' => ['label' => 'Classique', 'desc' => 'Le parfait équilibre entre qualité et facilité. Cet algorithme privilégie la fidélité des détails de votre photo tout en utilisant des pièces standards. C\'est le meilleur choix pour un rendu visuel optimal et un montage agréable.', 'color' => 'var(--lego-blue)'],

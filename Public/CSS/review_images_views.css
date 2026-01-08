@@ -1,4 +1,3 @@
-/* --- 1. PALETTE & VARIABLES (Identique) --- */
 :root {
     --lego-red: #D92328;
     --lego-red-dark: #b31217;
@@ -17,7 +16,6 @@
     --header-height: 90px;
 }
 
-/* --- 2. LAYOUT --- */
 .review-wrapper {
     min-height: calc(100vh - var(--header-height));
     background-color: var(--bg-base);
@@ -38,7 +36,6 @@
     width: 100%;
 }
 
-/* --- 3. SECTION HAUT (Split) --- */
 .review-top-section {
     display: flex;
     justify-content: space-between;
@@ -48,12 +45,11 @@
     position: relative;
 }
 
-/* Partie Gauche (Texte + Briques) */
 .header-left {
     flex: 1;
     padding-top: 20px;
     position: relative;
-    text-align: center; /* <--- ON CENTRE TOUT ICI */
+    text-align: center;
 }
 
 .header-left h2 {
@@ -62,7 +58,6 @@
     margin: 0 0 15px 0;
     line-height: 1.1;
     color: var(--text-dark);
-    /* text-align: center; (Hérité du parent, mais on peut le laisser) */
 }
 
 .header-left .subtitle {
@@ -70,54 +65,37 @@
     margin-bottom: 30px;
     color: var(--text-grey);
     max-width: 600px;
-    margin-left: auto;  /* Centrage du bloc texte */
-    margin-right: auto; /* Centrage du bloc texte */
+    margin-left: auto; 
+    margin-right: auto;
 }
 
-/* --- DÉCORATION BRIQUES (CSS PURE) --- */
 .lego-scatter {
     display: flex;
-    justify-content: center; /* <--- CENTRE LES BRIQUES HORIZONTALEMENT */
+    justify-content: center;
     gap: 15px;
     flex-wrap: wrap;
-    margin-top: 20px; /* Un peu plus haut */
+    margin-top: 20px;
     margin-bottom: 30px;
     opacity: 0.9;
 }
 
-/* ... (Le style .brick, .b-2x4 etc. reste identique) ... */
-
-/* ... (Le style .info-bulle si tu l'as ajouté) ... */
-/* Si tu utilises la bulle d'info, ajoute ça pour la centrer aussi : */
-/*
-.info-bulle {
-    margin: 0 auto;
-    text-align: left; 
-}
-*/
-
-/* Style de base d'une brique */
 .brick {
     position: relative;
     height: 30px;
     border-radius: 2px;
-    box-shadow: 3px 3px 0 rgba(0,0,0,0.15); /* Ombre 3D simple */
-    /* Les tenons (petits ronds) faits en CSS */
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.15);
     background-image: radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%);
-    background-size: 15px 15px; /* Taille d'un tenon */
+    background-size: 15px 15px;
 }
 
-/* Tailles */
-.b-2x4 { width: 60px; } /* 4 tenons de large */
-.b-2x2 { width: 30px; } /* 2 tenons de large */
+.b-2x4 { width: 60px; } 
+.b-2x2 { width: 30px; }
 
-/* Couleurs */
 .b-red { background-color: var(--lego-red); }
 .b-blue { background-color: var(--lego-blue); }
 .b-yellow { background-color: var(--lego-yellow); }
 .b-green { background-color: var(--lego-green); }
 
-/* Rotation aléatoire pour faire "vrac" */
 .brick:nth-child(1) { transform: rotate(-5deg); margin-left: 10px; }
 .brick:nth-child(2) { transform: rotate(10deg); margin-top: 10px; }
 .brick:nth-child(3) { transform: rotate(-2deg); margin-left: 20px; }
@@ -125,19 +103,16 @@
 .brick:nth-child(5) { transform: rotate(-10deg); margin-left: 10px; }
 
 
-/* --- 4. POST-IT (DROITE) --- */
 .user-image-preview.post-it-style {
     flex-shrink: 0;
-    background: #fef08a; /* Jaune Post-it */
+    background: #fef08a; 
     padding: 15px 12px 30px 12px;
-    width: 240px; /* Taille moyenne */
-    
-    /* Effet Papier */
+    width: 240px;
     box-shadow: 10px 10px 20px rgba(0,0,0,0.15);
     transform: rotate(3deg);
     position: relative;
     transition: transform 0.3s ease;
-    margin-right: 20px; /* Marge à droite pour ne pas coller au bord */
+    margin-right: 20px;
 }
 
 .user-image-preview.post-it-style:hover {
@@ -177,7 +152,6 @@
     display: block;
 }
 
-/* --- 5. GRILLE OPTIONS (Reste identique) --- */
 .mosaic-options {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -185,7 +159,6 @@
     align-items: stretch;
 }
 
-/* Carte Produit */
 .option-card {
     background: #ffffff;
     border-radius: 20px;
@@ -204,7 +177,6 @@
     box-shadow: 0 25px 50px rgba(0,0,0,0.1);
 }
 
-/* Barre Top */
 .card-top-bar {
     position: absolute;
     top: 0; left: 0; right: 0; height: 8px;
@@ -239,13 +211,13 @@
     filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
 }
 
-/* Stats */
 .card-stats {
     display: flex; justify-content: space-between; align-items: center;
     background-color: #f8fafc;
     border-radius: 12px; padding: 15px; margin-bottom: 20px;
     border: 1px solid #e2e8f0;
 }
+
 .stat-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
 .stat-divider { width: 1px; height: 35px; background-color: #cbd5e1; }
 .stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-grey); font-weight: 700; margin-bottom: 4px; font-family: var(--font-heading); }
@@ -259,7 +231,6 @@
 
 .card-action-form { margin-top: auto; }
 
-/* Bouton */
 .btn-select {
     width: 100%;
     color: white; border: none; padding: 16px; border-radius: 50px;
@@ -288,18 +259,19 @@
     box-shadow: 0 4px 10px rgba(0, 133, 43, 0.2);
     animation: slideDown 0.5s ease;
 }
+
 @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-/* --- RESPONSIVE --- */
 @media (max-width: 900px) {
+
     .review-top-section {
-        flex-direction: column-reverse; /* Texte en bas, Image en haut */
+        flex-direction: column-reverse;
         align-items: center; text-align: center;
         gap: 30px;
     }
+
     .header-left h2 { font-size: 2.5rem; }
     .header-left { padding-top: 0; }
     .header-left .subtitle { margin: 0 auto 30px auto; }
-    
-    .lego-scatter { justify-content: center; } /* Centrer les briques sur mobile */
+    .lego-scatter { justify-content: center; }
     .user-image-preview.post-it-style { margin-right: 0; }
 }

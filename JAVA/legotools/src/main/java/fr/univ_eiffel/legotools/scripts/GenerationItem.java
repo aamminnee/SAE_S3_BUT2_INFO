@@ -1,6 +1,7 @@
 package fr.univ_eiffel.legotools.scripts;
 
-import io.github.cdimascio.dotenv.Dotenv; // Importation de Dotenv
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,31 +14,42 @@ import java.util.Map;
 
 public class GenerationItem {
 
-    // Gestion du fichier .env pour éviter l'erreur "cannot find symbol loadEnv"
-    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-
-    /**
-     * Méthode utilitaire pour récupérer une variable d'environnement.
-     * Cherche d'abord dans le .env, puis dans le système.
-     */
-    private static String getEnv(String key, String defaultValue) {
-        String value = dotenv.get(key);
-        if (value == null) {
-            value = System.getenv(key);
-        }
-        return (value != null) ? value : defaultValue;
-    }
+    private static final Map<String, String> ENV = new HashMap<>();
 
     public static void main(String[] args) {
 
-        // Récupération des paramètres de connexion via getEnv
-        String host = getEnv("DB_HOST", "localhost");
-        String dbName = getEnv("DB_NAME", "SAE_S3_BUT2_INFO");
-        String user = getEnv("DB_USER", "root");
-        String password = getEnv("DB_PASS", "Vh-23f538"); // Mot de passe par défaut fourni
+        // chargement des variables de configuration depuis le fichier .env
+        loadEnv(".env");
 
+        // récupération des paramètres de connexion à la base de données
+        String host = ENV.get("DB_HOST");
+        String dbName = ENV.get("DB_NAME");
+        String user = ENV.get("DB_USER");
+        String password = ENV.get("DB_PASSWORD");
+
+        // vérification de la présence des informations de l'hôte
+        if (host == null) {
+            System.err.println("Erreur : DB_HOST manquant dans le fichier .env");
+            return;
+        }
+        // vérification de la présence du nom de la base de données
+        if (dbName == null) {
+            System.err.println("Erreur : DB_NAME manquant dans le fichier .env");
+            return;
+        }
+        // vérification de la présence de l'utilisateur
+        if (user == null) {
+            System.err.println("Erreur : DB_USER manquant dans le fichier .env");
+            return;
+        }
+        // gestion du mot de passe vide par défaut
+        if (password == null) password = "";
+
+        // construction de la chaîne de connexion jdbc
         String url = "jdbc:mysql://" + host + ":3306/" + dbName;
         
+        System.out.println("Connexion à la BDD : " + url + " (User: " + user + ")");
+
         List<String> shapesList = new ArrayList<>();
         Map<Integer, Integer> shapeIdToIndex = new HashMap<>();
 
@@ -46,9 +58,10 @@ public class GenerationItem {
 
         List<String> piecesLines = new ArrayList<>();
 
+        // connexion et extraction des données via les procédures stockées
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             
-            // 1. Récupération des formes (Shapes)
+            // récupération et indexation des formes de briques
             try (CallableStatement csShapes = conn.prepareCall("{call get_export_shapes()}");
                  ResultSet rsShapes = csShapes.executeQuery()) {
                 
@@ -58,8 +71,8 @@ public class GenerationItem {
                     shapesList.add(rsShapes.getInt("width") + "-" + rsShapes.getInt("length"));
                 }
             }
-
-            // 2. Récupération des couleurs (Colors)
+            
+            // récupération et indexation des couleurs disponibles
             try (CallableStatement csColors = conn.prepareCall("{call get_export_colors()}");
                  ResultSet rsColors = csColors.executeQuery()) {
                 
@@ -70,7 +83,7 @@ public class GenerationItem {
                 }
             }
 
-            // 3. Récupération des items et du stock
+            // extraction des items en stock avec leurs prix
             try (CallableStatement csItems = conn.prepareCall("{call get_export_items_stock()}");
                  ResultSet rsItems = csItems.executeQuery()) {
                 
@@ -90,7 +103,7 @@ public class GenerationItem {
                 }
             }
 
-            // 4. Écriture du fichier briques.txt pour le code C
+            // génération du fichier briques.txt pour le module de pavage en c
             try (BufferedWriter writer = new BufferedWriter(new FileWriter("C/input/briques.txt"))) {
                 writer.write(shapesList.size() + " " + colorsList.size() + " " + piecesLines.size());
                 writer.newLine();
@@ -111,11 +124,31 @@ public class GenerationItem {
                 }
             }
 
-            System.out.println("Succès : briques.txt généré avec succès dans C/input/ !");
+            System.out.println("Succès : briques.txt généré avec les procédures stockées !");
 
         } catch (SQLException | IOException e) {
-            System.err.println("Erreur lors de la génération de briques.txt : " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    // lit le fichier .env et remplit la map de configuration
+    private static void loadEnv(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                // ignore les lignes vides ou les commentaires
+                if (line.isEmpty() || line.startsWith("#")) continue;
+                
+                String[] parts = line.split("=", 2);
+                if (parts.length >= 2) {
+                    ENV.put(parts[0].trim(), parts[1].trim());
+                } else if (parts.length == 1) {
+                    ENV.put(parts[0].trim(), "");
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur : Impossible de lire le fichier " + filePath);
         }
     }
 }

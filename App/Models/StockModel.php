@@ -5,21 +5,19 @@ use App\Core\Model;
 use App\Core\Db;
 use PDO;
 
-class StockModel extends Model
-{
+/**
+ * StockModel
+ * * Manages the inventory of LEGO parts.
+ * * Provides methods to query stock levels, filter items, and update quantities.
+ */
+class StockModel extends Model {
     protected $table = 'Item';
 
-    /**
-     * Récupère le stock avec Pagination et Filtres
-     * C'est la méthode principale pour ton tableau Admin
-     */
-    public function getPaginatedStock($limit, $page, $shapeFilter = null, $colorFilter = null)
-    {
+    public function getPaginatedStock($limit, $page, $shapeFilter = null, $colorFilter = null) {
         $offset = ($page - 1) * $limit;
         $params = [];
         $whereClause = "";
 
-        // Construction dynamique des filtres
         if (!empty($shapeFilter)) {
             $whereClause .= " AND s.name = :shape";
             $params[':shape'] = $shapeFilter;
@@ -29,7 +27,6 @@ class StockModel extends Model
             $params[':color'] = $colorFilter;
         }
 
-        // La grosse requête optimisée
         $sql = "SELECT 
                     i.id_Item, 
                     s.name AS shape_name, 
@@ -54,16 +51,13 @@ class StockModel extends Model
                 ORDER BY s.name, c.name
                 LIMIT :limit OFFSET :offset";
 
-        // On utilise PDO directement pour pouvoir binder LIMIT et OFFSET en INT (crucial)
         $db = Db::getInstance();
         $stmt = $db->prepare($sql);
 
-        // Bind des filtres
         foreach ($params as $key => $val) {
             $stmt->bindValue($key, $val);
         }
 
-        // Bind de la pagination (impératif en INT pour MySQL)
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
 
@@ -71,12 +65,8 @@ class StockModel extends Model
         return $stmt->fetchAll();
     }
 
-    /**
-     * Compte le nombre total de résultats (pour calculer le nombre de pages)
-     * Prend en compte les filtres actifs !
-     */
-    public function countStockItems($shapeFilter = null, $colorFilter = null)
-    {
+
+    public function countStockItems($shapeFilter = null, $colorFilter = null) {
         $params = [];
         $whereClause = "";
 
@@ -95,15 +85,10 @@ class StockModel extends Model
                 JOIN Colors c ON i.color_id = c.id_color
                 WHERE 1=1 $whereClause";
 
-        // Ici on peut utiliser la méthode requete du parent car pas de LIMIT
         $res = $this->requete($sql, $params)->fetch();
         return $res->total;
     }
 
-    /**
-     * Récupère la liste complète pour la Datalist (Recherche rapide)
-     * Optimisé pour ne récupérer que l'essentiel
-     */
     public function getAllItemsForSearch()
     {
         $sql = "SELECT 
@@ -117,24 +102,20 @@ class StockModel extends Model
         return Db::getInstance()->query($sql)->fetchAll();
     }
 
-    // Pour remplir le select de filtres "Formes"
     public function getAllShapes() {
         return Db::getInstance()->query("SELECT DISTINCT name FROM Shapes ORDER BY name")->fetchAll();
     }
 
-    // Pour remplir le select de filtres "Couleurs"
     public function getAllColors() {
         return Db::getInstance()->query("SELECT DISTINCT name FROM Colors ORDER BY name")->fetchAll();
     }
 
-    // Ta méthode d'update inchangée
     public function updateStock($itemId, $quantity){
         $sql = "INSERT INTO StockEntry (id_Item, quantity) VALUES (?, ?)";
         return $this->requete($sql, [$itemId, $quantity]);
     }
 
     public function countLowStockItems($threshold = 10) {
-        // On reprend la logique entrées - sorties
         $sql = "SELECT COUNT(*) as total FROM (
                     SELECT 
                         (IFNULL(e.total_entries, 0) - IFNULL(v.total_sales, 0)) AS current_stock
@@ -150,17 +131,7 @@ class StockModel extends Model
         return $res->total ?? 0;
     }
 
-    /**
-     * Récupère toutes les données nécessaires pour générer briques.txt
-     * (Formes, Couleurs, Prix, Stock Réel)
-     */
-    /**
-     * Récupère les données géométriques précises (width, length, hole)
-     * pour la génération du fichier briques.txt
-     */
-    public function getFullStockDetails()
-    {
-        // AJOUT DE c.id_color
+    public function getFullStockDetails() {
         $sql = "SELECT 
                     s.width, 
                     s.length, 

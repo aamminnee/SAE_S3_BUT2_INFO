@@ -5,6 +5,11 @@ use App\Core\Controller;
 use App\Models\ImagesModel;
 use App\Models\TranslationModel;
 
+/**
+ * ImagesController
+ * * Handles image uploads and retrieval.
+ * * Serves image binaries from the database to the browser.
+ */
 class ImagesController extends Controller {
     private $translations;
 
@@ -51,13 +56,11 @@ class ImagesController extends Controller {
                 exit;
             }
 
-            // lecture binaire
             $imgData = file_get_contents($file['tmp_name']);
             $fileName = $file['name']; // correspond à votre colonne 'filename'
 
             try {
                 $model = new ImagesModel();
-                // appel de la méthode corrigée
                 $imageId = $model->saveCustomerImage($_SESSION['user_id'], $imgData, $fileName, $fileType);
 
                 echo json_encode([
@@ -76,7 +79,6 @@ class ImagesController extends Controller {
     }
 
     public function view($id) {
-        // nettoyage de l'id
         $id = (int)$id;
 
         if ($id <= 0) {
@@ -85,23 +87,18 @@ class ImagesController extends Controller {
         }
 
         $model = new ImagesModel();
-        // récupération de l'image (jointure image + customerimage)
         $image = $model->getImageById($id);
 
-        // si pas d'image trouvée ou pas de données binaires
         if (!$image || empty($image->file)) {
             http_response_code(404);
-            // image par défaut ou vide
             exit;
         }
         if (ob_get_level()) {
             ob_end_clean();
         }
 
-        // on définit le type de contenu (ex: image/png)
         header("Content-Type: " . $image->file_type);
         
-        // on affiche les données brutes
         echo $image->file;
         exit;
     }

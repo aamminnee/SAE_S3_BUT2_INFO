@@ -34,8 +34,6 @@
                         <div class="info-status">
                             <span class="status-badge status-<?= strtolower($c->status) ?>">
                                 <?php 
-                                    // Astuce : On cherche la traduction "status_payée", "status_livrée", etc.
-                                    // Si elle n'existe pas, on affiche le statut brut de la BDD.
                                     $statusKey = 'status_' . mb_strtolower($c->status, 'UTF-8');
                                     echo htmlspecialchars($t[$statusKey] ?? $c->status); 
                                 ?>

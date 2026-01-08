@@ -4,23 +4,22 @@ namespace App\Core;
 use PDO;
 use PDOException;
 
-class Db extends PDO
-{
-    // instance unique de la classe
+/**
+ * Database Connection Class
+ * * Implements the Singleton Pattern to ensure a single database connection.
+ * * Extends PDO for direct database manipulation.
+ */
+class Db extends PDO {
     private static $instance;
 
-    private function __construct()
-    {
-        // récupération des variables du .env
+    private function __construct() {
         $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
         $dbName = $_ENV['DB_NAME'] ?? 'SAE_S3_BUT2_INFO';
         $dbUser = $_ENV['DB_USER'] ?? 'admin';
         $dbPass = $_ENV['DB_PASS'] ?? 'Pokemon.v.5';
 
-        // dsn de connexion
         $_dsn = 'mysql:dbname=' . $dbName . ';host=' . $dbHost;
 
-        // on appelle le constructeur de la classe pdo
         try {
             parent::__construct($_dsn, $dbUser, $dbPass);
             $this->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8');
@@ -31,9 +30,7 @@ class Db extends PDO
         }
     }
 
-    public static function getInstance(): self
-    {
-        // si l'instance n'existe pas, on la crée
+    public static function getInstance(): self {
         if (self::$instance === null) {
             self::$instance = new self();
         }

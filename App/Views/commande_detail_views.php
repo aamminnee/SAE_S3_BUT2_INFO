@@ -1,5 +1,5 @@
 <?php
-// --- 1. LOGIQUE DE SUIVI ---
+
 $dateCommande = new DateTime($commande->order_date);
 $maintenant = new DateTime();
 $interval = $dateCommande->diff($maintenant);
@@ -9,7 +9,6 @@ $statusLivraison = "";
 $progressWidth = "0%";
 $classEtat = "";
 
-// Traduction dynamique des statuts
 if ($joursPasses < 3) {
     $statusLivraison = $t['order_status_prep'] ?? "En préparation / Expédition";
     $progressWidth = "33%";
@@ -24,7 +23,6 @@ if ($joursPasses < 3) {
     $classEtat = "state-delivered"; 
 }
 
-// Sécurité multi-articles
 if (!isset($items) || empty($items)) {
     $items = [ 
         (object)[
