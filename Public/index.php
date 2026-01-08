@@ -4,11 +4,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 2. Affichage des erreurs (Pour le développement)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 use App\Core\Main;
 use Dotenv\Dotenv;
 

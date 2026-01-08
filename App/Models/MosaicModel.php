@@ -33,71 +33,86 @@ class MosaicModel extends Model {
             throw new Exception("Erreur de permissions sur les dossiers input/output.");
         }
 
-        $this->updateBriquesFile($inputDir . '/briques.txt');
-
-        $inputFilename = 'image_' . $idImage . '.' . $extension;
-        $outputFilename = 'image_' . $idImage . '.' . $extension;
-        $inputPath = $inputDir . '/' . $inputFilename;
-        $outputPath = $outputDir . '/' . $outputFilename;
-
-        file_put_contents($inputPath, $blobData);
-        $execName = $projectRoot . '/bin/pavage'; 
-
-        $cmd = sprintf(
-            'cd %s && java -jar %s pave %s %s %s all 2>&1',
-            escapeshellarg($workDir),
-            escapeshellarg($jarPath),
-            escapeshellarg($inputPath),
-            escapeshellarg($outputPath),
-            escapeshellarg($execName)
-        );
-
-        $output = [];
-        $returnCode = 0;
-        exec($cmd, $output, $returnCode);
-
+        $lockFile = $inputDir . '/generation.lock';
+        $lockHandle = fopen($lockFile, 'w+');
         $results = [];
-        $searchPattern = $outputDir . '/image_' . $idImage . '*';
-        $generatedFiles = glob($searchPattern);
 
-        if ($generatedFiles) {
-            foreach ($generatedFiles as $file) {
-                $filename = basename($file);
-                $type = 'default';
-                
-                if (strpos($filename, 'minimisation') !== false) $type = 'minimisation';
-                elseif (strpos($filename, 'rentabilite') !== false || strpos($filename, 'rentable') !== false) $type = 'rentabilite';
-                elseif (strpos($filename, 'stock') !== false) $type = 'stock';
-                elseif (strpos($filename, 'libre') !== false) $type = 'libre';
-                else $type = 'libre'; 
-                if (!isset($results[$type])) {
-                    $results[$type] = ['img' => null, 'txt' => null, 'count' => 0];
-                }
+        if (flock($lockHandle, LOCK_EX)) {
+            try {
+                $this->updateBriquesFile($inputDir . '/briques.txt');
 
-                $info = pathinfo($file);
+                $inputFilename = 'image_' . $idImage . '.' . $extension;
+                $outputFilename = 'image_' . $idImage . '.' . $extension;
+                $inputPath = $inputDir . '/' . $inputFilename;
+                $outputPath = $outputDir . '/' . $outputFilename;
 
-                if (strpos($filename, 'inventory') !== false) {
-                    $content = file_get_contents($file);
-                    if (preg_match('/Total de briques\s*:\s*(\d+)/', $content, $matches)) {
-                        $results[$type]['count'] = (int)$matches[1];
+                file_put_contents($inputPath, $blobData);
+                $execName = $projectRoot . '/bin/pavage'; 
+
+                $cmd = sprintf(
+                    'cd %s && java -jar %s pave %s %s %s all 2>&1',
+                    escapeshellarg($workDir),
+                    escapeshellarg($jarPath),
+                    escapeshellarg($inputPath),
+                    escapeshellarg($outputPath),
+                    escapeshellarg($execName)
+                );
+
+                $execOutput = [];
+                $returnCode = 0;
+                exec($cmd, $execOutput, $returnCode);
+
+                $searchPattern = $outputDir . '/image_' . $idImage . '*';
+                $generatedFiles = glob($searchPattern);
+
+                if ($generatedFiles) {
+                    foreach ($generatedFiles as $file) {
+                        $filename = basename($file);
+                        $type = 'default';
+                        
+                        if (strpos($filename, 'minimisation') !== false) $type = 'minimisation';
+                        elseif (strpos($filename, 'rentabilite') !== false || strpos($filename, 'rentable') !== false) $type = 'rentabilite';
+                        elseif (strpos($filename, 'stock') !== false) $type = 'stock';
+                        elseif (strpos($filename, 'libre') !== false) $type = 'libre';
+                        else $type = 'libre';
+
+                        if (!isset($results[$type])) {
+                            $results[$type] = ['img' => null, 'txt' => null, 'count' => 0];
+                        }
+
+                        $info = pathinfo($file);
+
+                        if (strpos($filename, 'inventory') !== false) {
+                            $content = file_get_contents($file);
+                            if (preg_match('/Total de briques\s*:\s*(\d+)/', $content, $matches)) {
+                                $results[$type]['count'] = (int)$matches[1];
+                            }
+                            @unlink($file);
+                        }
+                        elseif (isset($info['extension']) && $info['extension'] === 'txt') {
+                            $results[$type]['txt'] = file_get_contents($file);
+                            @unlink($file);
+                        }
+                        elseif (isset($info['extension']) && in_array($info['extension'], ['png', 'jpg', 'jpeg'])) {
+                            $imgContent = file_get_contents($file);
+                            if ($imgContent) {
+                                $mime = mime_content_type($file);
+                                $results[$type]['img'] = "data:$mime;base64," . base64_encode($imgContent);
+                            }
+                            @unlink($file);
+                        }
                     }
-                    @unlink($file);
                 }
-                elseif (isset($info['extension']) && $info['extension'] === 'txt') {
-                    $results[$type]['txt'] = file_get_contents($file);
-                    @unlink($file);
-                }
-                elseif (isset($info['extension']) && in_array($info['extension'], ['png', 'jpg', 'jpeg'])) {
-                    $imgContent = file_get_contents($file);
-                    if ($imgContent) {
-                        $mime = mime_content_type($file);
-                        $results[$type]['img'] = "data:$mime;base64," . base64_encode($imgContent);
-                    }
-                    @unlink($file);
-                }
+                @unlink($inputPath);
+
+            } finally {
+                flock($lockHandle, LOCK_UN);
+                fclose($lockHandle);
             }
+        } else {
+            throw new Exception("Impossible d'acquérir le verrou de génération.");
         }
-        @unlink($inputPath);
+
         return $results;
     }
 
