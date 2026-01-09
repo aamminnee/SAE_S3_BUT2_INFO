@@ -1,23 +1,26 @@
-/* --- Header Principal --- */
+:root {
+    --lego-red: #D92328;
+    --lego-blue: #006CB7;
+    --lego-blue-hover: #005596;
+    --lego-yellow: #FFD500;
+    --text-dark: #333;
+    --border-color: #eee;
+}
+
 header {
     background-color: #ffffff;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
-    height: 90px; /* Hauteur augmentée pour accommoder le logo plus grand */
+    height: 90px;
     display: flex;
     align-items: center;
     width: 100%;
-    margin: 0; /* Sécurité anti-espace */
-    padding: 0; /* Sécurité anti-espace */
 }
 
-/* IMPORTANT : Assurez-vous que le body n'a pas de marge dans style.css */
-/* body { margin: 0; padding: 0; } */
-
 .header-container {
-    max-width: 1400px; /* Un peu plus large pour aérer */
+    max-width: 1400px;
     width: 100%;
     margin: 0 auto;
     padding: 0 30px;
@@ -27,15 +30,15 @@ header {
     height: 100%;
 }
 
-/* --- Logo Agrandit --- */
 .logo {
     display: flex;
     align-items: center;
     height: 100%;
+    text-decoration: none;
 }
 
 .logo img {
-    height: 130px;
+    height: 60px;
     width: auto;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -44,19 +47,18 @@ header {
     transform: scale(1.05);
 }
 
-/* --- Navigation --- */
 .main-nav ul {
     list-style: none;
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 20px;
     margin: 0;
     padding: 0;
 }
 
 .nav-link {
     text-decoration: none;
-    color: #333;
+    color: var(--text-dark);
     font-weight: 600;
     font-size: 1rem;
     position: relative;
@@ -64,55 +66,89 @@ header {
     transition: color 0.3s;
 }
 
-.nav-link::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 3px;
-    bottom: 0;
-    left: 0;
-    background-color: #FFD500;
-    transition: width 0.3s ease;
-    border-radius: 2px;
+.nav-link:hover {
+    color: var(--lego-blue);
 }
 
-.nav-link:hover::after {
-    width: 100%;
-}
-
-/* --- Bouton Header (Inscription) --- */
 .btn-header {
-    background-color: #006CB7;
+    background-color: var(--lego-blue);
     color: white;
-    padding: 12px 25px; /* Un peu plus grand */
+    padding: 10px 20px;
     border-radius: 30px;
     text-decoration: none;
     font-weight: 600;
     font-size: 0.95rem;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 108, 183, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-header:hover {
-    background-color: #005596;
+    background-color: var(--lego-blue-hover);
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 108, 183, 0.3);
+    color: white;
 }
 
-/* --- Menu Profil --- */
+.cart-btn {
+    position: relative;
+    padding: 10px 15px;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: var(--lego-red);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.cart-badge.bump {
+    transform: scale(1.5);
+}
+
+.flying-img {
+    position: fixed;
+    z-index: 9999;
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 50%;
+    background: var(--lego-yellow);
+    border: 2px solid white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    pointer-events: none;
+    transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
 .profile-menu {
     position: relative;
     cursor: pointer;
     height: 100%;
     display: flex;
     align-items: center;
+    margin-left: 0px;
 }
 
 .profile-trigger {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 15px;
+    padding: 6px 12px;
     border-radius: 30px;
     transition: background 0.3s;
     border: 1px solid transparent;
@@ -120,12 +156,7 @@ header {
 
 .profile-trigger:hover {
     background-color: #f4f4f4;
-    border-color: #eee;
-}
-
-.profile-trigger span {
-    font-weight: 600;
-    color: #333;
+    border-color: var(--border-color);
 }
 
 .avatar-mini {
@@ -133,27 +164,27 @@ header {
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #eee;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* Menu déroulant */
 .dropdown {
     position: absolute;
-    top: 85px; /* Ajusté par rapport à la nouvelle hauteur du header */
+    top: 100%;
     right: 0;
     background: white;
-    width: 220px;
+    width: 200px;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     opacity: 0;
     visibility: hidden;
     transform: translateY(10px);
     transition: all 0.2s ease;
-    display: block !important;
+    display: flex !important; 
     flex-direction: column !important;
     gap: 0 !important;
     padding: 8px 0 !important;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--border-color);
     z-index: 1100;
 }
 
@@ -165,6 +196,7 @@ header {
 
 .dropdown li {
     width: 100%;
+    margin: 0;
 }
 
 .dropdown a {
@@ -177,32 +209,62 @@ header {
 }
 
 .dropdown a:hover {
-    background-color: #f9f9f9;
-    color: #006CB7;
+    background-color: #f8f9fa;
+    color: var(--lego-blue);
 }
 
 .separator {
     height: 1px;
-    background-color: #eee;
-    margin: 5px 0;
+    background-color: var(--border-color);
+    margin: 5px 0 !important;
 }
 
 .logout-btn:hover {
-    color: #D11013 !important;
+    color: var(--lego-red) !important;
     background-color: #fff5f5 !important;
 }
 
-/* Responsive */
+.lang-switch-container {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.lang-link {
+    text-decoration: none;
+    color: #888;
+    transition: color 0.3s ease;
+    padding: 0 4px;
+}
+
+.lang-link:hover {
+    color: #333;
+}
+
+.lang-link.active {
+    color: #D92328; 
+    font-weight: bold;
+    cursor: default;
+}
+
+.lang-sep {
+    color: #ccc;
+    font-weight: 300;
+    font-size: 0.8rem;
+}
+
 @media (max-width: 768px) {
-    header {
-        height: 70px;
+    .lang-switch-container {
+        justify-content: center;
+        margin: 10px 0;
     }
-    
-    .logo img {
-        height: 50px;
-    }
-    
-    .nav-link span {
-        display: none;
-    }
+}
+
+@media (max-width: 768px) {
+    .header-container { padding: 0 15px; }
+    .logo img { height: 45px; }
+    .profile-trigger span { display: none; }
+    .btn-header { padding: 8px 12px; }
 }

@@ -20,7 +20,7 @@ public class StepwiseStrategy implements ResolutionStrategy {
         double wStep = Math.pow((double)targetWidth / w, 1.0 / steps);
         double hStep = Math.pow((double)targetHeight / h, 1.0 / steps);
         for (int i = 0; i < steps; i++) {
-            // Calcul de la nouvelle taille intermédiaire
+            // définit les dimensions de l'image pour l'étape intermédiaire actuelle
             int nextW = (int) (w * Math.pow(wStep, i + 1));
             int nextH = (int) (h * Math.pow(hStep, i + 1));
             if (i == steps - 1) {

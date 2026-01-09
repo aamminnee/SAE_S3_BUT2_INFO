@@ -1,54 +1,88 @@
 <?php
 $baseUrl = $_ENV['BASE_URL'] ?? '';
-$tr = $t ?? [];
 ?>
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 </head>
-<h1>Recadrer votre image</h1>
 
-<?php if (isset($image) && !empty($image) && isset($image['file'])): ?>
-    <div class="image-container">
-        <img id="image-to-crop" 
-             src="data:<?= $image['file_type'] ?>;base64,<?= base64_encode($image['file']) ?>" 
-             alt="<?= htmlspecialchars($image['filename']) ?>"
-             data-id="<?= $image['id_Image'] ?>"> 
-    </div>
-
-    <aside id="options-panel" class="lego-box">
-        <h3><?= $t['render_options'] ?? 'Settings' ?></h3>
-        
-        <div class="option-group">
-            <label for="size"><?= $t['board_size'] ?? 'Board size (Studs)' ?></label>
-            <select id="size">
-                <option value="32">32 x 32 (Small)</option>
-                <option value="48">48 x 48 (Medium)</option>
-                <option value="64" selected>64 x 64 (Large)</option>
-                <option value="96">96 x 96 (Extra Large)</option>
-                <option value="128">128 x 128 (Jumbo)</option>
-            </select>
-        </div>
-
-        <div class="option-group">
-            <label for="aspect"><?= $t['crop_ratio'] ?? 'Aspect Ratio' ?></label>
-            <select id="aspect">
-                <option value="1" selected><?= $t['ratio_square'] ?? 'Square (1:1)' ?></option>
-                <option value="1.33333"><?= $t['ratio_43'] ?? '4:3' ?></option>
-                <option value="1.77777"><?= $t['ratio_169'] ?? '16:9' ?></option>
-            </select>
-        </div>
-    </aside>
-
-    <div style="text-align:center; margin-top:20px;">
-        <button id="btn-crop" class="btn btn-lego">Valider le recadrage</button>
-    </div>
+<div class="crop-workspace">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <script src="<?= $baseUrl ?>/JS/crop_images.js"></script>
-
-<?php else: ?>
-    <div class="alert alert-warning" style="text-align:center; margin: 20px;">
-        <p>Aucune image trouvée. Veuillez d'abord télécharger une image.</p>
-        <a href="<?= $baseUrl ?>/images" class="btn btn-lego">Uploader une image</a>
+    <div class="workspace-header">
+        <h1><?= $t['crop_title'] ?? 'Recadrer & Configurer' ?></h1>
+        <p><?= $t['crop_subtitle'] ?? 'Sélectionnez la zone à transformer en briques.' ?></p>
     </div>
-<?php endif; ?>
+
+    <?php if (isset($image) && !empty($image) && isset($image['file'])): ?>
+        
+        <div class="crop-interface">
+            
+            <div class="editor-zone">
+                <div class="image-container">
+                    <img id="image-to-crop" 
+                         src="data:<?= $image['file_type'] ?>;base64,<?= base64_encode($image['file']) ?>" 
+                         alt="<?= htmlspecialchars($image['filename']) ?>"
+                         data-id="<?= $image['id_Image'] ?>"> 
+                </div>
+            </div>
+
+            <aside id="options-panel" class="settings-sidebar">
+                <div class="settings-card">
+                    <div class="card-deco-bar"></div>
+
+                    <h3><?= $t['crop_settings_title'] ?? 'Paramètres' ?></h3>
+                    
+                    <div class="option-group">
+                        <label for="size">
+                            <?= $t['crop_label_size'] ?? 'Taille du tableau' ?>
+                        </label>
+                        <div class="select-wrapper">
+                            <select id="size">
+                                <option value="32"><?= $t['crop_size_small'] ?? '32 x 32 (Petit)' ?></option>
+                                <option value="48"><?= $t['crop_size_medium'] ?? '48 x 48 (Moyen)' ?></option>
+                                <option value="64" selected><?= $t['crop_size_large'] ?? '64 x 64 (Grand)' ?></option>
+                                <option value="96"><?= $t['crop_size_xl'] ?? '96 x 96 (Très Grand)' ?></option>
+                                <option value="128"><?= $t['crop_size_giant'] ?? '128 x 128 (Géant)' ?></option>
+                            </select>
+                            <div class="select-arrow">▼</div>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <label for="aspect">
+                            <?= $t['crop_label_aspect'] ?? 'Format (Ratio)' ?>
+                        </label>
+                        <div class="select-wrapper">
+                            <select id="aspect">
+                                <option value="1" selected><?= $t['crop_aspect_square'] ?? 'Carré (1:1)' ?></option>
+                                <option value="1.33333"><?= $t['crop_aspect_landscape'] ?? 'Paysage (4:3)' ?></option>
+                                <option value="1.77777"><?= $t['crop_aspect_cinema'] ?? 'Cinéma (16:9)' ?></option>
+                                <option value="0.75"><?= $t['crop_aspect_portrait'] ?? 'Portrait (3:4)' ?></option>
+                            </select>
+                            <div class="select-arrow">▼</div>
+                        </div>
+                    </div>
+
+                    <div class="action-footer">
+                        <button id="btn-crop" class="btn-validate">
+                            <?= $t['crop_btn_generate'] ?? 'Générer la Mosaïque' ?>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+        <script src="<?= $baseUrl ?>/JS/crop_images.js"></script>
+
+    <?php else: ?>
+        <div class="empty-state">
+            <div class="alert-box">
+                <p><?= $t['crop_error_no_image'] ?? 'Oups, aucune image trouvée.' ?></p>
+                <a href="<?= $baseUrl ?>/images" class="btn-validate"><?= $t['crop_btn_upload'] ?? 'Téléverser une image' ?></a>
+            </div>
+        </div>
+    <?php endif; ?>
+
+</div>

@@ -1,17 +1,16 @@
 package fr.univ_eiffel.legotools.paving;
 
-/**
- * Ce que Java envoie au programme C.
- */
 public class PavingInput {
+    // largeur de l'image à paver
     int width;
+    // hauteur de l'image à paver
     int height;
-    int[][] pixels; // Matrice des couleurs (RGB int)
-    boolean useStock; // Mode strict (stock) ou infini
+    // matrice des couleurs des pixels
+    int[][] pixels; 
+    // indique si l'on doit respecter strictement le stock
+    boolean useStock; 
     
-    // On pourrait ajouter ici la liste du stock disponible
-    // List<StockEntry> stock; 
-
+    // constructeur pour préparer les données de pavage
     public PavingInput(int width, int height, int[][] pixels, boolean useStock) {
         this.width = width;
         this.height = height;

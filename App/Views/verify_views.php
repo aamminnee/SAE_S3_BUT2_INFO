@@ -1,14 +1,27 @@
-<div class="verify-container">
-    <h2>Vérification</h2>
-    <p>Un code a été envoyé à votre adresse email.</p>
-
-    <form action="<?= $_ENV['BASE_URL'] ?>/user/verify" method="POST">
-        <div class="form-group">
-            <label for="token">Code de vérification</label>
-            <input type="text" id="token" name="token" required placeholder="123456">
-        </div>
-        <button type="submit" class="btn-submit">Valider</button>
-    </form>
+<div class="verify-wrapper">
     
-    <p><a href="<?= $_ENV['BASE_URL'] ?>/user/login">Retour à la connexion</a></p>
+    <div class="verify-container">
+        <div class="icon-lock">🔒</div>
+        
+        <h2><?= $t['verify_title'] ?? 'Vérification' ?></h2>
+        <p class="verify-desc"><?= $t['verify_desc'] ?? 'Un code de sécurité a été envoyé à votre adresse email.' ?></p>
+
+        <form action="<?= $_ENV['BASE_URL'] ?>/user/verify" method="POST">
+            <div class="form-group">
+                <input type="text" id="token" name="token" required 
+                       class="code-input" 
+                       placeholder="<?= $t['verify_placeholder_token'] ?? '000000' ?>" 
+                       maxlength="6" 
+                       autocomplete="off">
+            </div>
+            <button type="submit" class="btn-submit"><?= $t['verify_btn_validate'] ?? 'Valider le code' ?></button>
+        </form>
+        
+        <div class="verify-footer">
+            <a href="<?= $_ENV['BASE_URL'] ?>/user/login" class="back-link">
+                <?= $t['verify_link_back'] ?? '&larr; Retour à la connexion' ?>
+            </a>
+        </div>
+    </div>
+
 </div>

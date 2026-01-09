@@ -13,12 +13,13 @@ public class ImageProcessor {
         this.strategy = new NearestNeighborStrategy();
     }
 
+    // définit la stratégie de redimensionnement à utiliser
     public void setStrategy(ResolutionStrategy strategy) {
         this.strategy = strategy;
     }
 
+    // charge une image, applique le traitement et sauvegarde le résultat
     public void processImage(String inputPath, String outputPath, int targetWidth, int targetHeight) throws IOException {
-        // 1. Chargement
         File inputFile = new File(inputPath);
         BufferedImage source = ImageIO.read(inputFile);
         if (source == null) {
