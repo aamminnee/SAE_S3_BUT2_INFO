@@ -1,13 +1,11 @@
 # MyBrickStore
 
-MyBrickStore est une application web permettant de transformer vos photos personnelles en mosaïques LEGO® uniques. Téléversez une image, recadrez-la, choisissez la taille de votre tableau et recevez un plan de montage précis ainsi que la liste des briques nécessaires.
+MyBrickStore est une application web permettant de transformer vos photos personnelles en mosaïques de Briques uniques. Téléversez une image, recadrez-la, choisissez la taille de votre tableau et recevez un plan de montage précis ainsi que la liste des briques nécessaires.
 
 ##  Accès à la version de démonstration
 
 Le site est accessible en ligne à l'adresse suivante :
  **[https://brickstore.alwaysdata.net/MyBrickStore/Public](https://brickstore.alwaysdata.net/MyBrickStore/Public)**
-
-
 
 ##  Note technique : Mesure d'audience
 
