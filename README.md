@@ -7,12 +7,7 @@ MyBrickStore est une application web permettant de transformer vos photos person
 Le site est accessible en ligne à l'adresse suivante :
  **[https://brickstore.alwaysdata.net/MyBrickStore/Public](https://brickstore.alwaysdata.net/MyBrickStore/Public)**
 
-## Accès Administration
 
-Pour tester les fonctionnalités du panneau d'administration (gestion des stocks, commandes, statistiques), utilisez les identifiants suivants :
-
-* **Identifiant :** `admin`
-* **Mot de passe :** `123456789aA!`
 
 ##  Note technique : Mesure d'audience
 
