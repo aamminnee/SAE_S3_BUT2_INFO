@@ -6,19 +6,17 @@ use App\Core\Db;
 use PDO;
 use Exception;
 
+/**
+ * MosaicModel
+ * * Handles the core business logic for Mosaics.
+ */
 class MosaicModel extends Model {
     protected $table = 'Mosaic';
 
-    // Coefficient multiplicateur de marge sur la matière première
     public const MARGIN_COEFF = 2;
-
-    // Frais fixes (emballage, logistique)
     public const HANDLING_FEE = 5.99;
-
-    // Frais de livraison
     public const DELIVERY_FEE = 4.99;
 
-    // // génération des mosaïques (code existant)
     public function generateTemporaryMosaics($idImage, $blobData, $extension) {
         $projectRoot = dirname(__DIR__, 2); 
         $workDir = $projectRoot . '/JAVA/legotools';
@@ -30,78 +28,89 @@ class MosaicModel extends Model {
             throw new Exception("Erreur de permissions sur les dossiers input/output.");
         }
 
-        $inputFilename = 'image_' . $idImage . '.' . $extension;
-        $outputFilename = 'image_' . $idImage . '.' . $extension;
-        $inputPath = $inputDir . '/' . $inputFilename;
-        $outputPath = $outputDir . '/' . $outputFilename;
-
-        file_put_contents($inputPath, $blobData);
-        $execName = $projectRoot . '/bin/pavage'; 
-
-        $cmd = sprintf(
-            'cd %s && java -jar %s pave %s %s %s all 2>&1',
-            escapeshellarg($workDir),
-            escapeshellarg($jarPath),
-            escapeshellarg($inputPath),
-            escapeshellarg($outputPath),
-            escapeshellarg($execName)
-        );
-
-        $output = [];
-        $returnCode = 0;
-        exec($cmd, $output, $returnCode);
-
+        $lockFile = $inputDir . '/generation.lock';
+        $lockHandle = fopen($lockFile, 'w+');
         $results = [];
-        $searchPattern = $outputDir . '/image_' . $idImage . '*';
-        $generatedFiles = glob($searchPattern);
 
-        if ($generatedFiles) {
-            foreach ($generatedFiles as $file) {
-                $filename = basename($file);
-                $type = 'default';
-                
-                // Détection du type
-                if (strpos($filename, 'rupture') !== false) $type = 'rupture';
-                elseif (strpos($filename, 'cheap') !== false || strpos($filename, 'rentable') !== false) $type = 'cheap';
-                elseif (strpos($filename, 'stock') !== false) $type = 'stock';
-                elseif (strpos($filename, 'libre') !== false) $type = 'default'; // 'v4_libre' = default
+        if (flock($lockHandle, LOCK_EX)) {
+            try {
+                $this->updateBriquesFile($inputDir . '/briques.txt');
 
-                if (!isset($results[$type])) {
-                    $results[$type] = ['img' => null, 'txt' => null, 'count' => 0];
-                }
+                $inputFilename = 'image_' . $idImage . '.' . $extension;
+                $outputFilename = 'image_' . $idImage . '.' . $extension;
+                $inputPath = $inputDir . '/' . $inputFilename;
+                $outputPath = $outputDir . '/' . $outputFilename;
 
-                $info = pathinfo($file);
+                file_put_contents($inputPath, $blobData);
+                $execName = $projectRoot . '/bin/pavage'; 
 
-                // CAS 1 : C'est le fichier d'inventaire
-                if (strpos($filename, 'inventory') !== false) {
-                    $content = file_get_contents($file);
-                    // On cherche "Total de briques : X"
-                    if (preg_match('/Total de briques\s*:\s*(\d+)/', $content, $matches)) {
-                        $results[$type]['count'] = (int)$matches[1];
+                $cmd = sprintf(
+                    'cd %s && java -jar %s pave %s %s %s all 2>&1',
+                    escapeshellarg($workDir),
+                    escapeshellarg($jarPath),
+                    escapeshellarg($inputPath),
+                    escapeshellarg($outputPath),
+                    escapeshellarg($execName)
+                );
+
+                $execOutput = [];
+                $returnCode = 0;
+                exec($cmd, $execOutput, $returnCode);
+
+                $searchPattern = $outputDir . '/image_' . $idImage . '*';
+                $generatedFiles = glob($searchPattern);
+
+                if ($generatedFiles) {
+                    foreach ($generatedFiles as $file) {
+                        $filename = basename($file);
+                        $type = 'default';
+                        
+                        if (strpos($filename, 'minimisation') !== false) $type = 'minimisation';
+                        elseif (strpos($filename, 'rentabilite') !== false || strpos($filename, 'rentable') !== false) $type = 'rentabilite';
+                        elseif (strpos($filename, 'stock') !== false) $type = 'stock';
+                        elseif (strpos($filename, 'libre') !== false) $type = 'libre';
+                        else $type = 'libre';
+
+                        if (!isset($results[$type])) {
+                            $results[$type] = ['img' => null, 'txt' => null, 'count' => 0];
+                        }
+
+                        $info = pathinfo($file);
+
+                        if (strpos($filename, 'inventory') !== false) {
+                            $content = file_get_contents($file);
+                            if (preg_match('/Total de briques\s*:\s*(\d+)/', $content, $matches)) {
+                                $results[$type]['count'] = (int)$matches[1];
+                            }
+                            @unlink($file);
+                        }
+                        elseif (isset($info['extension']) && $info['extension'] === 'txt') {
+                            $results[$type]['txt'] = file_get_contents($file);
+                            @unlink($file);
+                        }
+                        elseif (isset($info['extension']) && in_array($info['extension'], ['png', 'jpg', 'jpeg'])) {
+                            $imgContent = file_get_contents($file);
+                            if ($imgContent) {
+                                $mime = mime_content_type($file);
+                                $results[$type]['img'] = "data:$mime;base64," . base64_encode($imgContent);
+                            }
+                            @unlink($file);
+                        }
                     }
-                    @unlink($file); // On supprime après lecture
                 }
-                // CAS 2 : C'est le fichier texte du pavage (PAS l'inventaire)
-                elseif (isset($info['extension']) && $info['extension'] === 'txt') {
-                    $results[$type]['txt'] = file_get_contents($file);
-                    @unlink($file);
-                }
-                // CAS 3 : C'est l'image de prévisualisation
-                elseif (isset($info['extension']) && in_array($info['extension'], ['png', 'jpg', 'jpeg'])) {
-                    $imgContent = file_get_contents($file);
-                    if ($imgContent) {
-                        $mime = mime_content_type($file);
-                        $results[$type]['img'] = "data:$mime;base64," . base64_encode($imgContent);
-                    }
-                    @unlink($file);
-                }
+                @unlink($inputPath);
+
+            } finally {
+                flock($lockHandle, LOCK_UN);
+                fclose($lockHandle);
             }
+        } else {
+            throw new Exception("Impossible d'acquérir le verrou de génération.");
         }
-        @unlink($inputPath);
+
         return $results;
     }
 
-    // // sauvegarde le choix
     public function saveSelectedMosaic($idImage, $content, $type) {
         $db = Db::getInstance();
         $sql = "INSERT INTO Mosaic (pavage, id_Image, generation_date) VALUES (?, ?, NOW())";
@@ -115,7 +124,6 @@ class MosaicModel extends Model {
         return false;
     }
 
-    // // méthode pour visualiser le pavage final via java
     public function getMosaicVisual($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -128,17 +136,13 @@ class MosaicModel extends Model {
 
         $pavageContent = $res['pavage'];
         $projectRoot = dirname(__DIR__, 2);
-        
-        // // définition des chemins conformes à votre demande
         $workDir = $projectRoot . '/JAVA/legotools';
         $inputDir = $workDir . '/C/input';
         $outputDir = $workDir . '/C/output';
         
-        // // création des dossiers si besoin
         if (!is_dir($inputDir)) mkdir($inputDir, 0777, true);
         if (!is_dir($outputDir)) mkdir($outputDir, 0777, true);
 
-        // // nom unique pour éviter les conflits
         $uniqueId = uniqid();
         $txtFilename = 'visual_' . $uniqueId . '.txt';
         $pngFilename = 'visual_' . $uniqueId . '.png';
@@ -146,14 +150,10 @@ class MosaicModel extends Model {
         $inputPath = $inputDir . '/' . $txtFilename;
         $outputPath = $outputDir . '/' . $pngFilename;
 
-        // // 1. écrire le fichier .txt dans l'input java
         file_put_contents($inputPath, $pavageContent);
 
-        // // chemin absolu du jar
         $jarPath = $projectRoot . '/bin/legotools-1.0-SNAPSHOT.jar';
         
-        // // 2. exécuter la commande java visualize
-        // // on se déplace dans java/legotools pour que java trouve ses dépendances si besoin
         $cmd = sprintf(
             'cd %s && java -jar %s visualize %s %s 2>&1',
             escapeshellarg($workDir),
@@ -168,20 +168,16 @@ class MosaicModel extends Model {
 
         $base64Image = null;
 
-        // // 3. lire l'image générée et nettoyer
         if (file_exists($outputPath)) {
             $data = file_get_contents($outputPath);
             if ($data !== false) {
                 $base64Image = 'data:image/png;base64,' . base64_encode($data);
             }
-            // // supprimer le fichier de sortie
             @unlink($outputPath);
         } else {
-            // // debug : afficher l'erreur dans les logs si besoin
             error_log("Erreur Java Visualize: " . implode(" | ", $output));
         }
 
-        // // supprimer le fichier d'entrée
         @unlink($inputPath);
 
         return $base64Image;
@@ -197,7 +193,6 @@ class MosaicModel extends Model {
             return [];
         }
 
-        // On découpe le contenu ligne par ligne
         $lines = explode("\n", $res['pavage']);
         $inventory = [];
 
@@ -205,11 +200,9 @@ class MosaicModel extends Model {
             $line = trim($line);
             if (empty($line)) continue;
             
-            // Format attendu par ligne : "2x4/ff0000 10 20 0"
             $parts = explode(' ', $line);
-            $key = $parts[0]; // ex: "2x4/ff0000"
+            $key = $parts[0];
             
-            // Sécurité : on ignore les lignes qui ne sont pas des briques (ex: entêtes)
             if (strpos($key, '/') === false) continue; 
 
             if (!isset($inventory[$key])) {
@@ -218,13 +211,10 @@ class MosaicModel extends Model {
             $inventory[$key]++;
         }
 
-        // On formate proprement pour la vue
         $finalList = [];
         foreach ($inventory as $key => $count) {
-            // Séparation taille et couleur
             list($size, $color) = explode('/', $key);
             
-            // Ajout du # si manquant pour le CSS
             if ($color[0] !== '#') $color = '#' . $color;
 
             $finalList[] = [
@@ -234,27 +224,20 @@ class MosaicModel extends Model {
             ];
         }
 
-        // Tri : d'abord par taille (décroissant), puis par couleur
         array_multisort(array_column($finalList, 'size'), SORT_DESC, $finalList);
 
         return $finalList;
     }
 
-    // Sauvegarde la composition dans la table de liaison
     public function saveMosaicComposition($idMosaic) {
-        // Récupère la liste des briques
         $bricks = $this->getBricksList($idMosaic);
-        
         if (empty($bricks)) return false;
-
         $db = Db::getInstance();
 
         foreach ($bricks as $brick) {
-            // Trouve l'ID de l'item correspondant
             $idItem = $this->findItemId($brick['size'], $brick['color']);
 
             if ($idItem) {
-                // Insertion dans MosaicComposition
                 $sql = "INSERT IGNORE INTO MosaicComposition (id_Mosaic, id_Item, quantity_needed) VALUES (?, ?, ?)";
                 $stmt = $db->prepare($sql);
                 $stmt->execute([$idMosaic, $idItem, $brick['count']]);
@@ -263,19 +246,16 @@ class MosaicModel extends Model {
         return true;
     }
 
-    // Trouve l'ID de l'item via Jointure
     private function findItemId($size, $hexColor) {
         $db = Db::getInstance();
 
         $cleanHex = str_replace('#', '', $hexColor);
 
-        // Parsing de la taille
         $dims = explode('x', $size);
         if (count($dims) < 2) return null;
         $w = (int)$dims[0];
         $l = (int)$dims[1];
 
-        // Requête avec jointures
         $sql = "SELECT I.id_Item 
                 FROM Item I
                 JOIN Shapes S ON I.shape_id = S.id_shape
@@ -293,7 +273,6 @@ class MosaicModel extends Model {
         return $stmt->fetchColumn(); 
     }
     
-    // Ajout d'une petite méthode utilitaire pour éviter les doublons si on rafraichit la page
     public function hasComposition($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT 1 FROM MosaicComposition WHERE id_Mosaic = ? LIMIT 1");
@@ -301,7 +280,6 @@ class MosaicModel extends Model {
         return (bool)$stmt->fetch();
     }
 
-    // Ajoutez cette méthode à la classe MosaicModel
     public function getMosaicPrice($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -309,7 +287,7 @@ class MosaicModel extends Model {
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$res || empty($res['pavage'])) {
-            return 0.00; // Prix par défaut ou gestion d'erreur
+            return 0.00;
         }
 
         $lines = explode("\n", $res['pavage']);
@@ -323,22 +301,14 @@ class MosaicModel extends Model {
         }
 
         if ($rawCost <= 0) {
-            return 19.99; // Prix par défaut minimum
+            return 19.99;
         }
 
-        // Formule de rentabilité
         $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE;
 
-        // Arrondir
         return floor($finalPrice) + 0.99;
     }
 
-    // App/Models/MosaicModel.php
-
-    /**
-     * Calcule le prix estimé à partir du contenu brut du fichier de pavage.
-     * Utilise la même formule que getMosaicPrice.
-     */
     public function calculatePriceFromContent($pavageContent) {
         if (empty($pavageContent)) return 0.00;
 
@@ -349,19 +319,11 @@ class MosaicModel extends Model {
         $rawCost = (isset($parts[1]) && is_numeric($parts[1])) ? (float)$parts[1] : 0.00;
         if ($rawCost <= 0) return 19.99;
 
-        // Formule : (Coût briques * 2) + 4.99€ d'emballage
-        // Le client voit ça comme le prix du produit
         $finalPrice = ($rawCost * self::MARGIN_COEFF) + self::HANDLING_FEE;
 
         return floor($finalPrice) + 0.99;
     }
 
-    // App/Models/MosaicModel.php
-
-    /**
-     * Compte le nombre de briques à partir du contenu du fichier texte.
-     * Plus fiable que le parsing du fichier inventory séparé.
-     */
     public function countPiecesFromContent($pavageContent) {
         if (empty($pavageContent)) {
             return 0;
@@ -372,13 +334,8 @@ class MosaicModel extends Model {
 
         foreach ($lines as $line) {
             $line = trim($line);
-            // On ignore les lignes vides
             if (empty($line)) continue;
-            
-            // On ignore la ligne de coût ou les en-têtes (qui ne contiennent généralement pas de '/')
-            // Format attendu d'une brique : "2x4/ff0000 10 20 0"
             if (strpos($line, '/') === false) continue;
-
             $count++;
         }
 
@@ -391,25 +348,20 @@ class MosaicModel extends Model {
                 LEFT JOIN CustomerImage i ON m.id_Image = i.id_Image
                 WHERE m.id_Order = ?";
         
-        // --- CORRECTION ICI : 'requete' au lieu de 'query' ---
         $results = $this->requete($sql, [$orderId])->fetchAll();
         
-        // Traitement pour l'affichage (Conversion Blob -> Base64)
         foreach ($results as $row) {
             if (!empty($row->file)) {
                 $row->visuel = "data:" . $row->file_type . ";base64," . base64_encode($row->file);
             } else {
                 $row->visuel = null;
             }
-            // Valeurs par défaut
             $row->size = 64; 
             $row->style = 'Standard';
         }
         
         return $results;
     }
-
-    // Dans App/Models/MosaicModel.php
 
     public function getMosaicGridHtml($idMosaic) {
         $db = \App\Core\Db::getInstance();
@@ -422,11 +374,10 @@ class MosaicModel extends Model {
         $lines = explode("\n", trim($res['pavage']));
         $bricksData = [];
         $maxX = 0; $maxY = 0;
-        $colorToSymbol = []; // Pour associer une couleur à une lettre (A, B, C...)
+        $colorToSymbol = [];
         $symbolIndex = 0;
-        $symbols = range('A', 'Z'); // On utilise des lettres
+        $symbols = range('A', 'Z');
 
-        // 1. Analyse et préparation des symboles
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line) || strpos($line, '/') === false) continue;
@@ -435,66 +386,59 @@ class MosaicModel extends Model {
             $info = explode('/', $parts[0]);
             $color = "#" . $info[1];
             
-            // On assigne un symbole unique par couleur
             if (!isset($colorToSymbol[$color])) {
                 $colorToSymbol[$color] = $symbols[$symbolIndex % 26] . (floor($symbolIndex / 26) ?: '');
                 $symbolIndex++;
             }
 
             $size = explode('x', $info[0]);
-            $w = (int)$size[0]; $h = (int)$size[1];
-            $x = (int)$parts[1]; $y = (int)$parts[2];
+            $w = (int)$size[0]; 
+            $l = (int)$size[1];
+            $x = (int)$parts[1]; 
+            $y = (int)$parts[2];
+            $rot = (int)($parts[3] ?? 0);
 
-            $bricksData[] = ['x' => $x, 'y' => $y, 'w' => $w, 'h' => $h, 'color' => $color, 'symbol' => $colorToSymbol[$color]];
-            if ($x + $w > $maxX) $maxX = $x + $w;
-            if ($y + $h > $maxY) $maxY = $y + $h;
+            $finalW = ($rot == 1) ? $l : $w;
+            $finalH = ($rot == 1) ? $w : $l;
+
+            $bricksData[] = [
+                'x' => $x, 'y' => $y, 'w' => $finalW, 'h' => $finalH, 
+                'color' => $color, 'symbol' => $colorToSymbol[$color]
+            ];
+
+            if ($x + $finalW > $maxX) $maxX = $x + $finalW;
+            if ($y + $finalH > $maxY) $maxY = $y + $finalH;
         }
 
-        // 2. Création de la grille
-        $grid = array_fill(0, $maxY, array_fill(0, $maxX, ['color' => '#ffffff', 'symbol' => '']));
-        foreach ($bricksData as $b) {
-            for ($i = 0; $i < $b['h']; $i++) {
-                for ($j = 0; $j < $b['w']; $j++) {
-                    if (isset($grid[$b['y'] + $i][$b['x'] + $j])) {
-                        $grid[$b['y'] + $i][$b['x'] + $j] = ['color' => $b['color'], 'symbol' => $b['symbol']];
-                    }
-                }
-            }
-        }
-
-        // 3. Génération du HTML compact
-        // On utilise des unités 'pt' pour que la taille soit fixe sur le PDF
-        $cellSize = '10pt'; 
-        $html = '<div style="display: inline-grid; grid-template-columns: repeat('.$maxX.', '.$cellSize.'); border: 2px solid #333; line-height: 0;">';
+        $scale = 12; 
+        $html = '<div style="position: relative; width: '.($maxX * $scale).'pt; height: '.($maxY * $scale).'pt; background: #ffffff; border: 1pt solid #333;">';
         
-        foreach ($grid as $row) {
-            foreach ($row as $cell) {
-                $html .= '<div style="
-                    width:'.$cellSize.'; 
-                    height:'.$cellSize.'; 
-                    background:'.$cell['color'].'; 
-                    border:0.1pt solid rgba(0,0,0,0.2); 
-                    display:flex; 
-                    align-items:center; 
-                    justify-content:center; 
-                    font-size:5pt; 
-                    font-weight:bold; 
-                    color: rgba(0,0,0,0.5);
-                    box-sizing: border-box;
-                ">'.$cell['symbol'].'</div>';
-            }
+        foreach ($bricksData as $b) {
+            $html .= '<div style="
+                position: absolute;
+                left: '.($b['x'] * $scale).'pt;
+                top: '.($b['y'] * $scale).'pt;
+                width: '.($b['w'] * $scale).'pt;
+                height: '.($b['h'] * $scale).'pt;
+                background-color: '.$b['color'].';
+                border: 0.2pt solid rgba(0,0,0,0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 6pt;
+                font-weight: bold;
+                color: rgba(0,0,0,0.5);
+                box-sizing: border-box;
+                overflow: hidden;
+            ">'.$b['symbol'].'</div>';
         }
         $html .= '</div>';
 
         return ['html' => $html, 'legend' => $colorToSymbol];
     }
 
-    // Dans App/Models/MosaicModel.php
-
-    // Ajoute ceci dans App/Models/MosaicModel.php
-
     public function getMosaicPlanData($idMosaic) {
-        $db = \App\Core\Db::getInstance();
+        $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
         $stmt->execute([$idMosaic]);
         $res = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -502,8 +446,11 @@ class MosaicModel extends Model {
         if (!$res || empty($res['pavage'])) return null;
 
         $lines = explode("\n", trim($res['pavage']));
+        
         $bricks = [];
-        $maxX = 0; $maxY = 0;
+        $maxX = 0; 
+        $maxY = 0;
+        
         $colorToSymbol = [];
         $symbols = range('A', 'Z');
         $symbolIndex = 0;
@@ -514,25 +461,37 @@ class MosaicModel extends Model {
 
             $parts = preg_split('/\s+/', $line);
             $info = explode('/', $parts[0]);
-            $color = "#" . $info[1];
             
-            // Attribution d'une lettre unique par couleur
-            if (!isset($colorToSymbol[$color])) {
-                $colorToSymbol[$color] = $symbols[$symbolIndex % 26] . (floor($symbolIndex / 26) ?: '');
+            $colorHex = "#" . $info[1];
+            
+            if (!isset($colorToSymbol[$colorHex])) {
+                $suffix = floor($symbolIndex / 26) > 0 ? floor($symbolIndex / 26) : '';
+                $colorToSymbol[$colorHex] = $symbols[$symbolIndex % 26] . $suffix;
                 $symbolIndex++;
             }
 
             $size = explode('x', $info[0]);
-            $w = (int)$size[0]; $h = (int)$size[1];
-            $x = (int)$parts[1]; $y = (int)$parts[2];
+            $w = (int)$size[0];
+            $h = (int)$size[1];
+            
+            $x = (int)$parts[1]; 
+            $y = (int)$parts[2];
+            $rot = (int)($parts[3] ?? 0);
+
+            $finalW = ($rot == 1) ? $h : $w;
+            $finalH = ($rot == 1) ? $w : $h;
 
             $bricks[] = [
-                'x' => $x, 'y' => $y, 'w' => $w, 'h' => $h, 
-                'color' => $color, 'symbol' => $colorToSymbol[$color]
+                'x' => $x,
+                'y' => $y,
+                'w' => $finalW,
+                'h' => $finalH,
+                'color' => $colorHex,
+                'symbol' => $colorToSymbol[$colorHex]
             ];
 
-            if ($x + $w > $maxX) $maxX = $x + $w;
-            if ($y + $h > $maxY) $maxY = $y + $h;
+            if ($x + $finalW > $maxX) $maxX = $x + $finalW;
+            if ($y + $finalH > $maxY) $maxY = $y + $finalH;
         }
 
         return [
@@ -541,5 +500,77 @@ class MosaicModel extends Model {
             'bricks' => $bricks,
             'legend' => $colorToSymbol
         ];
+    }
+
+    private function updateBriquesFile($filePath) {
+        $stockModel = new StockModel();
+        $items = $stockModel->getFullStockDetails(); 
+
+        $shapesList = [];
+        $colorsList = [];
+        
+        $shapeMap = []; 
+        $colorMap = []; 
+
+        $brickLines = [];
+
+        foreach ($items as $item) {
+            $shapeDef = $item['width'] . '-' . $item['length'];
+            if (!empty($item['hole'])) {
+                $shapeDef .= '-' . $item['hole'];
+            }
+
+            if (!isset($shapeMap[$shapeDef])) {
+                $shapeMap[$shapeDef] = count($shapesList);
+                $shapesList[] = $shapeDef;
+            }
+            $sIdx = $shapeMap[$shapeDef];
+
+            $cId = $item['id_color'];
+            $cHex = str_replace('#', '', $item['hex_color']);
+
+            if (!isset($colorMap[$cId])) {
+                $colorMap[$cId] = count($colorsList);
+                $colorsList[] = $cHex; 
+            }
+            $cIdx = $colorMap[$cId];
+
+            $price = $item['price'];
+            $qty = max(0, intval($item['current_stock']));
+            
+            $brickLines[] = "$sIdx/$cIdx $price $qty";
+        }
+        
+        $content = "";
+        
+        $content .= count($shapesList) . " " . count($colorsList) . " " . count($brickLines) . "\n";
+
+        foreach ($shapesList as $s) {
+            $content .= "$s\n";
+        }
+
+        foreach ($colorsList as $c) {
+            $content .= "$c\n";
+        }
+
+        foreach ($brickLines as $line) {
+            $content .= "$line\n";
+        }
+
+        file_put_contents($filePath, $content);
+    }
+
+    public function deductStockFromMosaic($idMosaic) {
+        $stockModel = new StockModel();
+
+        $sql = "SELECT id_Item, quantity_needed FROM MosaicComposition WHERE id_Mosaic = ?";
+        $items = $this->requete($sql, [$idMosaic])->fetchAll();
+        
+        if (!$items) return;
+
+        foreach ($items as $item) {
+            $qtyToRemove = -1 * abs($item->quantity_needed);
+            $stockModel->updateStock($item->id_Item, $qtyToRemove);
+        }
     }
 }

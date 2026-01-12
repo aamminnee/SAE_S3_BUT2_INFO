@@ -1,20 +1,23 @@
 <div class="admin-container">
-    <h1>Mesure d'audience (Statistiques)</h1>
+    <h1><?= $t['stats_page_title'] ?? 'Mesure d\'audience (Statistiques)' ?></h1>
     
     <div class="admin-card">
-        <h3>Tableau de bord Matomo (Local)</h3>
-        <p>Données de fréquentation hébergées localement.</p>
+        <h3><?= $t['stats_dashboard_title'] ?? 'Tableau de bord Matomo (Local)' ?></h3>
+        
+        <p><?= $t['stats_dashboard_desc'] ?? 'Données de fréquentation hébergées localement.' ?></p>
         
         <div class="stats-placeholder">
             <iframe 
-                style="width: 100%; height: 600px; border: 0;" 
-                src="http://localhost/SAE_S3_BUT2_INFO/matomo/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=1&period=day&date=today"
+                style="width: 100%; height: 800px; border: 0; overflow: hidden;" 
+                src="http://localhost/matomo/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=1&period=day&date=yesterday"
             ></iframe>
         </div>
     </div>
     
     <div class="admin-card">
-        <p><em>Rappel : Pour générer des données, naviguez sur le site en tant que visiteur.</em></p>
-        <a href="http://localhost/SAE_S3_BUT2_INFO/matomo/" target="_blank" class="btn-primary">Interface complète Matomo</a>
+        <p><em><?= $t['stats_reminder'] ?? 'Rappel : Pour générer des données, naviguez sur le site en tant que visiteur.' ?></em></p>
+        <a href="http://localhost/matomo/index.php?module=CoreHome&action=index&idSite=1&period=day&date=yesterday#?period=day&date=yesterday&category=Dashboard_Dashboard&subcategory=1" target="_blank" class="btn-primary">
+            <?= $t['stats_btn_interface'] ?? 'Interface complète Matomo' ?>
+        </a>
     </div>
 </div>

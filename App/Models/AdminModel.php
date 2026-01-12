@@ -8,7 +8,6 @@ use PDO;
 class AdminModel extends Model {
     protected $db;
 
-    // // constructeur pour la connexion bdd
     public function __construct() {
         if (method_exists(parent::class, '__construct')) {
             parent::__construct();
@@ -18,14 +17,12 @@ class AdminModel extends Model {
         }
     }
 
-    // // récupère les commandes usine avec les détails des articles
     public function getFactoryOrdersWithDetails() {
-        // // on joint les tables factoryorder, details, item, shapes et colors
         $sql = "
             SELECT 
                 fo.id_FactoryOrder,
                 fo.order_date,
-                fo.total_price,
+                fo.total_price, 
                 fod.quantity,
                 i.id_Item,
                 s.name AS shape_name,
@@ -38,13 +35,6 @@ class AdminModel extends Model {
             ORDER BY fo.order_date DESC, fo.id_FactoryOrder
         ";
         
-        $stmt = $this->db->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
-    }
-
-    // // garde cette méthode si utilisée ailleurs (stats, etc)
-    public function getAllStock() {
-        $sql = "SELECT * FROM View_StockStatus"; // // ou votre requête habituelle
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }

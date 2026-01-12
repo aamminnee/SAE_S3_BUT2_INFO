@@ -11,6 +11,7 @@
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/model/FactoryBrick.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/model/LegoBrick.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/factory/impl/PoWPaymentStrategy.java
+/var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/scripts/PriceUpdater.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/factory/api/ApiSender.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/image/BilinearStrategy.java
 /var/www/html/SAE_S3_BUT2_INFO/JAVA/legotools/src/main/java/fr/univ_eiffel/legotools/image/LanczosStrategy.java

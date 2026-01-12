@@ -5,6 +5,11 @@ use App\Core\Controller;
 use App\Models\ImagesModel;
 use App\Models\TranslationModel;
 
+/**
+ * ImagesController
+ * * Handles image uploads and retrieval.
+ * * Serves image binaries from the database to the browser.
+ */
 class ImagesController extends Controller {
     private $translations;
 
@@ -68,14 +73,14 @@ class ImagesController extends Controller {
                 exit;
             }
 
-            // // lecture binaire du fichier
             $imgData = file_get_contents($file['tmp_name']);
-            $fileName = $file['name']; 
+            $fileName = $file['name'];
 
             try {
                 $model = new ImagesModel();
-                // // sauvegarde de l'image en base de données
                 $imageId = $model->saveCustomerImage($_SESSION['user_id'], $imgData, $fileName, $fileType);
+
+                $_SESSION['can_crop'] = true;
 
                 echo json_encode([
                     'status' => 'success', 
@@ -94,7 +99,6 @@ class ImagesController extends Controller {
 
     // méthode pour afficher l'image brute depuis la bdd
     public function view($id) {
-        // nettoyage de l'id pour la sécurité
         $id = (int)$id;
 
         if ($id <= 0) {
@@ -103,10 +107,8 @@ class ImagesController extends Controller {
         }
 
         $model = new ImagesModel();
-        // récupération de l'image
         $image = $model->getImageById($id);
 
-        // si l'image n'existe pas ou est vide
         if (!$image || empty($image->file)) {
             http_response_code(404);
             exit;
@@ -117,10 +119,8 @@ class ImagesController extends Controller {
             ob_end_clean();
         }
 
-        // définition du header content-type correct
         header("Content-Type: " . $image->file_type);
         
-        // affichage des données binaires
         echo $image->file;
         exit;
     }

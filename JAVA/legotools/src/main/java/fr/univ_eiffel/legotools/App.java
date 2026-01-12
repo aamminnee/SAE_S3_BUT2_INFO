@@ -7,6 +7,8 @@ import fr.univ_eiffel.legotools.factory.impl.HttpRestFactory;
 import fr.univ_eiffel.legotools.model.FactoryBrick;
 import fr.univ_eiffel.legotools.image.*;
 import fr.univ_eiffel.legotools.paving.PavingService;
+import fr.univ_eiffel.legotools.scripts.PriceUpdater; // Import du script de prix
+
 import io.github.cdimascio.dotenv.Dotenv; 
 
 import java.awt.image.BufferedImage;
@@ -22,16 +24,12 @@ public class App {
 
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-    // récupère une variable d'environnement depuis le fichier .env ou le système
-    private static String getEnv(String key) {
-        String value = dotenv.get(key);
-        if (value == null) {
-            return System.getenv(key);
-        }
-        return value;
-    }
-
     public static void main(String[] args) {
+        // 1. On charge les variables AVANT de les utiliser
+        var email = getEnv("LEGOFACTORY_EMAIL");
+        var key = getEnv("LEGOFACTORY_KEY");
+        var url = getEnv("LEGOFACTORY_URL");
+
         if (args.length < 1) {
             printUsage();
             return;
@@ -41,14 +39,27 @@ public class App {
 
         try {
             switch (command) {
-                case "refill" -> runRefill();
+                case "refill" -> {
+                    if (checkEnv(url, email, key)) runRefill(url, email, key);
+                }
                 case "resize" -> runResize(args);
                 case "pave" -> runPave(args);
-                case "order" -> runOrder();
-                case "proactive" -> runProactiveOrder();
+                case "order" -> {
+                    if (checkEnv(url, email, key)) runOrder(url, email, key);
+                }
+                case "proactive" -> {
+                    if (checkEnv(url, email, key)) runProactiveOrder(url, email, key);
+                }
                 case "visualize" -> runVisualize(args);
-                case "restock" -> runFullRestock(); 
-                case "buy" -> runBuy(args);
+                case "restock" -> {
+                    if (checkEnv(url, email, key)) runFullRestock(url, email, key);
+                }
+                case "buy" -> {
+                    if (checkEnv(url, email, key)) runBuy(args, url, email, key);
+                }
+                case "update-prices" -> {
+                    if (checkEnv(url, email, key)) PriceUpdater.run(url, email, key);
+                }
                 default -> {
                     System.err.println("Commande inconnue : " + command);
                     printUsage();
@@ -59,7 +70,24 @@ public class App {
         }
     }
 
-    // affiche les instructions d'utilisation de l'application
+    // --- Méthodes Utilitaires ---
+
+    private static String getEnv(String key) {
+        String value = dotenv.get(key);
+        if (value == null) {
+            return System.getenv(key);
+        }
+        return value;
+    }
+
+    private static boolean checkEnv(String url, String email, String key) {
+        if (email == null || key == null || url == null) {
+             System.err.println("ERREUR : Variables d'environnement manquantes (LEGOFACTORY_EMAIL, KEY, URL)");
+             return false;
+        }
+        return true;
+    }
+
     private static void printUsage() {
         System.out.println("Usage :");
         System.out.println("  1. Recharger le compte : java -jar legotools.jar refill");
@@ -70,18 +98,13 @@ public class App {
         System.out.println("  6. Visualiser : java -jar legotools.jar visualize <input_txt> <output_png>");
         System.out.println("  7. Restockage complet : java -jar legotools.jar restock");
         System.out.println("  8. Achat ciblé : java -jar legotools.jar buy <ref> <qty>");
+        System.out.println("  9. Mettre à jour les prix : java -jar legotools.jar update-prices");
     }
 
-    // lance la procédure de recharge de crédits pour l'usine
-    private static void runRefill() throws IOException {
-        var email = getEnv("LEGOFACTORY_EMAIL");
-        var key = getEnv("LEGOFACTORY_KEY");
+    // --- Commandes ---
 
-        if (email == null || key == null) {
-            System.err.println("Erreur : Variables LEGOFACTORY manquantes.");
-            return;
-        }
-        var refiller = new AccountRefiller(email, key);
+    private static void runRefill(String url, String email, String key) throws IOException {
+        var refiller = new AccountRefiller(url, email, key);
         System.out.println("Nouveau solde : " + refiller.refill());
     }
 
@@ -134,7 +157,7 @@ public class App {
 
         List<String> algos;
         if ("all".equalsIgnoreCase(algoArg)) {
-            algos = List.of("v4_stock", "v4_libre", "v4_rupture", "v4_rentable");
+            algos = List.of("stock", "libre", "minimisation", "rentabilite");
         } else {
             algos = List.of(algoArg);
         }
@@ -160,13 +183,8 @@ public class App {
         }
     }
 
-    // passe une commande simple auprès de l'usine
-    private static void runOrder() {
-        var email = getEnv("LEGOFACTORY_EMAIL");
-        var key = getEnv("LEGOFACTORY_KEY");
-        if (email == null) return;
-
-        HttpRestFactory factory = new HttpRestFactory(email, key);
+    private static void runOrder(String url, String email, String key) {
+        HttpRestFactory factory = new HttpRestFactory(url, email, key);
         StockManager stock = new StockManager();
         stock.showStock();
 
@@ -177,9 +195,7 @@ public class App {
             Map<String, Integer> panier = Map.of("2-2/c9cae2", 1);
             
             LegoFactory.Quote quote = factory.requestQuote(panier);
-            
             factory.acceptQuote(quote.id());
-            
             stock.recordFactoryOrder(quote.id(), quote.price(), panier);
             
             System.out.println("Attente livraison...");
@@ -190,66 +206,61 @@ public class App {
         }
     }
 
-    // analyse les besoins et commande automatiquement les pièces les plus vendues
-    private static void runProactiveOrder() {
-        var email = getEnv("LEGOFACTORY_EMAIL");
-        var key = getEnv("LEGOFACTORY_KEY");
-        if (email == null) {
-             System.err.println("Variables d'environnement manquantes");
-             return;
+    private static void runProactiveOrder(String url, String email, String key) {
+        StockManager stockManager = new StockManager();
+        HttpRestFactory factory = new HttpRestFactory(url, email, key);
+        
+        System.out.println("Interrogation de la vue 'View_LowStockDetails'...");
+        
+        Map<String, Integer> alerts = stockManager.getLowStockItems();
+        
+        if (alerts.isEmpty()) {
+            System.out.println("Aucune alerte. Tout le stock est supérieur à 50.");
+            return;
         }
 
-        StockManager stockManager = new StockManager();
-        HttpRestFactory factory = new HttpRestFactory(email, key);
-        
-        System.out.println("Analyse proactive du stock...");
-        
-        Map<String, Integer> popularItems = stockManager.getPopularItems(10);
-        Map<String, Integer> currentStock = stockManager.getStockCounts();
         Map<String, Integer> toOrder = new HashMap<>();
-        
         int TARGET_BUFFER = 50; 
         
-        for (Map.Entry<String, Integer> entry : popularItems.entrySet()) {
+        for (Map.Entry<String, Integer> entry : alerts.entrySet()) {
             String itemKey = entry.getKey();
-            int current = currentStock.getOrDefault(itemKey, 0);
+            int current = entry.getValue();
             
-            if (current < TARGET_BUFFER) {
-                int needed = TARGET_BUFFER - current;
+            int needed = TARGET_BUFFER - current;
+            
+            if (needed > 0) {
                 toOrder.put(itemKey, needed);
-                System.out.println("Besoin identifié : " + itemKey + " (actuel: " + current + ", commande: " + needed + ")");
+                System.out.println(" > ALERTE : " + itemKey + " (Stock: " + current + " -> Commande: " + needed + ")");
             }
         }
         
-        if (toOrder.isEmpty()) {
-            System.out.println("Stock suffisant, pas de commande nécessaire.");
-            return;
-        }
-        
         try {
-            System.out.println("Demande de devis pour réapprovisionnement...");
+            System.out.println("Envoi commande pour " + toOrder.size() + " références...");
             LegoFactory.Quote quote = factory.requestQuote(toOrder);
             
-            System.out.println("Validation commande " + quote.id());
+            long balance = factory.getBalance();
+            if (balance < quote.price()) {
+                long missing = (long)quote.price() - balance + 500;
+                System.out.println(" ! Solde insuffisant. Minage automatique (" + missing + ")...");
+                factory.rechargeAccount(missing);
+            }
+
             factory.acceptQuote(quote.id());
-            
             stockManager.recordFactoryOrder(quote.id(), quote.price(), toOrder);
             
             int totalExpected = toOrder.values().stream().mapToInt(Integer::intValue).sum();
             processDelivery(factory, stockManager, quote.id(), totalExpected);
             
         } catch (Exception e) {
-            System.err.println("Echec commande proactive : " + e.getMessage());
+            System.err.println("Erreur proactive : " + e.getMessage());
         }
     }
     
-    // attend la livraison complète et vérifie la validité des briques reçues
     private static void processDelivery(HttpRestFactory factory, StockManager stock, String quoteId, int expectedQuantity) throws IOException, InterruptedException {
         List<FactoryBrick> briques = new ArrayList<>();
         
         while (briques.size() < expectedQuantity) {
             briques = factory.retrieveOrder(quoteId);
-            
             if (briques.size() < expectedQuantity) {
                 System.out.print("\rAttente livraison... (" + briques.size() + "/" + expectedQuantity + ")");
                 Thread.sleep(1000);
@@ -271,7 +282,6 @@ public class App {
         }
     }
 
-    // crée une image à partir d'un fichier de données de pavage existant
     private static void runVisualize(String[] args) throws IOException {
         if (args.length < 3) {
             System.out.println("Usage: visualize <input_txt> <output_png>");
@@ -285,19 +295,13 @@ public class App {
         System.out.println("Visualisation générée : " + outputPath);
     }
 
-    // commande un stock important pour toutes les briques référencées en base
-    private static void runFullRestock() {
-        var email = getEnv("LEGOFACTORY_EMAIL");
-        var key = getEnv("LEGOFACTORY_KEY");
-        if (email == null) return;
-
+    private static void runFullRestock(String url, String email, String key) {
         StockManager stock = new StockManager();
-        HttpRestFactory factory = new HttpRestFactory(email, key);
+        HttpRestFactory factory = new HttpRestFactory(url, email, key);
 
         System.out.println("Préparation de la commande massive (75 unités par brique)...");
 
         List<String> allTypes = stock.getAllBrickTypes();
-        
         if (allTypes.isEmpty()) {
             System.out.println("Aucune brique trouvée en base.");
             return;
@@ -310,21 +314,17 @@ public class App {
 
         for (String type : allTypes) {
             currentBatch.put(type, 75);
-
             if (currentBatch.size() >= BATCH_SIZE) {
                 processBatch(factory, stock, currentBatch);
                 currentBatch.clear();
             }
         }
-        
         if (!currentBatch.isEmpty()) {
             processBatch(factory, stock, currentBatch);
         }
-        
         System.out.println("Restockage terminé.");
     }
 
-    // traite une commande par lot et gère les erreurs potentielles sur les références
     private static void processBatch(HttpRestFactory factory, StockManager stock, Map<String, Integer> batch) {
         try {
             LegoFactory.Quote quote = factory.requestQuote(batch);
@@ -337,74 +337,35 @@ public class App {
             
         } catch (Exception e) {
             System.err.println("// Erreur sur le lot (" + e.getMessage() + "). Filtrage des items invalides...");
-            
-            Map<String, Integer> safeBatch = new HashMap<>();
-            
-            for (Map.Entry<String, Integer> entry : batch.entrySet()) {
-                try {
-                    factory.requestQuote(Map.of(entry.getKey(), entry.getValue()));
-                    safeBatch.put(entry.getKey(), entry.getValue());
-                } catch (Exception ex) {
-                    System.err.println("// Item invalide retiré de la commande : " + entry.getKey());
-                }
-            }
-            
-            if (!safeBatch.isEmpty()) {
-                try {
-                    LegoFactory.Quote quote = factory.requestQuote(safeBatch);
-                    factory.acceptQuote(quote.id());
-                    stock.recordFactoryOrder(quote.id(), quote.price(), safeBatch);
-                    System.out.println("// Lot corrigé (" + safeBatch.size() + " références) commandé.");
-                    
-                    int totalSafe = safeBatch.values().stream().mapToInt(Integer::intValue).sum();
-                    processDelivery(factory, stock, quote.id(), totalSafe);
-                    
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
         }
     }
 
-    // effectue l'achat d'une brique spécifique en quantité demandée
-    private static void runBuy(String[] args) {
+    private static void runBuy(String[] args, String url, String email, String key) {
         if (args.length < 3) {
             System.out.println("Usage: buy <reference> <quantité>");
-            System.out.println("Exemple: buy 2-2/c9cae2 50");
             return;
         }
-        
         String reference = args[1];
         int quantity;
-        
         try {
             quantity = Integer.parseInt(args[2]);
         } catch (NumberFormatException e) {
             System.err.println("Erreur : La quantité doit être un nombre entier.");
             return;
         }
-        
-        var email = getEnv("LEGOFACTORY_EMAIL");
-        var key = getEnv("LEGOFACTORY_KEY");
-        if (email == null) return;
 
         StockManager stock = new StockManager();
-        HttpRestFactory factory = new HttpRestFactory(email, key);
+        HttpRestFactory factory = new HttpRestFactory(url, email, key);
 
         try {
             System.out.println("Préparation de la commande : " + quantity + " x " + reference);
-            
             Map<String, Integer> itemToOrder = Map.of(reference, quantity);
-            
             LegoFactory.Quote quote = factory.requestQuote(itemToOrder);
             System.out.println("Devis reçu : " + quote.price() + " crédits");
             
             factory.acceptQuote(quote.id());
-            
             stock.recordFactoryOrder(quote.id(), quote.price(), itemToOrder);
-            
             System.out.println("Commande validée. En attente de livraison...");
-            
             processDelivery(factory, stock, quote.id(), quantity);
             
         } catch (Exception e) {

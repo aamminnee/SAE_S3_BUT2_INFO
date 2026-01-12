@@ -1,5 +1,4 @@
 <?php 
-// // sécurité : on s'assure que $cart est un tableau
 $items = isset($cart) ? (array)$cart : [];
 // // on définit total s'il n'existe pas pour éviter les erreurs
 $total = $total ?? 0;
@@ -13,26 +12,26 @@ $total = $total ?? 0;
     <div class="payment-layout">
         
         <div class="payment-form-container">
-            <h2 class="payment-title">Finaliser votre commande</h2>
+            <h2 class="payment-title"><?= $t['payment_title'] ?? 'Finaliser votre commande' ?></h2>
             
             <form action="<?= $_ENV['BASE_URL'] ?>/payment/process" method="POST" class="lego-form">
 
                 <div class="form-group">
-                    <label for="phone">Téléphone</label>
+                    <label for="phone"><?= $t['payment_label_phone'] ?? 'Téléphone' ?></label>
                     <input type="tel" id="phone" name="phone" required 
-                           placeholder="ex: 06 12 34 56 78" 
+                           placeholder="<?= $t['payment_placeholder_phone'] ?? 'ex: 06 12 34 56 78' ?>" 
                            value="07 77 77 77 77">
                 </div>
 
                 <div class="form-group">
-                    <label for="adress">Adresse complète</label>
+                    <label for="adress"><?= $t['payment_label_address'] ?? 'Adresse complète' ?></label>
                     <input type="text" id="adress" name="adress" required 
-                           placeholder="ex: 12 Rue de la Paix, 75000 Paris" 
+                           placeholder="<?= $t['payment_placeholder_address'] ?? 'ex: 12 Rue de la Paix, 75000 Paris' ?>" 
                            value="12 Rue de la Paix, 75002 Paris">
                 </div>
 
                 <div class="form-group">
-                    <label for="card_number">Numéro de carte</label>
+                    <label for="card_number"><?= $t['payment_label_card'] ?? 'Numéro de carte' ?></label>
                     <div class="input-icon">
                         <span class="icon">💳</span>
                         <input type="text" id="card_number" name="card_number" required 
@@ -43,13 +42,13 @@ $total = $total ?? 0;
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="card_expiry">Expiration</label>
+                        <label for="card_expiry"><?= $t['payment_label_expiry'] ?? 'Expiration' ?></label>
                         <input type="month" id="card_expiry" name="card_expiry" required 
                                value="2025-12">
                     </div>
                     
                     <div class="form-group">
-                        <label for="card_cvv">CVV</label>
+                        <label for="card_cvv"><?= $t['payment_label_cvv'] ?? 'CVV' ?></label>
                         <div class="input-icon">
                             <input type="text" id="card_cvv" name="card_cvv" required 
                                    placeholder="123" maxlength="3" 
@@ -63,13 +62,13 @@ $total = $total ?? 0;
                 </p>
 
                 <button type="submit" class="btn-pay">
-                    Payer <?= number_format($total, 2, ',', ' ') ?> €
+                    <?= sprintf($t['payment_btn_pay'] ?? 'Payer %s €', number_format($total, 2, ',', ' ')) ?>
                 </button>
             </form>
         </div>
 
         <div class="order-summary">
-            <h3>Récapitulatif</h3>
+            <h3><?= $t['payment_summary_title'] ?? 'Récapitulatif' ?></h3>
             
             <div class="summary-items">
                 <?php foreach ($items as $item): 
@@ -79,7 +78,7 @@ $total = $total ?? 0;
                     <div class="mosaic-preview">
                         <img src="<?= $imgSrc ?>" alt="Votre Pavage">
                         <div class="preview-info">
-                            <p class="preview-title">Pavage LEGO®</p>
+                            <p class="preview-title"><?= $t['payment_product_title'] ?? 'Pavage LEGO®' ?></p>
                             <p class="preview-details"><?= $item['size'] ?>x<?= $item['size'] ?> - <?= ucfirst($item['style']) ?></p>
                             <p class="preview-price"><?= number_format($item['price'], 2) ?> €</p>
                         </div>
@@ -90,7 +89,7 @@ $total = $total ?? 0;
             <div class="summary-divider"></div>
 
             <div class="summary-row total-row">
-                <span>Total à payer</span>
+                <span><?= $t['payment_total_label'] ?? 'Total à payer' ?></span>
                 <span class="total-price"><?= number_format($total, 2, ',', ' ') ?> €</span>
             </div>
         </div>

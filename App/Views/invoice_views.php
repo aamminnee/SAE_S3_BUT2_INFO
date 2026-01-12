@@ -2,10 +2,10 @@
 
 <div class="invoice-controls">
     <a href="<?= ($_ENV['BASE_URL'] ?? '') ?>/commande" class="btn-back">
-        &larr; Retour aux commandes
+        &larr; <?= $t['invoice_btn_back'] ?? 'Retour aux commandes' ?>
     </a>
     <button onclick="downloadPDF()" class="btn-download">
-        Télécharger la facture (PDF)
+        <?= $t['invoice_btn_download'] ?? 'Télécharger la facture (PDF)' ?>
     </button>
 </div>
 
@@ -23,18 +23,18 @@
         </div>
         
         <div class="invoice-meta">
-            <h2 class="invoice-title">FACTURE</h2>
+            <h2 class="invoice-title"><?= $t['invoice_title'] ?? 'FACTURE' ?></h2>
             <table class="meta-table">
                 <tr>
-                    <th>N° Facture :</th>
+                    <th><?= $t['invoice_number'] ?? 'N° Facture :' ?></th>
                     <td><?= htmlspecialchars($order['invoice_number'] ?? $order['id_Order']) ?></td>
                 </tr>
                 <tr>
-                    <th>Date :</th>
+                    <th><?= $t['invoice_date'] ?? 'Date :' ?></th>
                     <td><?= date('d/m/Y', strtotime($order['issue_date'] ?? $order['order_date'] ?? 'now')) ?></td>
                 </tr>
                 <tr>
-                    <th>Réf. Commande :</th>
+                    <th><?= $t['invoice_ref'] ?? 'Réf. Commande :' ?></th>
                     <td>#<?= $order['id_Order'] ?></td>
                 </tr>
             </table>
@@ -45,30 +45,29 @@
 
     <div class="client-section">
         <div class="client-box">
-            <h3 class="section-title">Facturé à :</h3>
+            <h3 class="section-title"><?= $t['invoice_billed_to'] ?? 'Facturé à :' ?></h3>
             <div class="client-details">
                 <strong><?= htmlspecialchars(($order['first_name'] ?? '') . ' ' . ($order['last_name'] ?? '')) ?></strong><br>
-                <?= nl2br(htmlspecialchars($order['adress'] ?? 'Adresse non renseignée')) ?><br>
+                <?= nl2br(htmlspecialchars($order['adress'] ?? ($t['invoice_addr_missing'] ?? 'Adresse non renseignée'))) ?><br>
                 Email : <?= htmlspecialchars($order['email'] ?? '') ?><br>
             </div>
         </div>
     </div>
 
-    <div class="items-section">
+    <div class="items-section" style="overflow-x: auto;"> <table class="items-table" style="width: 100%; min-width: 600px; border-collapse: collapse;">
         <table class="items-table">
             <thead>
                 <tr>
-                    <th class="col-desc">Description</th>
-                    <th class="col-qty">Pièces</th>
-                    <th class="col-qty">Quantité</th>
-                    <th class="col-price">Prix Unitaire</th>
-                    <th class="col-total">Total</th>
+                    <th class="col-desc"><?= $t['invoice_col_desc'] ?? 'Description' ?></th>
+                    <th class="col-qty"><?= $t['invoice_col_pieces'] ?? 'Pièces' ?></th>
+                    <th class="col-qty"><?= $t['invoice_col_qty'] ?? 'Quantité' ?></th>
+                    <th class="col-price"><?= $t['invoice_col_unit_price'] ?? 'Prix Unitaire' ?></th>
+                    <th class="col-total"><?= $t['invoice_col_total'] ?? 'Total' ?></th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (isset($items) && !empty($items)): ?>
                     <?php foreach ($items as $item): 
-                        // Gestion hybride objet/tableau
                         $isObj = is_object($item);
                         $price = $isObj ? ($item->price ?? 0) : ($item['price'] ?? 0);
                         $pieces = $isObj ? ($item->pieces ?? 0) : ($item['pieces'] ?? 0);
@@ -76,14 +75,14 @@
                     ?>
                     <tr class="item">
                         <td>
-                            <strong>Mosaïque Personnalisée</strong>
+                            <strong><?= $t['invoice_item_mosaic'] ?? 'Mosaïque Personnalisée' ?></strong>
                             <br>
                             <span style="font-size: 0.8em; color: #666; font-style: italic;">
-                                Réf: MS-<?= $idMosaic ?> 
-                                (Dont <?= number_format($handlingUnit ?? 4.99, 2) ?> € de frais de préparation inclus)
+                                <?= $t['invoice_item_ref'] ?? 'Réf:' ?> MS-<?= $idMosaic ?> 
+                                <?= sprintf($t['invoice_item_handling'] ?? '(Dont %s € de frais de préparation inclus)', number_format($handlingUnit ?? 4.99, 2)) ?>
                             </span>
                         </td>
-                        <td class="text-center"><?= $pieces ?> briques</td>
+                        <td class="text-center"><?= $pieces ?></td>
                         <td class="text-right">1</td>
                         <td class="text-right"><?= number_format($price, 2) ?> €</td>
                         <td class="text-right"><?= number_format($price, 2) ?> €</td>
@@ -93,7 +92,7 @@
 
                 <tr class="item delivery-row" style="background-color: #f9f9f9;">
                     <td colspan="3" class="text-right" style="padding-right: 20px; font-weight: 500; color: #555;">
-                        Livraison Standard
+                        <?= $t['invoice_item_delivery'] ?? 'Livraison Standard' ?>
                     </td>
                     <td class="text-right"><?= number_format($deliveryTTC ?? 4.99, 2) ?> €</td>
                     <td class="text-right"><?= number_format($deliveryTTC ?? 4.99, 2) ?> €</td>
@@ -108,10 +107,9 @@
         <div class="invoice-notes" style="width: 50%; font-size: 0.85rem; color: #666;">
             <?php if(isset($totalHandling) && $totalHandling > 0): ?>
                 <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #eee;">
-                    <strong>Note informative :</strong><br>
-                    Le montant des articles inclut <?= number_format($totalHandling, 2) ?> € 
-                    de frais de préparation (tri, ensachage, notice).<br>
-                    <em>TVA applicable sur l'ensemble : 20.00%</em>
+                    <strong><?= $t['invoice_note_title'] ?? 'Note informative :' ?></strong><br>
+                    <?= sprintf($t['invoice_note_text'] ?? 'Le montant des articles inclut %s € de frais de préparation.', number_format($totalHandling, 2)) ?><br>
+                    <em><?= $t['invoice_note_vat'] ?? 'TVA applicable sur l\'ensemble : 20.00%' ?></em>
                 </div>
             <?php endif; ?>
         </div>
@@ -119,12 +117,12 @@
         <div class="financial-totals" style="width: 45%;">
             <table class="totals-table" style="width: 100%; border-collapse: collapse;">
                 <tr>
-                    <th style="text-align: left; padding: 5px; color: #555; font-weight: normal;">Total Articles HT</th>
+                    <th style="text-align: left; padding: 5px; color: #555; font-weight: normal;"><?= $t['invoice_total_items_ht'] ?? 'Total Articles HT' ?></th>
                     <td style="text-align: right; padding: 5px;"><?= number_format($itemsHT ?? 0, 2) ?> €</td>
                 </tr>
                 
                 <tr>
-                    <th style="text-align: left; padding: 5px; color: #555; font-weight: normal;">Frais de port HT</th>
+                    <th style="text-align: left; padding: 5px; color: #555; font-weight: normal;"><?= $t['invoice_total_shipping_ht'] ?? 'Frais de port HT' ?></th>
                     <td style="text-align: right; padding: 5px;"><?= number_format($deliveryHT ?? 0, 2) ?> €</td>
                 </tr>
                 
@@ -133,17 +131,17 @@
                 </tr>
 
                 <tr>
-                    <th style="text-align: left; padding: 5px;">Total HT Net</th>
+                    <th style="text-align: left; padding: 5px;"><?= $t['invoice_total_ht_net'] ?? 'Total HT Net' ?></th>
                     <td style="text-align: right; padding: 5px; font-weight: bold;"><?= number_format($totalHT ?? 0, 2) ?> €</td>
                 </tr>
 
                 <tr>
-                    <th style="text-align: left; padding: 5px; color: #555; font-weight: normal;">TVA (20%)</th>
+                    <th style="text-align: left; padding: 5px; color: #555; font-weight: normal;"><?= $t['invoice_total_vat'] ?? 'TVA (20%)' ?></th>
                     <td style="text-align: right; padding: 5px;"><?= number_format($totalTVA ?? 0, 2) ?> €</td>
                 </tr>
 
                 <tr class="grand-total" style="background-color: #f4f4f4; border-top: 2px solid #333;">
-                    <th style="text-align: left; padding: 10px; font-size: 1.1em; color: #000;">Net à payer (TTC)</th>
+                    <th style="text-align: left; padding: 10px; font-size: 1.1em; color: #000;"><?= $t['invoice_total_ttc'] ?? 'Net à payer (TTC)' ?></th>
                     <td style="text-align: right; padding: 10px; font-size: 1.1em; font-weight: bold; color: #D92328;">
                         <?= number_format($totalTTC ?? 0, 2) ?> €
                     </td>
@@ -153,8 +151,8 @@
     </div>
 
     <div class="paper-footer">
-        <p>Merci pour votre confiance !</p>
-        <p class="small">MyBrixStore - Capital de 10 000 €</p>
+        <p><?= $t['invoice_footer_thanks'] ?? 'Merci pour votre confiance !' ?></p>
+        <p class="small"><?= $t['invoice_footer_capital'] ?? 'MyBrixStore - Capital de 10 000 €' ?></p>
     </div>
 </div>
 

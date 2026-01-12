@@ -28,6 +28,9 @@ func (fc *FactoryConfig) CreateQuote(basket map[string]int) (*Order, error) {
 	var price Monetary
 	var delay time.Duration
 	for k, v := range basket {
+		if v <= 0 {
+			return nil, errors.New("the quantity for a block must be at least 1")
+		}
 		b := Block{Name: k}
 		area := b.Area()
 		p := fc.ComputeCost(area)

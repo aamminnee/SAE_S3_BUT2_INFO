@@ -1,24 +1,25 @@
 package fr.univ_eiffel.legotools.factory.api;
+
 import fr.univ_eiffel.legotools.factory.security.ProofOfWorkSolver;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
 import com.google.gson.Gson;
 
-// utilisé pour recharger le compte prépayé sur l'usine lego
 public class AccountRefiller {
-    public static final String FACTORY_URL = "https://legofactory.plade.org";
     public static final ProofOfWorkSolver POW_SOLVER = new ProofOfWorkSolver("SHA-256");
 
+    private final String serverUrl; // Nouvelle variable
     private final String email;
     private final String apiKey;
 
     private Gson gson = new Gson();
 
-    public AccountRefiller(String email, String apiKey) {
+    public AccountRefiller(String serverUrl, String email, String apiKey) {
+        this.serverUrl = serverUrl;
         this.email = email;
         this.apiKey = apiKey;
     }
@@ -27,8 +28,8 @@ public class AccountRefiller {
 
     // récupère un nouveau challenge auprès de l'usine
     public Challenge fetchChallenge() throws IOException {
-        @SuppressWarnings("deprecation")
-        var connection = (HttpURLConnection)new URL(FACTORY_URL + "/billing/challenge").openConnection();
+        // Utilisation de this.serverUrl
+        var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/challenge").toURL().openConnection();
         connection.addRequestProperty("X-Email", email);
         connection.addRequestProperty("X-Secret-Key", apiKey);
         int status = connection.getResponseCode();
@@ -52,8 +53,7 @@ public class AccountRefiller {
 
     // soumet la réponse au challenge pour obtenir les crédits
     public void submitChallengeAnswer(ChallengeAnswer challengeAnswer) throws IOException {
-        @SuppressWarnings("deprecation")
-        var connection = (HttpURLConnection)new URL(FACTORY_URL + "/billing/challenge-answer").openConnection();
+        var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/challenge-answer").toURL().openConnection();
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.addRequestProperty("X-Email", email);
@@ -69,8 +69,7 @@ public class AccountRefiller {
 
     // récupère le solde actuel du compte
     public String fetchAccountBalance() throws IOException {
-        @SuppressWarnings("deprecation")
-        var connection = (HttpURLConnection)new URL(FACTORY_URL + "/billing/balance").openConnection();
+        var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/balance").toURL().openConnection();
         connection.addRequestProperty("X-Email", email);
         connection.addRequestProperty("X-Secret-Key", apiKey);
         int status = connection.getResponseCode();

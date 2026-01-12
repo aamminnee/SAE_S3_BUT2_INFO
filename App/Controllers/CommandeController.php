@@ -7,6 +7,11 @@ use App\Models\ImagesModel;
 use App\Models\MosaicModel; 
 use App\Models\TranslationModel;
 
+/**
+ * CommandeController
+ * * Manages the user's order history and downloads.
+ * * Allows users to view past orders, download assembly plans, and parts lists.
+ */
 class CommandeController extends Controller {
     
     private $translations;
@@ -27,10 +32,8 @@ class CommandeController extends Controller {
         $commandeModel = new CommandeModel();
         $mosaicModel = new MosaicModel();
 
-        // Récupération des commandes
         $commandes = $commandeModel->getCommandeByUserId($_SESSION['user_id']);
 
-        // Ajout du visuel (le premier trouvé pour chaque commande)
         foreach ($commandes as $commande) {
             if (!empty($commande->id_Mosaic)) {
                 $commande->visuel = $mosaicModel->getMosaicVisual($commande->id_Mosaic);
@@ -56,26 +59,21 @@ class CommandeController extends Controller {
         $commandeModel = new CommandeModel();
         $commande = $commandeModel->getCommandeById($id);
         
-        // Sécurité : Vérifier que la commande appartient bien à l'utilisateur
         if (!$commande || $commande->id_Customer != $_SESSION['user_id']) {
             header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/commande");
             exit;
         }
 
-        // Récupération de TOUS les articles de la commande
         $mosaicModel = new MosaicModel();
         $items = $mosaicModel->getMosaicsByOrderId($id);
 
-        // Récupération et AGRÉGATION des briques (pour éviter les doublons dans la liste)
         $briquesAgregees = [];
         
         if ($items) {
             foreach ($items as $itm) {
-                // --- CORRECTION DE L'ERREUR ICI (getBricksList au lieu de getBricksForMosaic) ---
                 $pieces = $mosaicModel->getBricksList($itm->id_Mosaic);
                 
                 foreach ($pieces as $piece) {
-                    // On crée une clé unique "Taille + Couleur" pour fusionner les quantités
                     $key = $piece['size'] . '_' . $piece['color'];
                     
                     if (isset($briquesAgregees[$key])) {
@@ -87,10 +85,8 @@ class CommandeController extends Controller {
             }
         }
         
-        // On remet les briques dans un tableau indexé propre
         $briques = array_values($briquesAgregees);
         
-        // Tri final : Par taille décroissante, puis par couleur
         array_multisort(
             array_column($briques, 'size'), SORT_DESC,
             array_column($briques, 'color'), SORT_ASC,
@@ -102,18 +98,15 @@ class CommandeController extends Controller {
             'commande' => $commande,
             'items' => $items,
             'briques' => $briques,
-            'visuel' => $items[0]->visuel ?? null, // Visuel par défaut (le premier article)
+            'visuel' => $items[0]->visuel ?? null,
             'css' => 'commande_detail_views.css'
         ]);
     }
 
-    // 1. Télécharger la liste des pièces en CSV (Excel)
     public function downloadCsv($id) {
         $this->checkAuth();
         $mosaicModel = new MosaicModel();
         
-        // CORRECTION : On vérifie que la mosaïque appartient à une commande de l'utilisateur
-        // (Simplification : on suppose que l'ID passé est l'ID mosaïque direct)
         $briques = $mosaicModel->getBricksList((int)$id);
 
         if (empty($briques)) {
@@ -138,8 +131,27 @@ class CommandeController extends Controller {
         exit;
     }
 
-    // 2. Télécharger l'image finale
-    // Ajoute ceci dans App/Controllers/CommandeController.php
+    public function downloadImage($idMosaic) {
+        $mosaicModel = new \App\Models\MosaicModel();
+        
+        $imageDataBase64 = $mosaicModel->getMosaicVisual($idMosaic); 
+        
+        if ($imageDataBase64) {
+            $parts = explode(',', $imageDataBase64);
+            $binary = base64_decode($parts[1]);
+            
+            header('Content-Type: image/png');
+            header('Content-Disposition: attachment; filename="mosaique_lego_'.$idMosaic.'.png"');
+            header('Content-Length: ' . strlen($binary));
+            
+            echo $binary;
+            exit;
+        } else {
+            $_SESSION['error_message'] = "Impossible de générer l'image pour le téléchargement.";
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+    }
 
     public function downloadPlan($id) {
         if (!isset($_SESSION['user_id'])) { header("Location: /user/login"); exit; }
@@ -152,15 +164,11 @@ class CommandeController extends Controller {
             exit;
         }
 
-        // On passe un 3ème paramètre (le layout) qui n'existe pas ou qui est vide
-        // pour éviter d'afficher le header.php et footer.html du site
         $this->render('plan_views', [
             'id' => $id,
             'plan' => $planData
         ], 'empty'); 
     }
-    // 3. Télécharger le Plan (Placeholder)
-    // Dans App/Controllers/CommandeController.php
 
     private function checkAuth() {
         if (!isset($_SESSION['user_id'])) {

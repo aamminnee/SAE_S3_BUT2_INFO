@@ -22,8 +22,12 @@ type BlockOrder struct {
 
 func (f *Factory) runLane(ctx context.Context, orderChannel chan BlockOrder) {
 	for order := range orderChannel {
-		order.Callback(f.Config.BuildBlock(ctx, order.Name))
+		block := f.Config.BuildBlock(ctx, order.Name)
+		if block != nil {
+			order.Callback(block)
+		}
 		if ctx.Err() != nil {
+			slog.Info("End of lane", "orderChannel", orderChannel)
 			return
 		}
 	}
@@ -95,6 +99,10 @@ func (f *Factory) Run(ctx context.Context) {
 						if len(orderedBlocks) == len(laneChannels) {
 							break
 						}
+						// the following case should not be possible (unless we authorize quotes with <=0 quantities)
+						if samples <= 0 {
+							delete(orderObject.PendingBlocks, name)
+						}
 					}
 					for i, orderorderedBlock := range orderedBlocks {
 						fi := i
@@ -108,14 +116,17 @@ func (f *Factory) Run(ctx context.Context) {
 							}
 						}}
 					}
-					select {
-					case <-finishedChannel:
-					case <-ctx.Done():
+					if len(orderedBlocks) > 0 {
+						select {
+						case <-finishedChannel:
+						case <-ctx.Done():
+						}
 					}
+					// slog.Info("Manufacturing", "order", orderObject.Id, "pendingBlocks", len(orderObject.PendingBlocks), "builtBlocks", len(orderObject.BuiltBlocks))
 					if remainingBlocks == 0 {
 						for _, block := range obtainedBlocks {
 							orderObject.PendingBlocks[block.Name] -= 1
-							if orderObject.PendingBlocks[block.Name] == 0 {
+							if orderObject.PendingBlocks[block.Name] <= 0 {
 								delete(orderObject.PendingBlocks, block.Name)
 							}
 							orderObject.BuiltBlocks = append(orderObject.BuiltBlocks, *block)

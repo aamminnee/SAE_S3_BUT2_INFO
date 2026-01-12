@@ -1,32 +1,23 @@
-/* --- 1. PALETTE & VARIABLES --- */
 :root {
-    /* Couleurs Officielles Lego (Approximatives pour le Web) */
     --lego-red: #D92328;
     --lego-red-dark: #b31217;
     --lego-blue: #006CB7;
     --lego-blue-dark: #004c82;
-    --lego-yellow: #FFCF00; /* Un peu plus chaud que le jaune standard */
+    --lego-yellow: #FFCF00;
     --lego-green: #00852B;
-    
-    /* Neutres Pro */
-    --text-dark: #1e293b;  /* Gris très foncé bleuté */
+    --text-dark: #1e293b; 
     --text-grey: #475569;
-    --bg-base: #f4f7f6;    /* Gris très clair pour le fond global */
+    --bg-base: #f4f7f6; 
     --card-bg: #ffffff;
-    
-    /* Polices */
-    --font-heading: 'Fredoka', sans-serif; /* La touche "Lego" */
-    --font-body: 'Inter', sans-serif;      /* La touche "Pro" */
+    --font-heading: 'Fredoka', sans-serif; 
+    --font-body: 'Inter', sans-serif;    
 }
 
-/* --- 2. FOND & TYPO GÉNÉRALE --- */
 body {
     background-color: var(--bg-base);
     color: var(--text-dark);
     font-family: var(--font-body);
     margin: 0;
-    
-    /* EFFET "PLAQUE DE BASE" (Texture tenons subtile) */
     background-image: 
         radial-gradient(#e2e8f0 2px, transparent 2.5px), 
         radial-gradient(#e2e8f0 2px, transparent 2.5px);
@@ -39,10 +30,9 @@ h1, h2, h3, h4, h5 {
     letter-spacing: 0.5px;
 }
 
-/* --- 3. HERO SECTION (L'accroche) --- */
 .home-wrapper {
     padding-bottom: 80px;
-    overflow-x: hidden; /* Évite le scroll horizontal si animations */
+    overflow-x: hidden;
 }
 
 .hero-section {
@@ -57,7 +47,6 @@ h1, h2, h3, h4, h5 {
     position: relative;
 }
 
-/* Forme décorative jaune derrière le texte (Optionnel, ajoute du peps) */
 .hero-presentation::before {
     content: '';
     position: absolute;
@@ -76,13 +65,12 @@ h1, h2, h3, h4, h5 {
 }
 
 .main-title {
-    font-size: 3.5rem; /* Plus gros */
+    font-size: 3.5rem;
     line-height: 1.1;
     color: var(--text-dark);
     margin-bottom: 20px;
 }
 
-/* On met "LEGO" en couleur dans le titre si possible, sinon CSS global */
 .main-title span { color: var(--lego-red); } 
 
 .hero-subtitle {
@@ -93,14 +81,12 @@ h1, h2, h3, h4, h5 {
     max-width: 600px;
 }
 
-/* --- CARTE EXEMPLE (AVANT / APRÈS) --- */
 .example-card {
     display: flex;
     align-items: center;
     background: var(--card-bg);
     padding: 25px;
     border-radius: 20px;
-    /* Grosse ombre colorée pour l'effet "Pop" */
     box-shadow: 0 20px 40px -10px rgba(0, 108, 183, 0.15); 
     border: 2px solid white;
     margin-bottom: 30px;
@@ -108,7 +94,6 @@ h1, h2, h3, h4, h5 {
     position: relative;
 }
 
-/* Petit détail "Brique" sur la carte */
 .example-card::after {
     content: '';
     position: absolute;
@@ -147,7 +132,7 @@ h1, h2, h3, h4, h5 {
 
 .transformation-arrow {
     padding: 0 20px;
-    color: var(--lego-yellow); /* Flèche jaune vif */
+    color: var(--lego-yellow);
     width: 40px;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
@@ -159,7 +144,6 @@ h1, h2, h3, h4, h5 {
     font-weight: 700;
 }
 
-/* --- 4. UPLOAD CARD (L'Outil) --- */
 .hero-action {
     flex: 1;
     display: flex;
@@ -172,7 +156,6 @@ h1, h2, h3, h4, h5 {
     max-width: 550px;
     padding: 40px;
     border-radius: 24px;
-    /* Ombre profonde "Flottante" */
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
     border: 1px solid rgba(255,255,255,0.5);
     text-align: center;
@@ -180,7 +163,6 @@ h1, h2, h3, h4, h5 {
     overflow: hidden;
 }
 
-/* Barre de couleur en haut de la carte */
 .upload-card::before {
     content: '';
     position: absolute;
@@ -195,9 +177,8 @@ h1, h2, h3, h4, h5 {
     margin: 10px 0 5px 0;
 }
 
-/* ZONE DROP */
 .drop-zone {
-    border: 3px dashed #cbd5e1; /* Bordure plus épaisse */
+    border: 3px dashed #cbd5e1;
     border-radius: 16px;
     padding: 30px;
     background-color: #f8fafc;
@@ -227,7 +208,6 @@ h1, h2, h3, h4, h5 {
 .drop-text { font-family: var(--font-heading); font-size: 1.2rem; margin-bottom: 5px; }
 .browse-text { color: var(--lego-blue); font-weight: 600; text-decoration: underline; }
 
-/* BOUTON PRINCIPAL (Style "Play Button") */
 .btn-primary {
     background-color: var(--lego-red);
     color: white;
@@ -239,7 +219,7 @@ h1, h2, h3, h4, h5 {
     border-radius: 50px;
     cursor: pointer;
     margin-top: 25px;
-    box-shadow: 0 4px 0 var(--lego-red-dark); /* Effet 3D bouton physique */
+    box-shadow: 0 4px 0 var(--lego-red-dark);
     transition: all 0.1s;
     display: inline-flex; align-items: center; gap: 10px;
 }
@@ -254,7 +234,6 @@ h1, h2, h3, h4, h5 {
     box-shadow: 0 0 0 var(--lego-red-dark);
 }
 
-/* --- 5. HOW IT WORKS (Section Étapes) --- */
 .how-it-works {
     max-width: 1200px;
     margin: 80px auto 0 auto;
@@ -274,7 +253,6 @@ h1, h2, h3, h4, h5 {
     display: inline-block;
 }
 
-/* Soulignement ondulé ou brique */
 .section-header h3::after {
     content: '';
     display: block;
@@ -291,7 +269,6 @@ h1, h2, h3, h4, h5 {
     gap: 40px;
 }
 
-/* CARTE ÉTAPE */
 .step-card {
     background: white;
     padding: 40px 25px;
@@ -304,11 +281,10 @@ h1, h2, h3, h4, h5 {
 }
 
 .step-card:hover {
-    transform: translateY(-10px); /* Monte plus haut */
+    transform: translateY(-10px);
     box-shadow: 0 20px 40px rgba(0,0,0,0.08);
 }
 
-/* Les numéros en mode "Brique Ronde" */
 .step-number {
     width: 50px; height: 50px;
     line-height: 50px;
@@ -321,15 +297,12 @@ h1, h2, h3, h4, h5 {
     top: -25px; left: 50%;
     transform: translateX(-50%);
     box-shadow: 0 5px 10px rgba(0,0,0,0.15);
-    border: 4px solid white; /* Bordure blanche pour détacher du fond */
+    border: 4px solid white; 
 }
 
-/* Couleurs alternées pour les étapes */
 .step-card:nth-child(1) .step-number { background-color: var(--lego-blue); }
 .step-card:nth-child(2) .step-number { background-color: var(--lego-red); }
 .step-card:nth-child(3) .step-number { background-color: var(--lego-yellow); color: var(--text-dark); }
-
-/* Petite bordure colorée en bas de chaque carte */
 .step-card:nth-child(1) { border-bottom: 5px solid var(--lego-blue); }
 .step-card:nth-child(2) { border-bottom: 5px solid var(--lego-red); }
 .step-card:nth-child(3) { border-bottom: 5px solid var(--lego-yellow); }
@@ -352,7 +325,6 @@ h1, h2, h3, h4, h5 {
     margin-bottom: 10px;
 }
 
-/* --- RESPONSIVE --- */
 @media (max-width: 1024px) {
     .hero-section {
         flex-direction: column;

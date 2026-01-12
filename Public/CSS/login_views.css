@@ -1,13 +1,9 @@
-/* =========================================
-   1. VARIABLES & RESET GLOBAL
-   ========================================= */
 :root {
-    /* Palette Lego & UI */
-    --lego-red: #D92328;       /* Rouge Brique */
+    --lego-red: #D92328;      
     --lego-red-hover: #b91c20;
-    --lego-blue: #006CB7;      /* Bleu Lego */
+    --lego-blue: #006CB7; 
     --lego-blue-hover: #005596;
-    --lego-yellow: #FFD500;    /* Jaune Lego */
+    --lego-yellow: #FFD500;   
     
     --text-dark: #1a1a1a;
     --text-grey: #666666;
@@ -31,7 +27,6 @@ body {
     flex-direction: column;
 }
 
-/* Le MAIN prend toute la place restante */
 .main-content, .main-container {
     flex: 1;
     display: flex;
@@ -41,9 +36,6 @@ body {
     width: 100%;
 }
 
-/* =========================================
-   LOGIN & REGISTER CARD
-   ========================================= */
 .login-container, .register-container {
     background: #ffffff;
     width: 100%;
@@ -114,7 +106,6 @@ h2 {
     font-size: 0.8rem;
 }
 
-/* Captcha */
 .captcha-group {
     background: #f8f9fa;
     padding: 15px;
@@ -126,7 +117,6 @@ h2 {
 .captcha-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; text-align: center; }
 #captcha-refresh { border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: var(--lego-blue); }
 
-/* Boutons */
 .btn-submit {
     width: 100%;
     background-color: var(--lego-red);
@@ -142,7 +132,6 @@ h2 {
 }
 .btn-submit:hover { background-color: var(--lego-red-hover); transform: translateY(-1px); }
 
-/* Footer Links */
 .login-footer { margin-top: 25px; text-align: center; font-size: 0.9rem; color: var(--text-grey); border-top: 1px solid var(--border-color); padding-top: 20px; }
 .login-footer p { margin: 8px 0; }
 .login-footer a { color: var(--lego-blue); text-decoration: none; font-weight: 600; }

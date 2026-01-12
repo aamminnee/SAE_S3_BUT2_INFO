@@ -6,16 +6,20 @@ use App\Core\Db;
 use PDO;
 use Exception;
 
+/**
+ * FinancialModel
+ * * Manages payment processing and financial records.
+ * * Handles the transaction logic: saving card info (mock), creating orders, and linking payments.
+ */
 class FinancialModel extends Model {
     
-    // // on garde $refmosaicid juste pour récupérer l'id_image (pour avoir une image de couverture)
     public function processOrder($userId, $refMosaicId, $cardInfo, $amount, $billingInfo = []) {
         $db = Db::getInstance();
         
         try {
             $db->beginTransaction();
 
-            // // --- etape 1 : infos client ---
+            // 1. Sauvegarde des infos client (Facturation)
             $firstName = $billingInfo['first_name'];
             $lastName = $billingInfo['last_name'];
             $email = $billingInfo['email'];
@@ -25,42 +29,45 @@ class FinancialModel extends Model {
             $stmtSave->execute([$firstName, $lastName, $email]);
             $idSaveCustomer = $db->lastInsertId();
 
-            // // mise à jour téléphone
+            // 2. Mise à jour du téléphone si présent
             if (!empty($billingInfo['phone'])) {
                 $cleanPhone = substr(preg_replace('/[^0-9]/', '', $billingInfo['phone']), 0, 15);
                 $stmtPhone = $db->prepare("UPDATE Customer SET phone = ? WHERE id_Customer = ?");
                 $stmtPhone->execute([$cleanPhone, $userId]);
             }
 
-            // // --- etape 2 : banque ---
-            // // nettoyage du numéro de carte avant hachage
-            $rawCardNumber = str_replace(' ', '', $cardInfo['number']);
-            
-            // // hachage du numéro de carte et du cvc pour la sécurité
-            $hashedCard = password_hash($rawCardNumber, PASSWORD_DEFAULT);
-            $hashedCvc = password_hash($cardInfo['cvv'], PASSWORD_DEFAULT);
+            // 3. STOCKAGE SÉCURISÉ DE LA CARTE (Modifié)
+            // On nettoie le numéro pour le traitement
+            $cleanNumber = str_replace(' ', '', $cardInfo['number']);
 
-            $sqlBank = "INSERT INTO BankDetails (id_Customer, card_number, expire_at, cvc) VALUES (?, ?, ?, ?)";
-            $stmtBank = $db->prepare($sqlBank);
+            // A. On ne garde que les 4 derniers chiffres (Règle PCI-DSS)
+            $lastFour = substr($cleanNumber, -4);
             
-            // // insertion des données hachées
-            $stmtBank->execute([$userId, $hashedCard, $cardInfo['expiry'], $hashedCvc]);
+            // B. On génère un "Token" fictif (Simulation du retour banque/Stripe/PayPal)
+            $fakeToken = 'tok_' . bin2hex(random_bytes(10));
+
+            // C. On devine la marque (Optionnel, pour le style)
+            $brand = (isset($cleanNumber[0]) && $cleanNumber[0] == '4') ? 'Visa' : 'MasterCard';
+
+            // D. Insertion : On n'insère PLUS le numéro complet NI le CVC
+            $sqlBank = "INSERT INTO BankDetails (id_Customer, bank_name, last_four, expire_at, payment_token, card_brand) 
+                        VALUES (?, ?, ?, ?, ?, ?)";
+            $stmtBank = $db->prepare($sqlBank);
+            // 'N/A' pour le nom de banque car on ne peut pas le deviner sans API réelle
+            $stmtBank->execute([$userId, 'N/A', $lastFour, $cardInfo['expiry'], $fakeToken, $brand]);
             $idBankDetails = $db->lastInsertId();
 
-            // // --- etape 3 : commande (correction ici) ---
-            // // on récupère l'id image de la mosaïque de référence
+            // 4. Suite de la commande (Inchangé)
             $stmtImg = $db->prepare("SELECT id_Image FROM Mosaic WHERE id_Mosaic = ?");
             $stmtImg->execute([$refMosaicId]);
-            $idImage = $stmtImg->fetchColumn(); // // peut être null, ce n'est pas grave
+            $idImage = $stmtImg->fetchColumn();
 
-            // // on n'insère plus id_mosaic ici car la relation est maintenant dans l'autre sens
             $sqlOrder = "INSERT INTO CustomerOrder (order_date, status, total_amount, id_Customer, id_Image) 
                          VALUES (NOW(), 'Payée', ?, ?, ?)";
             $stmtOrder = $db->prepare($sqlOrder);
             $stmtOrder->execute([$amount, $userId, $idImage]);
             $orderId = $db->lastInsertId();
 
-            // // --- etape 4 : facture ---
             $invoiceNumber = 'FAC-' . date('Ymd') . '-' . $orderId;
             $adress = $billingInfo['adress'] ?? ''; 
 
@@ -74,8 +81,35 @@ class FinancialModel extends Model {
 
         } catch (Exception $e) {
             $db->rollBack();
-            // // on retourne l'erreur pour l'afficher dans le contrôleur
             return "Erreur SQL : " . $e->getMessage();
         }
+    }
+
+    public function getTotalRevenue() {
+        $sql = "SELECT SUM(total_amount) as total FROM CustomerOrder WHERE status != 'Annulée'";
+        $res = \App\Core\Db::getInstance()->query($sql)->fetch();
+        return $res->total ?? 0;
+    }
+
+    public function countOrders() {
+        $sql = "SELECT COUNT(*) as total FROM CustomerOrder";
+        $res = \App\Core\Db::getInstance()->query($sql)->fetch();
+        return $res->total ?? 0;
+    }
+
+    public function getLastOrders($limit = 5) {
+        $sql = "SELECT 
+                    o.id_Order as id, 
+                    o.order_date as date, 
+                    o.total_amount as amount, 
+                    o.status,
+                    CONCAT(c.first_name, ' ', c.last_name) as user
+                FROM CustomerOrder o
+                JOIN Customer cust ON o.id_Customer = cust.id_Customer
+                JOIN SaveCustomer c ON cust.id_Customer = c.id_SaveCustomer 
+                ORDER BY o.order_date DESC 
+                LIMIT $limit";
+        
+        return \App\Core\Db::getInstance()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
     }
 }

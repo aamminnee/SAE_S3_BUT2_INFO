@@ -1,4 +1,13 @@
-/* // public/css/admin_supplier_views.css */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;   
+}
+
+main {
+    flex: 1;        
+}
 
 .admin-container {
     max-width: 1200px;
@@ -9,20 +18,18 @@
 
 .admin-container h1 {
     color: #2d3748;
-    border-bottom: 3px solid #E3000B; /* // rouge lego */
+    border-bottom: 3px solid #E3000B;
     padding-bottom: 10px;
     margin-bottom: 30px;
     display: inline-block;
 }
 
-/* // liste des commandes (grille) */
 .factory-orders-list {
     display: flex;
     flex-direction: column;
     gap: 25px;
 }
 
-/* // carte de commande individuelle */
 .admin-card {
     background: white;
     border-radius: 12px;
@@ -31,7 +38,6 @@
     border: 1px solid #e2e8f0;
 }
 
-/* // en-tête de la commande (date et total) */
 .order-header {
     display: flex;
     justify-content: space-between;
@@ -53,7 +59,6 @@
     color: #006CB7;
 }
 
-/* // tableau des articles */
 .admin-table {
     width: 100%;
     border-collapse: collapse;
@@ -80,7 +85,6 @@
     border-bottom: none;
 }
 
-/* // mise en valeur des quantités */
 .qty-badge {
     background-color: #edf2f7;
     padding: 4px 10px;

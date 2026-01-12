@@ -11,6 +11,11 @@ use App\Models\ImagesModel;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+/**
+ * PaymentController
+ * * Handles the checkout process, payment simulation, and order finalization.
+ * * Transforms temporary cart items into permanent database records (Orders & Mosaics).
+ */
 class PaymentController extends Controller {
     private $translations;
 
@@ -70,7 +75,6 @@ class PaymentController extends Controller {
                 'cvv'    => $_POST['card_cvv']
             ];
 
-            // 1. Sauvegarde des Mosaïques en BDD (Table Mosaic)
             $mosaicModel = new MosaicModel();
             $imagesModel = new ImagesModel();
             $realMosaicIds = []; 
@@ -80,7 +84,6 @@ class PaymentController extends Controller {
                 $imgId = $item['image_id'];
                 $style = $item['style'];
 
-                // On récupère l'image source pour régénérer le texte
                 $imgDb = $imagesModel->getImageById($imgId, $userId);
                 
                 if ($imgDb) {
@@ -89,7 +92,6 @@ class PaymentController extends Controller {
                     $pavageContent = $genResults[$style]['txt'] ?? null;
 
                     if ($pavageContent) {
-                        // Création de la mosaïque (id_Order est NULL pour l'instant)
                         $newMosaicId = $mosaicModel->saveSelectedMosaic($imgId, $pavageContent, $style);
                         if ($newMosaicId) {
                             $realMosaicIds[] = $newMosaicId;
@@ -103,13 +105,10 @@ class PaymentController extends Controller {
                 exit;
             }
 
-            // 2. Paiement et Création de la Commande (CustomerOrder)
             $financialModel = new FinancialModel();
-            // On passe le 1er ID juste pour récupérer l'image de couverture dans le model
             $result = $financialModel->processOrder($userId, $realMosaicIds[0], $cardInfo, $totalAmount, $billingInfo);
 
             if (!is_numeric($result)) {
-                // Erreur SQL renvoyée par le model
                 $clientInfo = (array) $usersModel->getUserById($userId);
                 $this->render('payment_views', [
                     't' => $this->translations, 'total' => $totalAmount, 'cart' => $_SESSION['cart'],
@@ -121,19 +120,17 @@ class PaymentController extends Controller {
             
             $orderId = (int)$result;
 
-            // 3. Liaison : On met à jour toutes les mosaïques avec l'ID de la commande
             foreach ($realMosaicIds as $idMosaic) {
-                // C'est ICI que le lien 1 Commande -> N Mosaïques se fait
                 $sqlLink = "UPDATE Mosaic SET id_Order = ? WHERE id_Mosaic = ?";
                 $mosaicModel->requete($sqlLink, [$orderId, $idMosaic]);
                 
-                // On génère la liste des pièces (MosaicComposition)
                 if (!$mosaicModel->hasComposition($idMosaic)) {
                     $mosaicModel->saveMosaicComposition($idMosaic);
                 }
             }
 
-            // 4. Finalisation
+            $mosaicModel->deductStockFromMosaic($idMosaic);
+
             $commandeModel = new CommandeModel(); 
             $orderDetails = $commandeModel->getOrderDetails($orderId);
             $orderDetails['total_amount'] = $totalAmount; 
@@ -153,16 +150,14 @@ class PaymentController extends Controller {
         $commandeModel = new CommandeModel();
         $mosaicModel = new MosaicModel();
         
-        // 1. Récupération de la commande
         $orderDetails = $commandeModel->getOrderDetails($orderId);
         if (!$orderDetails) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/index.php"); exit; }
         $orderDetails = (array) $orderDetails; 
 
-        // 2. Récupération des articles
         $items = $mosaicModel->getMosaicsByOrderId($orderId);
         
         $totalHandling = 0;
-        $itemsTotalTTC = 0; // Somme des articles en TTC
+        $itemsTotalTTC = 0;
         $handlingUnit = \App\Models\MosaicModel::HANDLING_FEE; 
 
         foreach ($items as $item) {
@@ -183,33 +178,24 @@ class PaymentController extends Controller {
             $itemsTotalTTC += $price; 
         }
 
-        // 3. --- CALCULS FINANCIERS DÉTAILLÉS (TVA 20%) ---
-        $deliveryTTC = \App\Models\MosaicModel::DELIVERY_FEE; // 4.99
+        $deliveryTTC = \App\Models\MosaicModel::DELIVERY_FEE;
         $totalTTC = $itemsTotalTTC + $deliveryTTC;
 
-        // Coefficient TVA (20% => 1.2)
         $tvaRate = 0.20;
         $coeff = 1 + $tvaRate;
 
-        // Calcul des Hors Taxes (HT)
-        $itemsHT = $itemsTotalTTC / $coeff;       // Total articles HT
-        $deliveryHT = $deliveryTTC / $coeff;      // Port HT
-        $totalHT = $totalTTC / $coeff;            // Total HT global
+        $itemsHT = $itemsTotalTTC / $coeff;    
+        $deliveryHT = $deliveryTTC / $coeff;      
+        $totalHT = $totalTTC / $coeff;        
 
-        // Calcul de la TVA
         $totalTVA = $totalTTC - $totalHT;
 
-        // 4. Envoi à la vue
         $this->render('invoice_views', [
             't' => $this->translations, 
             'order' => $orderDetails,   
             'items' => $items,
-            
-            // Infos transparence
             'totalHandling' => $totalHandling,
             'handlingUnit' => $handlingUnit,
-            
-            // Infos Financières Complètes
             'itemsTotalTTC' => $itemsTotalTTC,
             'itemsHT' => $itemsHT,
             'deliveryTTC' => $deliveryTTC,
@@ -217,7 +203,6 @@ class PaymentController extends Controller {
             'totalHT' => $totalHT,
             'totalTVA' => $totalTVA,
             'totalTTC' => $totalTTC,
-            
             'css' => 'invoice_views.css'
         ]);
     }
@@ -226,10 +211,8 @@ class PaymentController extends Controller {
         $mail = new PHPMailer(true);
         $mosaicModel = new MosaicModel();
         
-        // Récupération des items pour le mail
         $items = $mosaicModel->getMosaicsByOrderId($order['id_Order']);
         $pieces = $mosaicModel->countPiecesFromContent($item->pavage); // AJOUT
-        // Construction du tableau HTML pour le mail
         $handlingUnit = \App\Models\MosaicModel::HANDLING_FEE;
 
         $rowsHtml = '';
