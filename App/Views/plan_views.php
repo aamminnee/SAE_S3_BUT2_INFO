@@ -35,6 +35,7 @@ if (!isset($t) || empty($t)) {
         .notice-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid var(--lego-blue); padding-bottom: 15px; margin-bottom: 30px; }
         .notice-header h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; color: var(--lego-blue); }
 
+        /* --- STYLES ÉCRAN (AVEC SCROLL) --- */
         .grid-wrapper { 
             border: 5px solid #222; 
             background: #222; 
@@ -71,6 +72,7 @@ if (!isset($t) || empty($t)) {
         .legend-item { display: flex; align-items: center; gap: 8px; padding: 5px; background: #fff; border-radius: 5px; border: 1px solid #ddd; }
         .swatch { width: 25px; height: 25px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; border: 1px solid #000; }
 
+        /* --- STYLES IMPRESSION --- */
         @media print {
             @page { margin: 0; size: auto; }
             .print-btn { display: none; }

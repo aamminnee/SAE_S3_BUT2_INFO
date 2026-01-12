@@ -32,6 +32,7 @@ func main() {
 	// create the webserver
 	mux := http.NewServeMux()
 	config.InstallWebHandlers(mux)
+	config.InstallWebHandlers2(mux)
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	var wg sync.WaitGroup
 	server := http.Server{Addr: addr, Handler: mux}

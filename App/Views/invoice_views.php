@@ -13,6 +13,7 @@
     
     <div class="paper-header">
         <div class="company-section">
+            <img src="<?= $_ENV['BASE_URL'] ?>/Public/img/logo.png" alt="MyBrixStore" style="height: 60px;">
             <div class="company-address">
                 <strong>MyBrixStore</strong><br>
                 123 Rue des Briques<br>

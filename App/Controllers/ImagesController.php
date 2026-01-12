@@ -57,11 +57,13 @@ class ImagesController extends Controller {
             }
 
             $imgData = file_get_contents($file['tmp_name']);
-            $fileName = $file['name']; // correspond à votre colonne 'filename'
+            $fileName = $file['name'];
 
             try {
                 $model = new ImagesModel();
                 $imageId = $model->saveCustomerImage($_SESSION['user_id'], $imgData, $fileName, $fileType);
+
+                $_SESSION['can_crop'] = true;
 
                 echo json_encode([
                     'status' => 'success', 

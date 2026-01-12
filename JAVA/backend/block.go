@@ -30,7 +30,7 @@ func ParseBlockReference(reference string) (int, int, string, string) {
 	}
 	missing := ""
 	if len(elements2) == 3 {
-		missing = elements2[3]
+		missing = elements2[2]
 	}
 	color := ""
 	if len(elements) == 2 {

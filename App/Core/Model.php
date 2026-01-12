@@ -20,7 +20,7 @@ class Model {
         return $this->requete("SELECT * FROM {$this->table} WHERE id = ?", [$id])->fetch();
     }
 
-    public function requete(string $sql, array $attributs = null) {
+    public function requete(string $sql, ?array $attributs = null) {
         $this->db = Db::getInstance();
 
         if ($attributs !== null) {

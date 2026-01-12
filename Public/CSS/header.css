@@ -141,7 +141,7 @@ header {
     height: 100%;
     display: flex;
     align-items: center;
-    margin-left: 0px;
+    margin-left: 10px;
 }
 
 .profile-trigger {
