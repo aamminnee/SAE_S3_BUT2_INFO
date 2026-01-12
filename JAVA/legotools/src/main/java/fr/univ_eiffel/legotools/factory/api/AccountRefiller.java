@@ -1,34 +1,37 @@
 package fr.univ_eiffel.legotools.factory.api;
+
 import fr.univ_eiffel.legotools.factory.security.ProofOfWorkSolver;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
 import com.google.gson.Gson;
 
-// utilisé pour recharger le compte prépayé sur l'usine lego
 public class AccountRefiller {
-    public static final String FACTORY_URL = "https://legofactory.plade.org";
     public static final ProofOfWorkSolver POW_SOLVER = new ProofOfWorkSolver("SHA-256");
 
+    private final String serverUrl; // Nouvelle variable
     private final String email;
     private final String apiKey;
 
     private Gson gson = new Gson();
 
-    public AccountRefiller(String email, String apiKey) {
+    // MODIFICATION DU CONSTRUCTEUR
+    public AccountRefiller(String serverUrl, String email, String apiKey) {
+        this.serverUrl = serverUrl;
         this.email = email;
         this.apiKey = apiKey;
     }
 
     public record Challenge(String data_prefix, String hash_prefix) {}
 
-    // récupère un nouveau challenge auprès de l'usine
     public Challenge fetchChallenge() throws IOException {
+        // Utilisation de this.serverUrl
         @SuppressWarnings("deprecation")
-        var connection = (HttpURLConnection)new URL(FACTORY_URL + "/billing/challenge").openConnection();
+        var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/challenge").toURL().openConnection();
         connection.addRequestProperty("X-Email", email);
         connection.addRequestProperty("X-Secret-Key", apiKey);
         int status = connection.getResponseCode();
@@ -38,7 +41,6 @@ public class AccountRefiller {
         return gson.fromJson(answer, Challenge.class);
     }
 
-    // résout le challenge de type proof of work
     public byte[] solveChallenge(Challenge challenge) {
         var startTime = System.nanoTime();
         byte[] dataPrefix = HexFormat.of().parseHex(challenge.data_prefix());
@@ -50,10 +52,9 @@ public class AccountRefiller {
 
     public record ChallengeAnswer(String data_prefix, String hash_prefix, String answer) {}
 
-    // soumet la réponse au challenge pour obtenir les crédits
     public void submitChallengeAnswer(ChallengeAnswer challengeAnswer) throws IOException {
         @SuppressWarnings("deprecation")
-        var connection = (HttpURLConnection)new URL(FACTORY_URL + "/billing/challenge-answer").openConnection();
+        var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/challenge-answer").toURL().openConnection();
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.addRequestProperty("X-Email", email);
@@ -67,10 +68,9 @@ public class AccountRefiller {
 
     public record AccountBalance(String balance) {};
 
-    // récupère le solde actuel du compte
     public String fetchAccountBalance() throws IOException {
         @SuppressWarnings("deprecation")
-        var connection = (HttpURLConnection)new URL(FACTORY_URL + "/billing/balance").openConnection();
+        var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/balance").toURL().openConnection();
         connection.addRequestProperty("X-Email", email);
         connection.addRequestProperty("X-Secret-Key", apiKey);
         int status = connection.getResponseCode();
@@ -80,7 +80,6 @@ public class AccountRefiller {
         return gson.fromJson(answer, AccountBalance.class).balance();
     }
 
-    // effectue le cycle complet de recharge
     public String refill() throws IOException {
         var challenge = fetchChallenge();
         System.err.println("Received PoW challenge: " + challenge);

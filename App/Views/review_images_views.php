@@ -53,9 +53,9 @@
                 <?php 
                 $styles = [
                     'rentabilite'   => ['label' => 'Économique', 'desc' => 'Ce mode est optimisé pour votre portefeuille. L\'algorithme choisit intelligemment les briques les moins chères pour réduire le coût total du projet. En contrepartie, la mosaïque sera légèrement dégradée.', 'color' => 'var(--lego-green)'],
-                    'minimisation' => ['label' => 'Classique', 'desc' => 'Le parfait équilibre entre qualité et facilité. Cet algorithme privilégie la fidélité des détails de votre photo tout en utilisant des pièces standards. C\'est le meilleur choix pour un rendu visuel optimal et un montage agréable.', 'color' => 'var(--lego-blue)'],
                     'libre' => ['label' => 'Renforcé', 'desc' => 'Idéal pour les grandes surfaces. Cet algorithme force l\'utilisation des plus grandes briques possibles pour remplir les zones de couleur.', 'color' => 'var(--lego-red)'],
-                    'stock'   => ['label' => 'Express', 'desc' => 'Pas d\'attente ! Ce rendu est généré exclusivement à partir des pièces physiquement présentes dans notre entrepôt. Si vous commandez ce modèle, l\'expédition est immédiate car nous n\'avons pas besoin de commander les pièces.', 'color' => 'var(--lego-yellow)']
+                    'stock'   => ['label' => 'Express', 'desc' => 'Pas d\'attente ! Ce rendu est généré exclusivement à partir des pièces physiquement présentes dans notre entrepôt. Si vous commandez ce modèle, l\'expédition est immédiate car nous n\'avons pas besoin de commander les pièces.', 'color' => 'var(--lego-yellow)'],
+                    'minimisation' => ['label' => 'Classique', 'desc' => 'Le parfait équilibre entre qualité et facilité. Cet algorithme privilégie la fidélité des détails de votre photo tout en utilisant des pièces standards. C\'est le meilleur choix pour un rendu visuel optimal et un montage agréable.', 'color' => 'var(--lego-blue)']
                 ];
                 ?>
 

@@ -21,7 +21,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
 public class HttpRestFactory implements LegoFactory {
-    private static final String BASE_URL = "https://legofactory.plade.org";
+    private final String serverUrl;
     private final String email;
     private final String apiKey;
     private final Gson gson = new Gson();
@@ -29,7 +29,8 @@ public class HttpRestFactory implements LegoFactory {
     private static PublicKey cachedPublicKey = null;
     private PaymentStrategy paymentStrategy = new PoWPaymentStrategy();
 
-    public HttpRestFactory(String email, String apiKey) {
+    public HttpRestFactory(String serverUrl, String email, String apiKey) {
+        this.serverUrl = serverUrl;
         this.email = email;
         this.apiKey = apiKey;
     }
@@ -43,7 +44,7 @@ public class HttpRestFactory implements LegoFactory {
 
     // envoie une requête http à l'api de l'usine
     private String sendRequest(String endpoint, String method, String jsonBody) throws IOException {
-        URL url = URI.create(BASE_URL + endpoint).toURL();
+        URL url = URI.create(serverUrl + endpoint).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod(method);
         conn.setRequestProperty("X-Email", email);

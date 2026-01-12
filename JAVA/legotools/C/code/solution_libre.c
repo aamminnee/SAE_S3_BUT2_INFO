@@ -9,96 +9,51 @@
 #include "dependance/solution.h"
 #include "dependance/solution_libre.h"
 
-/**
- * Algorithme "Formes Libres" :
- * Tente de remplir l'image avec les briques les plus grandes possibles
- * en respectant l'homogénéité des couleurs de l'image.
- */
+#define TOLERANCE_LIBRE 700 
 
+/**
+ * Algorithme Formes Libres
+ * Cet algorithme maximise l'efficacité géométrique en utilisant les plus grandes
+ * formes possibles du catalogue.
+ */
 Solution run_algo_libre(Image* I, BriqueList* B) {
     Solution S;
     init_sol(&S, I);
 
     if (S.array == NULL && S.length != 0) {
-        printf("Erreur: Solution non initialisée correctement dans init_sol.\n");
+        fprintf(stderr, "Erreur: Solution non initialisée.\n");
         exit(EXIT_FAILURE);
     }
 
     int npix = I->W * I->H;
     int* couvert = calloc(npix, sizeof(int));
-    int* couleur_proche = malloc(npix * sizeof(int));
-
-    if (!couvert || !couleur_proche) {
-        perror("malloc");
+    if (!couvert) {
+        perror("malloc couvert");
         exit(EXIT_FAILURE);
     }
 
-    // Etape 1 : Identification de la brique de base 1x1
+    // Etape 1 : Identification de la brique de base 1x1 pour le repli (fallback)
     int shape11 = lookupShape(B, 1, 1);
     if (shape11 == -1) {
-        printf("CRITICAL ERROR: La forme '1-1' est introuvable dans briques.txt !\n");
-        printf("Vérifiez le contenu de C/input/briques.txt\n");
+        fprintf(stderr, "Erreur critique: Forme 1x1 introuvable.\n");
         exit(EXIT_FAILURE);
     }
 
-    // Création d'une table de correspondance pour trouver une brique 1x1 par couleur
-    int map11[MAX_COLORS];
-    for(int i=0; i<MAX_COLORS; i++) {
-        map11[i] = -1;
-    }
-
-    for(int i=0; i<B->nBrique; i++) {
-        if (B->bShape[i] == shape11) {
-            // Vérification bornes
-            if(B->bCol[i] >= 0 && B->bCol[i] < MAX_COLORS) {
-                map11[B->bCol[i]] = i;
-            }
-        }
-    }
-
-    // Etape 2 : Analyse des couleurs de l'image
-    for (int y = 0; y < I->H; y++) {
-        for (int x = 0; x < I->W; x++) {
-            int meilleur_col = -1;
-            int min_err = INT_MAX;
-            RGB pix = *get(I, x, y);
-
-            for (int c = 0; c < B->nCol; c++) {
-                if (c >= MAX_COLORS || map11[c] == -1) {
-                    continue;
-                }
-                int err = colError(B->col[c], pix);
-                if (err < min_err) {
-                    min_err = err;
-                    meilleur_col = c;
-                }
-            }
-            couleur_proche[getIndex(x, y, I)] = meilleur_col;
-        }
-    }
-
-    // Etape 3 : Préparation de la liste des formes par taille
-    int max_formes = B->nShape; 
-    Dimension* formes = malloc(max_formes * sizeof(Dimension));
+    // Etape 2 : Préparation de la liste des formes triées par taille (aire) décroissante
+    Dimension* formes = malloc(B->nShape * sizeof(Dimension));
     int nb_formes = 0;
-
     for (int i = 0; i < B->nShape; i++) {
-        int w = B->W[i];
-        int h = B->H[i];
-
-        if (w <= 0 || h <= 0) {
-            continue;
+        if (B->W[i] > 0 && B->H[i] > 0) {
+            formes[nb_formes].w = B->W[i];
+            formes[nb_formes].h = B->H[i];
+            formes[nb_formes].aire = B->W[i] * B->H[i];
+            nb_formes++;
         }
-
-        formes[nb_formes].w = w;
-        formes[nb_formes].h = h;
-        formes[nb_formes].aire = w * h;
-        nb_formes++;
     }
-    // On trie les formes par taille décroissante
+    // Tri pour essayer les plus grandes pièces d'abord (optimisation géométrique)
     qsort(formes, nb_formes, sizeof(Dimension), comparer_aire);
     
-    // Etape 4 : Pavage glouton
+    // Etape 3 : Pavage glouton
     for (int y = 0; y < I->H; y++) {
         for (int x = 0; x < I->W; x++) {
 
@@ -106,15 +61,9 @@ Solution run_algo_libre(Image* I, BriqueList* B) {
                 continue;
             }
 
-            int col_cible = couleur_proche[getIndex(x, y, I)];
-            
-            if (col_cible == -1) {
-                continue;
-            }
-
             int place = 0;
 
-            // Parcours des formes disponibles
+            // On essaie les formes de la plus grande à la plus petite
             for (int k = 0; k < nb_formes && !place; k++) {
                 int w_base = formes[k].w;
                 int h_base = formes[k].h;
@@ -123,60 +72,66 @@ Solution run_algo_libre(Image* I, BriqueList* B) {
                     int w = (rot == 0) ? w_base : h_base;
                     int h = (rot == 0) ? h_base : w_base;
 
-                    if (x + w > I->W || y + h > I->H) {
-                        continue;
-                    }
-                    if (!rect_is_uncovered(x, y, w, h, I, couvert)) {
-                        continue;
-                    }
-                    if (!rect_has_uniform_closest(x, y, w, h, I, couleur_proche, col_cible)) {
-                        continue;
-                    }
+                    // Vérification des limites de l'image et de la zone libre
+                    if (x + w > I->W || y + h > I->H) continue;
+                    if (!rect_is_uncovered(x, y, w, h, I, couvert)) continue;
 
                     int id_shape = lookupShape(B, w, h);
-                    if (id_shape == -1) {
-                        continue;
+                    if (id_shape == -1) continue;
+
+                    // Recherche de la brique la plus proche en couleur pour cette zone
+                    int best_brique = -1;
+                    long long min_err = LLONG_MAX;
+
+                    for (int i = 0; i < B->nBrique; i++) {
+                        if (B->bShape[i] == id_shape) {
+                            // Calcul de l'erreur totale de la brique sur la zone
+                            long long err = (long long)compute_error_for_shape_at(i, x, y, rot, B, I);
+                            if (err < min_err) {
+                                min_err = err;
+                                best_brique = i;
+                            }
+                        }
                     }
 
-                    int id_brique = getBriqueWithColor(B, id_shape, col_cible);
-                    if (id_brique != -1) {
-                        push_sol_with_error(&S, id_brique, x, y, 0, I, B);
+                    // Validation : on place la brique si l'erreur moyenne par pixel est acceptable
+                    if (best_brique != -1 && (min_err / (w * h)) < TOLERANCE_LIBRE) {
+                        push_sol_with_error(&S, best_brique, x, y, rot, I, B);
                         mark_rect_covered(x, y, w, h, I, couvert);
                         place = 1;
                     }
                 }
             }
 
-            // Etape 5 : Dernier recours brique 1x1
+            // Etape 4 : Repli sur brique 1x1 si aucune grande forme ne convient
             if (!place) {
-                int brique_1x1 = -1;
-                if (col_cible >= 0 && col_cible < MAX_COLORS) {
-                    brique_1x1 = map11[col_cible];
-                }
+                int best_1x1 = -1;
+                int min_err_1x1 = INT_MAX;
+                RGB pix = *get(I, x, y);
 
-                if (brique_1x1 == -1) {
-                    for(int i=0; i<B->nBrique; i++) {
-                        if(B->bShape[i] == shape11) {
-                            brique_1x1 = i;
-                            break;
+                for (int i = 0; i < B->nBrique; i++) {
+                    if (B->bShape[i] == shape11) {
+                        int err = colError(B->col[B->bCol[i]], pix);
+                        if (err < min_err_1x1) {
+                            min_err_1x1 = err;
+                            best_1x1 = i;
                         }
                     }
                 }
 
-                if (brique_1x1 != -1) {
-                    push_sol_with_error(&S, brique_1x1, x, y, 0, I, B);
-                    couvert[getIndex(x, y, I)] = 1;
+                if (best_1x1 != -1) {
+                    push_sol_with_error(&S, best_1x1, x, y, 0, I, B);
                 } else {
-                    printf("Erreur fatale: Impossible de paver le pixel (%d,%d). Aucune brique 1x1 disponible.\n", x, y);
-                    exit(EXIT_FAILURE);
+                    // Cas désespéré : on met la première brique 1x1 trouvée
+                    push_sol_with_error(&S, -1, x, y, 0, I, B);
                 }
+                couvert[getIndex(x, y, I)] = 1;
             }
         }
     }
 
     fill_sol_stock(&S, B);
     free(couvert);
-    free(couleur_proche);
     free(formes);
     
     return S;

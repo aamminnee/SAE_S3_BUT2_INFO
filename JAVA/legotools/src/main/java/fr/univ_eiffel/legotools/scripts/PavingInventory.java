@@ -7,7 +7,6 @@ import java.util.TreeMap;
 public class PavingInventory {
 
     public static void main(String[] args) {
-        // Le main reste compatible pour une utilisation autonome
         String inputPath = (args.length > 0) ? args[0] : "C/output/pavage_v4_stock.txt";
         String outputPath = "inventory.txt";
         
@@ -30,7 +29,7 @@ public class PavingInventory {
 
         // 1. Lecture
         try (BufferedReader br = new BufferedReader(new FileReader(inputPath))) {
-            String line = br.readLine(); // On saute potentiellement la première ligne de stats du C si elle existe
+            String line = br.readLine();
             
             while ((line = br.readLine()) != null) {
                 line = line.trim();
@@ -40,7 +39,7 @@ public class PavingInventory {
                 if (parts.length < 1) continue;
 
                 String brickKey = parts[0]; 
-                if (!brickKey.contains("/")) continue; // Ignorer les lignes mal formées
+                if (!brickKey.contains("/")) continue;
 
                 inventory.put(brickKey, inventory.getOrDefault(brickKey, 0) + 1);
             }

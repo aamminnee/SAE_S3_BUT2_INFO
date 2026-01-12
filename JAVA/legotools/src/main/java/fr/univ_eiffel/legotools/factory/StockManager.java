@@ -23,8 +23,8 @@ public class StockManager {
         String dbName = dotenv.get("DB_NAME", "SAE_S3_BUT2_INFO");
         
         this.url = "jdbc:mysql://" + host + ":" + port + "/" + dbName;
-        this.user = dotenv.get("DB_USER", "admin");
-        this.password = dotenv.get("DB_PASSWORD", "");
+        this.user = dotenv.get("DB_USER", "root");
+        this.password = dotenv.get("DB_PASSWORD", "Vh-23f538");
         
         // initialisation de la table spécifique au composant java
         initTables();
@@ -56,7 +56,6 @@ public class StockManager {
     public Map<String, Integer> getStockCounts() {
         Map<String, Integer> counts = new HashMap<>();
         
-        // // requête calculant le stock actuel disponible
         String sql = """
             SELECT 
                 s.name AS shape_name, 
@@ -67,12 +66,13 @@ public class StockManager {
             JOIN Colors c ON i.color_id = c.id_color
             LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_in FROM StockEntry GROUP BY id_Item) entries ON i.id_Item = entries.id_Item
             LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_out FROM OrderItem GROUP BY id_Item) sales ON i.id_Item = sales.id_Item
-            HAVING quantity > 0
         """;
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = getConnection(); 
+             Statement stmt = conn.createStatement(); 
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
             while (rs.next()) {
-                // // format attendu par le code de pavage : "2-4/fc97ac"
                 String key = rs.getString("shape_name") + "/" + rs.getString("hex_color").toLowerCase();
                 counts.put(key, rs.getInt("quantity"));
             }
@@ -80,6 +80,26 @@ public class StockManager {
             e.printStackTrace();
         }
         return counts;
+    }
+
+    public Map<String, Integer> getLowStockItems() {
+        Map<String, Integer> alerts = new HashMap<>();
+        
+        String sql = "SELECT shape_name, hex_color, current_stock FROM View_LowStockDetails";
+
+        try (Connection conn = getConnection(); 
+             Statement stmt = conn.createStatement(); 
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                // Construction de la clé "2-2/c9cae2"
+                String key = rs.getString("shape_name") + "/" + rs.getString("hex_color").toLowerCase();
+                alerts.put(key, rs.getInt("current_stock"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return alerts;
     }
 
     // // ajoute les briques reçues de l'usine dans la bdd
@@ -273,5 +293,39 @@ public class StockManager {
             e.printStackTrace();
         }
         return types;
+    }
+
+    // 1. Récupère tous les articles avec leur ID et la référence API (Forme/Couleur)
+    public Map<Integer, String> getAllItemsRef() {
+        Map<Integer, String> items = new HashMap<>();
+        // On concatène comme l'attend l'API : "Forme/CouleurHex"
+        String sql = "SELECT i.id_Item, CONCAT(s.name, '/', LOWER(c.hex_color)) AS ref " +
+                     "FROM Item i " +
+                     "JOIN Shapes s ON i.shape_id = s.id_shape " +
+                     "JOIN Colors c ON i.color_id = c.id_color";
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                items.put(rs.getInt("id_Item"), rs.getString("ref"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return items;
+    }
+
+    // 2. Met à jour le prix d'un article spécifique
+    public void updateItemPrice(int idItem, double price) {
+        String sql = "UPDATE Item SET price = ? WHERE id_Item = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setDouble(1, price);
+            pstmt.setInt(2, idItem);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

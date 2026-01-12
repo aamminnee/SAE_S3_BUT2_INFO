@@ -76,15 +76,24 @@ CREATE TABLE `CustomerOrder` (
   KEY `id_Image` (`id_Image`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+DROP TABLE IF EXISTS `FactoryBrick`;
+CREATE TABLE IF NOT EXISTS `FactoryBrick` (
+  `serial` varchar(32) NOT NULL,
+  `certificate` TEXT, 
+  `shape_id` INT,
+  `color_id` INT,
+  `purchase_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`serial`),
+  KEY `shape_id` (`shape_id`),
+  KEY `color_id` (`color_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 DROP TABLE IF EXISTS `FactoryOrder`;
 CREATE TABLE `FactoryOrder` (
   `id_FactoryOrder` varchar(64) NOT NULL,
-  `id_Item` int NOT NULL,
-  `quantity` int NOT NULL,
-  `price` decimal(10,2) NOT NULL,
+  `total_price` decimal(10,2) NOT NULL,
   `order_date` date NOT NULL DEFAULT (curdate()),
-  PRIMARY KEY (`id_FactoryOrder`),
-  KEY `id_Item` (`id_Item`)
+  PRIMARY KEY (`id_FactoryOrder`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 DROP TABLE IF EXISTS `FactoryOrderDetails`;
@@ -159,16 +168,6 @@ CREATE TABLE `MosaicComposition` (
   KEY `fk_composition_item` (`id_Item`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-DROP TABLE IF EXISTS `OrderItem`;
-CREATE TABLE `OrderItem` (
-  `id_Order` int NOT NULL,
-  `id_Item` int NOT NULL,
-  `quantity` int NOT NULL,
-  `unit_price_snapshot` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`id_Order`,`id_Item`),
-  KEY `id_Item` (`id_Item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 DROP TABLE IF EXISTS `SaveCustomer`;
 CREATE TABLE `SaveCustomer` (
   `id_SaveCustomer` int NOT NULL AUTO_INCREMENT,
@@ -185,7 +184,7 @@ CREATE TABLE `Shapes` (
   `id_shape` int(11) NOT NULL AUTO_INCREMENT,
   `width` tinyint(4) NOT NULL,
   `length` tinyint(4) NOT NULL,
-  `hole` int(11) DEFAULT NULL,
+  `hole` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `name` varchar(50) NOT NULL,
   PRIMARY KEY (`id_shape`),
   UNIQUE KEY `width` (`width`,`length`,`hole`)
@@ -222,7 +221,274 @@ CREATE TABLE `Translations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
--- 2. INSERTION DES DONNÉES (DUMP)
+-- 2. VUES
+-- --------------------------------------------------------
+
+--
+-- Structure de la vue `View_LowStockDetails`
+--
+
+DROP VIEW IF EXISTS `View_LowStockDetails`;
+
+CREATE VIEW `View_LowStockDetails` AS 
+SELECT 
+  s.name AS shape_name, 
+  c.hex_color AS hex_color, 
+  IFNULL(entries.current_stock, 0) AS current_stock 
+FROM Item i
+JOIN Shapes s ON i.shape_id = s.id_shape
+JOIN Colors c ON i.color_id = c.id_color
+LEFT JOIN (
+    SELECT id_Item, SUM(quantity) AS current_stock 
+    FROM StockEntry 
+    GROUP BY id_Item
+) entries ON i.id_Item = entries.id_Item
+WHERE IFNULL(entries.current_stock, 0) < 50;
+
+--
+-- Structure de la vue `View_StockStatus`
+--
+
+DROP VIEW IF EXISTS `View_StockStatus`;
+
+CREATE VIEW `View_StockStatus` AS
+SELECT 
+    i.id_Item AS id_Item,
+    CONCAT(s.name, ' ', c.name) AS name,
+    IFNULL(entries.current_stock, 0) AS current_stock,
+    CASE 
+        WHEN IFNULL(entries.current_stock, 0) < 50 THEN 'OUI' 
+        ELSE 'NON' 
+    END AS alert_status
+FROM Item i
+JOIN Shapes s ON i.shape_id = s.id_shape
+JOIN Colors c ON i.color_id = c.id_color
+LEFT JOIN (
+    SELECT 
+        id_Item, 
+        SUM(quantity) AS current_stock 
+    FROM StockEntry 
+    GROUP BY id_Item
+) entries ON i.id_Item = entries.id_Item;
+
+-- --------------------------------------------------------
+-- 3. PROCÉDURES STOCKÉES (LOGIQUE MÉTIER UNIQUEMENT)
+-- --------------------------------------------------------
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `check_mosaic_stock`$$
+CREATE PROCEDURE `check_mosaic_stock` (IN `p_id_Mosaic` INT, OUT `p_is_available` BOOLEAN)
+BEGIN
+    DECLARE v_missing_items INT;
+    SELECT COUNT(*) INTO v_missing_items
+    FROM MosaicComposition mc
+    JOIN View_StockStatus vss ON mc.id_Item = vss.id_Item
+    WHERE mc.id_Mosaic = p_id_Mosaic
+    AND vss.current_stock < mc.quantity_needed;
+
+    IF v_missing_items = 0 THEN SET p_is_available = TRUE; ELSE SET p_is_available = FALSE; END IF;
+    IF (SELECT COUNT(*) FROM MosaicComposition WHERE id_Mosaic = p_id_Mosaic) = 0 THEN SET p_is_available = FALSE; END IF;
+END$$
+
+DROP PROCEDURE IF EXISTS `get_all_items_stock`$$
+CREATE PROCEDURE `get_all_items_stock` ()
+BEGIN
+    SELECT 
+        i.id_Item, 
+        s.name AS shape_name, 
+        c.name AS color_name,
+        i.price,
+        IFNULL(entries.current_stock, 0) AS calculated_stock
+    FROM Item i
+    JOIN Shapes s ON i.shape_id = s.id_shape
+    JOIN Colors c ON i.color_id = c.id_color
+    LEFT JOIN (
+        SELECT id_Item, SUM(quantity) AS current_stock 
+        FROM StockEntry 
+        GROUP BY id_Item
+    ) entries ON i.id_Item = entries.id_Item;
+END$$
+
+DROP PROCEDURE IF EXISTS `get_export_colors`$$
+CREATE PROCEDURE `get_export_colors` () 
+BEGIN
+	SELECT id_color, hex_color 
+    FROM Colors 
+    ORDER BY id_color;
+END$$
+
+DROP PROCEDURE IF EXISTS `get_export_items_stock`$$
+CREATE PROCEDURE `get_export_items_stock` ()
+BEGIN
+  SELECT 
+        i.shape_id,
+        i.color_id,
+        i.price,
+        CAST(IFNULL(entries.current_stock, 0) AS SIGNED) AS current_stock
+    FROM Item i
+    LEFT JOIN (
+        SELECT id_Item, SUM(quantity) AS current_stock 
+        FROM StockEntry 
+        GROUP BY id_Item
+    ) entries ON i.id_Item = entries.id_Item;
+END$$
+
+DROP PROCEDURE IF EXISTS `get_export_shapes`$$
+CREATE PROCEDURE `get_export_shapes` ()
+BEGIN
+	SELECT id_shape, width, length 
+    FROM Shapes 
+    ORDER BY id_shape;
+END$$
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+-- 4. TRIGGERS
+-- --------------------------------------------------------
+
+DELIMITER $$
+
+-- FactoryOrder Triggers
+DROP TRIGGER IF EXISTS `prevent_factory_order_delete`$$
+CREATE TRIGGER `prevent_factory_order_delete` BEFORE DELETE ON `FactoryOrder` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (FactoryOrder).';
+END$$
+
+DROP TRIGGER IF EXISTS `prevent_factory_order_update`$$
+CREATE TRIGGER `prevent_factory_order_update` BEFORE UPDATE ON `FactoryOrder` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (FactoryOrder).';
+END$$
+
+DROP TRIGGER IF EXISTS `prevent_factory_order_detail_update`$$ 
+CREATE TRIGGER `prevent_factory_order_detail_update` BEFORE UPDATE ON `FactoryOrderDetails` FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'  SET MESSAGE_TEXT = 'Erreur : Modification interdite (FactoryOrderDetail).';
+END //
+
+DROP TRIGGER IF EXISTS `prevent_factory_order_detail_delete`$$ 
+CREATE TRIGGER `prevent_factory_order_detail_delete` BEFORE DELETE ON `FactoryOrderDetails` FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (FactoryOrder).';
+END //
+
+DROP TRIGGER IF EXISTS `prevent_factory_brick_update`$$ 
+CREATE TRIGGER `prevent_factory_brick_update` BEFORE UPDATE ON `FactoryBrick` FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (FactoryDetail).';
+END //
+
+DROP TRIGGER IF EXISTS `prevent_factory_brick_delete`$$ 
+CREATE TRIGGER `prevent_factory_brick_delete` BEFORE DELETE ON `FactoryBrick` FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (FactoryDetail).';
+END //
+
+-- Invoice Triggers
+DROP TRIGGER IF EXISTS `before_invoice_insert`$$
+CREATE TRIGGER `before_invoice_insert` BEFORE INSERT ON `Invoice` FOR EACH ROW BEGIN
+    DECLARE v_id_SaveCustomer INT;
+    DECLARE v_today_prefix VARCHAR(20) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+    DECLARE v_max_invoice VARCHAR(50) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+    DECLARE v_next_seq INT DEFAULT 1;
+
+    -- récupération client via la commande liée
+    SELECT c.id_SaveCustomer INTO v_id_SaveCustomer
+    FROM CustomerOrder co
+    JOIN Customer c ON co.id_Customer = c.id_Customer
+    WHERE co.id_Order = NEW.id_Order LIMIT 1; 
+
+    -- construction du format fac-annee-client-seq
+    SET v_today_prefix = CONCAT('FAC-', DATE_FORMAT(NOW(), '%Y'), '-', v_id_SaveCustomer, '-');
+
+    SELECT invoice_number INTO v_max_invoice
+    FROM Invoice
+    WHERE invoice_number LIKE CONCAT(v_today_prefix, '%')
+    ORDER BY LENGTH(invoice_number) DESC, invoice_number DESC
+    LIMIT 1;
+
+    IF v_max_invoice IS NOT NULL THEN
+        SET v_next_seq = CAST(SUBSTRING_INDEX(v_max_invoice, '-', -1) AS UNSIGNED) + 1;
+    END IF;
+
+    SET NEW.invoice_number = CONCAT(v_today_prefix, LPAD(v_next_seq, 3, '0'));
+END$$
+
+DROP TRIGGER IF EXISTS `prevent_invoice_delete`$$
+CREATE TRIGGER `prevent_invoice_delete` BEFORE DELETE ON `Invoice` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (Invoice).';
+END$$
+
+DROP TRIGGER IF EXISTS `prevent_invoice_update`$$
+CREATE TRIGGER `prevent_invoice_update` BEFORE UPDATE ON `Invoice` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (Invoice).';
+END$$
+
+-- SaveCustomer Triggers
+DROP TRIGGER IF EXISTS `prevent_savecustomer_delete`$$
+CREATE TRIGGER `prevent_savecustomer_delete` BEFORE DELETE ON `SaveCustomer` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (SaveCustomer).';
+END$$
+
+DROP TRIGGER IF EXISTS `prevent_savecustomer_update`$$
+CREATE TRIGGER `prevent_savecustomer_update` BEFORE UPDATE ON `SaveCustomer` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (SaveCustomer).';
+END$$
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+-- 5. CONTRAINTES DE CLÉS ÉTRANGÈRES
+-- --------------------------------------------------------
+
+ALTER TABLE `BankDetails`
+  ADD CONSTRAINT `BankDetails_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`);
+
+ALTER TABLE `Customer`
+  ADD CONSTRAINT `Customer_ibfk_1` FOREIGN KEY (`id_SaveCustomer`) REFERENCES `SaveCustomer` (`id_SaveCustomer`);
+
+ALTER TABLE `CustomerOrder`
+  ADD CONSTRAINT `CustomerOrder_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`),
+  ADD CONSTRAINT `CustomerOrder_ibfk_2` FOREIGN KEY (`id_Image`) REFERENCES `CustomerImage` (`id_Image`);
+
+ALTER TABLE `FactoryBrick`
+  ADD CONSTRAINT `fk_fb_shape` FOREIGN KEY (`shape_id`) REFERENCES `Shapes` (`id_shape`) ON DELETE RESTRICT,
+  ADD CONSTRAINT `fk_fb_color` FOREIGN KEY (`color_id`) REFERENCES `Colors` (`id_color`) ON DELETE RESTRICT;
+
+ALTER TABLE `FactoryOrderDetails`
+  ADD CONSTRAINT `FactoryOrderDetails_ibfk_1` FOREIGN KEY (`id_FactoryOrder`) REFERENCES `FactoryOrder` (`id_FactoryOrder`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FactoryOrderDetails_ibfk_2` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`) ON DELETE CASCADE;
+
+ALTER TABLE `Image`
+  ADD CONSTRAINT `Image_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`) ON DELETE CASCADE;
+
+ALTER TABLE `Invoice`
+  ADD CONSTRAINT `Invoice_ibfk_1` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`),
+  ADD CONSTRAINT `Invoice_ibfk_2` FOREIGN KEY (`id_Bank_Details`) REFERENCES `BankDetails` (`id_Bank_Details`),
+  ADD CONSTRAINT `Invoice_ibfk_3` FOREIGN KEY (`id_SaveCustomer`) REFERENCES `SaveCustomer` (`id_SaveCustomer`);
+
+ALTER TABLE `Item`
+  ADD CONSTRAINT `pieces_ibfk_1` FOREIGN KEY (`shape_id`) REFERENCES `Shapes` (`id_shape`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `pieces_ibfk_2` FOREIGN KEY (`color_id`) REFERENCES `Colors` (`id_color`) ON UPDATE CASCADE;
+
+ALTER TABLE `Mosaic`
+  ADD CONSTRAINT `fk_mosaic_image` FOREIGN KEY (`id_Image`) REFERENCES `Image` (`id_Image`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_mosaic_order` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`) ON DELETE CASCADE;
+
+ALTER TABLE `MosaicComposition`
+  ADD CONSTRAINT `fk_composition_mosaic` FOREIGN KEY (`id_Mosaic`) REFERENCES `Mosaic` (`id_Mosaic`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_composition_item` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`) ON DELETE CASCADE;
+
+ALTER TABLE `StockEntry`
+  ADD CONSTRAINT `fk_stock_item` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
+
+ALTER TABLE `Tokens`
+  ADD CONSTRAINT `Tokens_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`) ON DELETE CASCADE;
+
+
+-- --------------------------------------------------------
+-- 6. INSERTION DES DONNÉES (DUMP)
 -- --------------------------------------------------------
 
 INSERT INTO `Colors` (`id_color`, `name`, `hex_color`, `is_trans`) VALUES
@@ -11516,20 +11782,20 @@ INSERT INTO `Shapes` (`id_shape`, `width`, `length`, `hole`, `name`) VALUES
 (5, 1, 5, NULL, '1-5'),
 (6, 1, 6, NULL, '1-6'),
 (7, 2, 2, NULL, '2-2'),
-(8, 2, 2, 1, '2-2_L'),
+(8, 2, 2, 1, '2-2-1'),
 (9, 1, 8, NULL, '1-8'),
 (10, 2, 3, NULL, '2-3'),
-(11, 2, 3, 1, '2-3_U'),
+(11, 2, 3, 1, '2-3-1'),
 (12, 1, 10, NULL, '1-10'),
 (13, 1, 12, NULL, '1-12'),
 (14, 2, 4, NULL, '2-4'),
 (15, 3, 3, NULL, '3-3'),
-(16, 3, 3, 268, '3-3_Plus'),
-(17, 3, 3, 1245, '3-3_L'),
+(16, 3, 3, 268, '3-3-268'),
+(17, 3, 3, 1245, '3-3-1245'),
 (18, 2, 6, NULL, '2-6'),
 (19, 2, 8, NULL, '2-8'),
 (20, 4, 4, NULL, '4-4'),
-(21, 4, 4, 2367, '4-4_L'),
+(21, 4, 4, 2367, '4-4-2367'),
 (22, 2, 10, NULL, '2-10'),
 (23, 2, 12, NULL, '2-12'),
 (24, 4, 6, NULL, '4-6'),
@@ -11549,6 +11815,10 @@ INSERT INTO `Shapes` (`id_shape`, `width`, `length`, `hole`, `name`) VALUES
 (38, 8, 16, NULL, '8-16'),
 (39, 6, 24, NULL, '6-24'),
 (40, 16, 16, NULL, '16-16');
+
+INSERT INTO StockEntry (id_Item, quantity, date_import)
+SELECT id_Item, 100, NOW()
+FROM Item;
 
 INSERT INTO `Translations` (`id`, `key_name`, `lang`, `texte`) VALUES
 (1, 'stats_page_title', 'fr', 'Mesure d\'audience (Statistiques)'),
@@ -12161,232 +12431,6 @@ INSERT INTO `Translations` (`id`, `key_name`, `lang`, `texte`) VALUES
 (608, 'verify_placeholder_token', 'en', '000000'),
 (609, 'verify_btn_validate', 'en', 'Validate Code'),
 (610, 'verify_link_back', 'en', '&larr; Back to login');
-
--- --------------------------------------------------------
--- 3. VUES
--- --------------------------------------------------------
-
-DROP VIEW IF EXISTS `View_StockStatus`;
-
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `View_StockStatus`  AS 
-SELECT 
-	`i`.`id_Item` AS `id_Item`, 
-	concat(`s`.`name`,' ',`c`.`name`) AS `name`, 
-	ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0) AS `current_stock`, 
-	CASE WHEN ifnull(`entries`.`total_in`,0) - ifnull(`sales`.`total_out`,0) < 10 THEN 'OUI' ELSE 'NON' END AS `alert_status` 
-FROM 
-	((((`Item` `i` 
-	join `Shapes` `s` on(`i`.`shape_id` = `s`.`id_shape`)) 
-	join `Colors` `c` on(`i`.`color_id` = `c`.`id_color`)) 
-	left join (select `StockEntry`.`id_Item` AS `id_Item`,sum(`StockEntry`.`quantity`) AS `total_in` from `StockEntry` group by `StockEntry`.`id_Item`) `entries` on(`i`.`id_Item` = `entries`.`id_Item`)) 
-	left join (select `OrderItem`.`id_Item` AS `id_Item`,sum(`OrderItem`.`quantity`) AS `total_out` from `OrderItem` group by `OrderItem`.`id_Item`) `sales` on(`i`.`id_Item` = `sales`.`id_Item`)) ;
-
--- --------------------------------------------------------
--- 4. PROCÉDURES STOCKÉES (LOGIQUE MÉTIER UNIQUEMENT)
--- --------------------------------------------------------
-
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS `check_mosaic_stock`$$
-CREATE PROCEDURE `check_mosaic_stock` (IN `p_id_Mosaic` INT, OUT `p_is_available` BOOLEAN)
-BEGIN
-    DECLARE v_missing_items INT;
-    SELECT COUNT(*) INTO v_missing_items
-    FROM MosaicComposition mc
-    JOIN View_StockStatus vss ON mc.id_Item = vss.id_Item
-    WHERE mc.id_Mosaic = p_id_Mosaic
-    AND vss.current_stock < mc.quantity_needed;
-
-    IF v_missing_items = 0 THEN SET p_is_available = TRUE; ELSE SET p_is_available = FALSE; END IF;
-    IF (SELECT COUNT(*) FROM MosaicComposition WHERE id_Mosaic = p_id_Mosaic) = 0 THEN SET p_is_available = FALSE; END IF;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_all_items_stock`$$
-CREATE PROCEDURE `get_all_items_stock` ()
-BEGIN
-    SELECT 
-        i.id_Item, 
-        s.name AS shape_name, 
-        c.name AS color_name,
-        i.price,
-        (IFNULL(entries.total_in, 0) - IFNULL(sales.total_out, 0)) AS calculated_stock
-    FROM Item i
-    JOIN Shapes s ON i.shape_id = s.id_shape
-    JOIN Colors c ON i.color_id = c.id_color
-    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_in FROM StockEntry GROUP BY id_Item) entries ON i.id_Item = entries.id_Item
-    LEFT JOIN (SELECT id_Item, SUM(quantity) AS total_out FROM OrderItem GROUP BY id_Item) sales ON i.id_Item = sales.id_Item;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_export_colors`$$
-CREATE PROCEDURE `get_export_colors` () 
-BEGIN
-	SELECT id_color, hex_color 
-    FROM Colors 
-    ORDER BY id_color;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_export_items_stock`$$
-CREATE PROCEDURE `get_export_items_stock` ()
-BEGIN
-	SELECT 
-        i.shape_id,
-        i.color_id,
-        i.price,
-        CAST((IFNULL(entries.total_in, 0) - IFNULL(sales.total_out, 0)) AS SIGNED) AS current_stock
-    FROM Item i
-    LEFT JOIN (
-        SELECT id_Item, SUM(quantity) AS total_in 
-        FROM StockEntry 
-        GROUP BY id_Item
-    ) entries ON i.id_Item = entries.id_Item
-    LEFT JOIN (
-        SELECT id_Item, SUM(quantity) AS total_out 
-        FROM OrderItem 
-        GROUP BY id_Item
-    ) sales ON i.id_Item = sales.id_Item;
-END$$
-
-DROP PROCEDURE IF EXISTS `get_export_shapes`$$
-CREATE PROCEDURE `get_export_shapes` ()
-BEGIN
-	SELECT id_shape, width, length 
-    FROM Shapes 
-    ORDER BY id_shape;
-END$$
-
-DELIMITER ;
-
--- --------------------------------------------------------
--- 5. TRIGGERS
--- --------------------------------------------------------
-
-DELIMITER $$
-
--- FactoryOrder Triggers
-DROP TRIGGER IF EXISTS `prevent_factory_order_delete`$$
-CREATE TRIGGER `prevent_factory_order_delete` BEFORE DELETE ON `FactoryOrder` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (FactoryOrder).';
-END$$
-
-DROP TRIGGER IF EXISTS `prevent_factory_order_update`$$
-CREATE TRIGGER `prevent_factory_order_update` BEFORE UPDATE ON `FactoryOrder` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (FactoryOrder).';
-END$$
-
--- Invoice Triggers
-DROP TRIGGER IF EXISTS `before_invoice_insert`$$
-CREATE TRIGGER `before_invoice_insert` BEFORE INSERT ON `Invoice` FOR EACH ROW BEGIN
-    DECLARE v_id_SaveCustomer INT;
-    DECLARE v_today_prefix VARCHAR(20) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
-    DECLARE v_max_invoice VARCHAR(50) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
-    DECLARE v_next_seq INT DEFAULT 1;
-
-    -- récupération client via la commande liée
-    SELECT c.id_SaveCustomer INTO v_id_SaveCustomer
-    FROM CustomerOrder co
-    JOIN Customer c ON co.id_Customer = c.id_Customer
-    WHERE co.id_Order = NEW.id_Order LIMIT 1; 
-
-    -- construction du format fac-annee-client-seq
-    SET v_today_prefix = CONCAT('FAC-', DATE_FORMAT(NOW(), '%Y'), '-', v_id_SaveCustomer, '-');
-
-    SELECT invoice_number INTO v_max_invoice
-    FROM Invoice
-    WHERE invoice_number LIKE CONCAT(v_today_prefix, '%')
-    ORDER BY LENGTH(invoice_number) DESC, invoice_number DESC
-    LIMIT 1;
-
-    IF v_max_invoice IS NOT NULL THEN
-        SET v_next_seq = CAST(SUBSTRING_INDEX(v_max_invoice, '-', -1) AS UNSIGNED) + 1;
-    END IF;
-
-    SET NEW.invoice_number = CONCAT(v_today_prefix, LPAD(v_next_seq, 3, '0'));
-END$$
-
-DROP TRIGGER IF EXISTS `prevent_invoice_delete`$$
-CREATE TRIGGER `prevent_invoice_delete` BEFORE DELETE ON `Invoice` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (Invoice).';
-END$$
-
-DROP TRIGGER IF EXISTS `prevent_invoice_update`$$
-CREATE TRIGGER `prevent_invoice_update` BEFORE UPDATE ON `Invoice` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (Invoice).';
-END$$
-
--- OrderItem Triggers
-DROP TRIGGER IF EXISTS `prevent_orderitem_delete`$$
-CREATE TRIGGER `prevent_orderitem_delete` BEFORE DELETE ON `OrderItem` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (OrderItem).';
-END$$
-
-DROP TRIGGER IF EXISTS `prevent_orderitem_update`$$
-CREATE TRIGGER `prevent_orderitem_update` BEFORE UPDATE ON `OrderItem` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (OrderItem).';
-END$$
-
--- SaveCustomer Triggers
-DROP TRIGGER IF EXISTS `prevent_savecustomer_delete`$$
-CREATE TRIGGER `prevent_savecustomer_delete` BEFORE DELETE ON `SaveCustomer` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Suppression interdite (SaveCustomer).';
-END$$
-
-DROP TRIGGER IF EXISTS `prevent_savecustomer_update`$$
-CREATE TRIGGER `prevent_savecustomer_update` BEFORE UPDATE ON `SaveCustomer` FOR EACH ROW BEGIN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erreur : Modification interdite (SaveCustomer).';
-END$$
-
-DELIMITER ;
-
--- --------------------------------------------------------
--- 6. CONTRAINTES DE CLÉS ÉTRANGÈRES
--- --------------------------------------------------------
-
-ALTER TABLE `BankDetails`
-  ADD CONSTRAINT `BankDetails_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`);
-
-ALTER TABLE `Customer`
-  ADD CONSTRAINT `Customer_ibfk_1` FOREIGN KEY (`id_SaveCustomer`) REFERENCES `SaveCustomer` (`id_SaveCustomer`);
-
-ALTER TABLE `CustomerOrder`
-  ADD CONSTRAINT `CustomerOrder_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`),
-  ADD CONSTRAINT `CustomerOrder_ibfk_2` FOREIGN KEY (`id_Image`) REFERENCES `CustomerImage` (`id_Image`);
-
-ALTER TABLE `FactoryOrder`
-  ADD CONSTRAINT `FactoryOrder_ibfk_1` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
-
-ALTER TABLE `FactoryOrderDetails`
-  ADD CONSTRAINT `FactoryOrderDetails_ibfk_1` FOREIGN KEY (`id_FactoryOrder`) REFERENCES `FactoryOrder` (`id_FactoryOrder`) ON DELETE CASCADE,
-  ADD CONSTRAINT `FactoryOrderDetails_ibfk_2` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`) ON DELETE CASCADE;
-
-ALTER TABLE `Image`
-  ADD CONSTRAINT `Image_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`) ON DELETE CASCADE;
-
-ALTER TABLE `Invoice`
-  ADD CONSTRAINT `Invoice_ibfk_1` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`),
-  ADD CONSTRAINT `Invoice_ibfk_2` FOREIGN KEY (`id_Bank_Details`) REFERENCES `BankDetails` (`id_Bank_Details`),
-  ADD CONSTRAINT `Invoice_ibfk_3` FOREIGN KEY (`id_SaveCustomer`) REFERENCES `SaveCustomer` (`id_SaveCustomer`);
-
-ALTER TABLE `Item`
-  ADD CONSTRAINT `pieces_ibfk_1` FOREIGN KEY (`shape_id`) REFERENCES `Shapes` (`id_shape`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `pieces_ibfk_2` FOREIGN KEY (`color_id`) REFERENCES `Colors` (`id_color`) ON UPDATE CASCADE;
-
-ALTER TABLE `Mosaic`
-  ADD CONSTRAINT `fk_mosaic_image` FOREIGN KEY (`id_Image`) REFERENCES `Image` (`id_Image`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_mosaic_order` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`) ON DELETE CASCADE;
-
-ALTER TABLE `MosaicComposition`
-  ADD CONSTRAINT `fk_composition_mosaic` FOREIGN KEY (`id_Mosaic`) REFERENCES `Mosaic` (`id_Mosaic`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_composition_item` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`) ON DELETE CASCADE;
-
-ALTER TABLE `OrderItem`
-  ADD CONSTRAINT `OrderItem_ibfk_1` FOREIGN KEY (`id_Order`) REFERENCES `CustomerOrder` (`id_Order`),
-  ADD CONSTRAINT `OrderItem_ibfk_2` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
-
-ALTER TABLE `StockEntry`
-  ADD CONSTRAINT `fk_stock_item` FOREIGN KEY (`id_Item`) REFERENCES `Item` (`id_Item`);
-
-ALTER TABLE `Tokens`
-  ADD CONSTRAINT `Tokens_ibfk_1` FOREIGN KEY (`id_Customer`) REFERENCES `Customer` (`id_Customer`) ON DELETE CASCADE;
 
 -- Réactiver les contraintes de clés étrangères
 SET FOREIGN_KEY_CHECKS = 1;

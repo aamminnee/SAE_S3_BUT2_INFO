@@ -54,7 +54,7 @@ class AdminController extends Controller {
             'revenue'      => $this->financial_model->getTotalRevenue() ?? 0,
             'orders_count' => $this->financial_model->countOrders() ?? 0,
             'users_count'  => $this->user_model->countUsers() ?? 0,
-            'low_stock'    => $this->stock_model->countLowStockItems(10) ?? 0
+            'low_stock'    => $this->stock_model->countLowStockItems(50) ?? 0
         ];
 
         $lastOrders = $this->financial_model->getLastOrders(5);
@@ -102,5 +102,64 @@ class AdminController extends Controller {
             'orders' => $groupedOrders,
             'css' => 'admin_supplier_views.css'
         ]);
+    }
+
+    /**
+     * Exécute les commandes de l'usine (Java)
+     * Route: POST /admin/runFactory
+     */
+    public function runFactory() {
+        // Sécurité admin
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . ($_ENV['BASE_URL'] ?? '') . '/index.php');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+            
+            // 1. LISTE BLANCHE : On sécurise les actions autorisées
+            $allowedActions = ['refill', 'order', 'proactive', 'restock'];
+            
+            if (in_array($action, $allowedActions)) {
+                
+                // 2. CHEMINS (Votre configuration validée)
+                $projectRoot = realpath(__DIR__ . '/../../'); 
+                $legoToolsDir = $projectRoot . '/JAVA/legotools'; // Le chemin qui fonctionne !
+                $jarPath = $legoToolsDir . '/target/legotools-1.0-SNAPSHOT.jar';
+
+                // 3. TROUVER JAVA
+                $javaBin = trim(shell_exec("which java"));
+                if (empty($javaBin)) $javaBin = '/usr/bin/java'; // Fallback
+
+                // 4. CONSTRUCTION DE LA COMMANDE
+                // On passe l'action dynamiquement ($action vaut 'refill', 'order', etc.)
+                $cmd = "cd " . escapeshellarg($legoToolsDir) . " && " . $javaBin . " -Dfile.encoding=UTF-8 -jar " . escapeshellarg($jarPath) . " " . escapeshellarg($action) . " 2>&1";
+                
+                // 5. EXÉCUTION
+                $output = [];
+                $returnCode = 0;
+                exec($cmd, $output, $returnCode);
+
+                // 6. TRAITEMENT DU RÉSULTAT
+                $resultText = implode("\n", $output);
+                $_SESSION['factory_output'] = $resultText;
+
+                // Mise à jour du solde si détecté dans la réponse
+                if (preg_match('/Nouveau solde : (\d+)/', $resultText, $matches)) {
+                    $_SESSION['last_factory_balance'] = $matches[1];
+                } elseif (preg_match('/Solde : (\d+)/', $resultText, $matches)) {
+                    $_SESSION['last_factory_balance'] = $matches[1];
+                }
+
+                // On reste sur la page fournisseur pour voir le résultat
+                header('Location: ' . ($_ENV['BASE_URL'] ?? '') . '/admin/supplier');
+                exit;
+            }
+            
+            // Si action inconnue ou autre erreur
+            header('Location: ' . ($_ENV['BASE_URL'] ?? '') . '/admin/index');
+            exit;
+        }
     }
 }

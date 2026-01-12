@@ -25,6 +25,11 @@ class CropImagesController extends Controller {
             exit;
         }
 
+        if (!isset($_SESSION['can_crop']) || $_SESSION['can_crop'] !== true) {
+            header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/images");
+            exit;
+        }
+
         $imagesModel = new ImagesModel();
         
         $lastImage = null;
@@ -122,6 +127,8 @@ class CropImagesController extends Controller {
             } else {
                 echo json_encode(["status" => "error", "message" => "Erreur lors de la mise à jour en BDD."]);
             }
+
+            $_SESSION['can_crop'] = false;
 
         } catch (\Exception $e) {
             if (file_exists($inputPath)) @unlink($inputPath);

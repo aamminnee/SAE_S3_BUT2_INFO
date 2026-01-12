@@ -22,7 +22,7 @@ class AdminModel extends Model {
             SELECT 
                 fo.id_FactoryOrder,
                 fo.order_date,
-                fo.price AS total_price, 
+                fo.total_price, 
                 fod.quantity,
                 i.id_Item,
                 s.name AS shape_name,

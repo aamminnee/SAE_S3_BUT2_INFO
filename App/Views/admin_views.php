@@ -25,6 +25,15 @@
                 <span class="stat-desc"><?= $t['dashboard_users_desc'] ?? 'Utilisateurs actifs' ?></span>
             </div>
 
+            <div class="stat-card" style="border-left: 4px solid #f1c40f;">
+                <span class="stat-label"><?= $t['dashboard_factory_balance'] ?? 'Solde Actuel' ?></span>
+                <span class="stat-value">
+                    <?= isset($_SESSION['last_factory_balance']) ? number_format($_SESSION['last_factory_balance']) : '---' ?> 
+                    <small style="font-size: 0.5em;">Crédits</small>
+                </span>
+                <span class="stat-desc">Compte B2B Fournisseur</span>
+            </div>
+
             <div class="stat-card alert"> 
                 <span class="stat-label"><?= $t['dashboard_low_stock'] ?? 'Stock Critique' ?></span>
                 <span class="stat-value"><?= $stats['low_stock'] ?></span>

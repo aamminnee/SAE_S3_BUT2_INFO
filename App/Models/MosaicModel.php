@@ -8,12 +8,7 @@ use Exception;
 
 /**
  * MosaicModel
- * * Handles the core business logic for LEGO Mosaics.
- * * Responsibilities:
- * 1. Interfacing with the Java/C engine for mosaic generation.
- * 2. Managing the 'briques.txt' stock file.
- * 3. Calculating prices and piece counts from generated files.
- * 4. Saving mosaic data to the database.
+ * * Handles the core business logic for Mosaics.
  */
 class MosaicModel extends Model {
     protected $table = 'Mosaic';

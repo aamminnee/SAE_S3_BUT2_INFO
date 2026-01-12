@@ -4,11 +4,6 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Models\StockModel;
 
-/**
- * StockController
- * * Manages the inventory of LEGO parts (Admin only).
- * * Provides functionalities to view, filter, and update stock quantities.
- */
 class StockController extends Controller {
     
     private $stockModel;
@@ -21,14 +16,19 @@ class StockController extends Controller {
     public function index() {
         $model = new StockModel();
 
-        $page = $_GET['page'] ?? 1;
-        $limit = 50; // Nombre d'items par page
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 50; 
+        
+        // 1. Récupération des filtres
         $filterShape = $_GET['filter_shape'] ?? null;
         $filterColor = $_GET['filter_color'] ?? null;
+        $filterStatus = $_GET['filter_status'] ?? 'all'; // 'all', 'low', ou 'critical'
 
-        $stocks = $model->getPaginatedStock($limit, $page, $filterShape, $filterColor);
+        // 2. On passe le $filterStatus au Modèle (il faudra modifier le modèle aussi !)
+        $stocks = $model->getPaginatedStock($limit, $page, $filterShape, $filterColor, $filterStatus);
         
-        $totalItems = $model->countStockItems($filterShape, $filterColor);
+        // 3. On compte aussi avec le filtre pour que la pagination soit juste
+        $totalItems = $model->countStockItems($filterShape, $filterColor, $filterStatus);
         $totalPages = ceil($totalItems / $limit);
 
         $allItems = $model->getAllItemsForSearch();
@@ -42,6 +42,8 @@ class StockController extends Controller {
             'currentPage' => $page,
             'shapesList' => $shapes,
             'colorsList' => $colors,
+            // On peut passer le status actuel si besoin, bien que $_GET suffise dans la vue
+            'currentStatus' => $filterStatus, 
             'css' => 'stock_views.css'
         ]);
     }
@@ -55,7 +57,7 @@ class StockController extends Controller {
                 $this->stockModel->updateStock($itemId, $quantity);
             }
         }
-
+        // Redirection en gardant les filtres si possible, sinon retour simple
         header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/stock");
         exit;
     }
