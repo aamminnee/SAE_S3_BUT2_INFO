@@ -1,1 +1,3 @@
-for the not indexation by the robot Google 
+User-agent: *
+Disallow: /
+# bloque tous les robots d'indexation sur l'ensemble du site

@@ -4,7 +4,6 @@ import fr.univ_eiffel.legotools.factory.security.ProofOfWorkSolver;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
@@ -19,7 +18,6 @@ public class AccountRefiller {
 
     private Gson gson = new Gson();
 
-    // MODIFICATION DU CONSTRUCTEUR
     public AccountRefiller(String serverUrl, String email, String apiKey) {
         this.serverUrl = serverUrl;
         this.email = email;
@@ -30,7 +28,6 @@ public class AccountRefiller {
 
     public Challenge fetchChallenge() throws IOException {
         // Utilisation de this.serverUrl
-        @SuppressWarnings("deprecation")
         var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/challenge").toURL().openConnection();
         connection.addRequestProperty("X-Email", email);
         connection.addRequestProperty("X-Secret-Key", apiKey);
@@ -53,7 +50,6 @@ public class AccountRefiller {
     public record ChallengeAnswer(String data_prefix, String hash_prefix, String answer) {}
 
     public void submitChallengeAnswer(ChallengeAnswer challengeAnswer) throws IOException {
-        @SuppressWarnings("deprecation")
         var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/challenge-answer").toURL().openConnection();
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
@@ -69,7 +65,6 @@ public class AccountRefiller {
     public record AccountBalance(String balance) {};
 
     public String fetchAccountBalance() throws IOException {
-        @SuppressWarnings("deprecation")
         var connection = (HttpURLConnection) URI.create(serverUrl + "/billing/balance").toURL().openConnection();
         connection.addRequestProperty("X-Email", email);
         connection.addRequestProperty("X-Secret-Key", apiKey);
