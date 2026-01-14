@@ -5,9 +5,23 @@ use App\Core\Model;
 use App\Core\Db;
 use PDO;
 
+/**
+ * Class AdminModel
+ * 
+ ** Handles administrative data retrieval
+ ** Specifically manages the aggregation of factory order data for the back-office
+ * 
+ * @package App\Models
+ */
 class AdminModel extends Model {
+
+    /** @var Db Instance of the database connection. */
     protected $db;
 
+    /**
+     * Constructor.
+     * Initializes the model and ensures a valid database connection
+     */
     public function __construct() {
         if (method_exists(parent::class, '__construct')) {
             parent::__construct();
@@ -17,6 +31,11 @@ class AdminModel extends Model {
         }
     }
 
+    /**
+     * Retrieves detailed factory orders including item specifications
+     *
+     * @return array list of orders with joined shape and color data
+     */
     public function getFactoryOrdersWithDetails() {
         $sql = "
             SELECT 

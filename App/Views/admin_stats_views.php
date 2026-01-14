@@ -1,3 +1,12 @@
+<?php
+/**
+ * Admin Statistics View
+ *
+ * Displays the local Matomo dashboard via an iframe for audience measurement.
+ *
+ * @var array $t   Associative array of translations (keys: stats_page_title, stats_dashboard_title, etc.)
+ */
+?>
 <div class="admin-container">
     <h1><?= $t['stats_page_title'] ?? 'Mesure d\'audience (Statistiques)' ?></h1>
     

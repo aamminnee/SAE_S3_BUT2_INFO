@@ -1,35 +1,47 @@
+<?php
+/**
+ * Main Layout Template
+ *
+ * The master template wrapping all view content.
+ * Handles the HTML skeleton, dynamic CSS loading, Header/Footer inclusion, and Matomo analytics.
+ *
+ * @var string $content       The rendered HTML content of the specific view to display
+ * @var string|null $titre    The page title (defaults to 'MyBrickStore')
+ * @var string|null $css      Optional specific CSS filename for the current view (e.g. 'cart_views.css')
+ */
+
+$baseUrl = $_ENV['BASE_URL'] ?? '';
+$lang = $_SESSION['lang'] ?? 'fr';
+$isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
+?>
 <!DOCTYPE html>
-<html lang="<?= $_SESSION['lang'] ?? 'fr' ?>">
+<html lang="<?= htmlspecialchars($lang) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $titre ?? 'MyBrixStore' ?></title>
+    <title><?= htmlspecialchars($titre ?? 'MyBrickStore') ?></title>
     
-    <link rel="stylesheet" href="<?=$_ENV['BASE_URL']?>/CSS/footer.css">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <?php if(isset($css)): ?>
-        <link rel="stylesheet" href="<?=$_ENV['BASE_URL']?>/CSS/<?= $css ?>">
+    <?php if ($isAdmin): ?>
+        <link rel="stylesheet" href="<?= $baseUrl ?>/CSS/header_admin.css">
+    <?php else: ?>
+        <link rel="stylesheet" href="<?= $baseUrl ?>/CSS/header.css">
     <?php endif; ?>
+    <link rel="stylesheet" href="<?= $baseUrl ?>/CSS/footer.css">
 
-    <?php 
-    if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-        echo '<link rel="stylesheet" href="'.$_ENV['BASE_URL'].'/CSS/header_admin.css">';
-    } else {
-        echo '<link rel="stylesheet" href="'.$_ENV['BASE_URL'].'/CSS/header.css">';
-    }
-    ?>
+    <?php if (isset($css) && !empty($css)): ?>
+        <link rel="stylesheet" href="<?= $baseUrl ?>/CSS/<?= htmlspecialchars($css) ?>">
+    <?php endif; ?>
     
-    <link rel="icon" href="<?=$_ENV['BASE_URL']?>/img/logo.png">
-
+    <link rel="icon" href="<?= $baseUrl ?>/img/favicon.png">
 </head>
 <body>
     
     <?php 
-    if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    if ($isAdmin) {
         require_once ROOT . '/App/Views/header_admin.php';
     } else {
         require_once ROOT . '/App/Views/header.php';
@@ -40,7 +52,7 @@
         <?= $content ?>
     </main>
 
-    <?php require_once ROOT . '/App/Views/footer.html';?>
+    <?php require_once ROOT . '/App/Views/footer.html'; ?>
 
     <script>
         var _paq = window._paq = window._paq || [];
@@ -54,5 +66,5 @@
             g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
         })();
     </script>
-    </body>
+</body>
 </html>

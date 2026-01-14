@@ -7,19 +7,33 @@ use App\Models\ImagesModel;
 use App\Models\MosaicModel;
 
 /**
- * ReviewImagesController
- * * Manages the preview generation of LEGO mosaics.
- * * Bridges the gap between the uploaded image and the Java processing engine.
+ * Class ReviewImagesController
+ * 
+ ** Manages the preview generation of lego mosaics
+ ** Acts as the bridge between raw image uploads and the java processing engine
+ * 
+ * @package App\Controllers
  */
 class ReviewImagesController extends Controller {
+
+    /** @var array Key/Value pair of translations. */
     private $translations;
 
+    /**
+     * Constructor.
+     * Initializes translation services based on user preference
+     */
     public function __construct() {
         $lang = $_SESSION['lang'] ?? 'fr';
         $translation_model = new TranslationModel();
         $this->translations = $translation_model->getTranslations($lang);
     }
 
+    /**
+     * Generates and displays mosaic previews with price calculations
+     *
+     * @return void
+     */
     public function index() {
         if (!isset($_SESSION['user_id']) || !isset($_GET['img'])) {
             header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/images");
@@ -91,6 +105,11 @@ class ReviewImagesController extends Controller {
         ]);
     }
 
+    /**
+     * Saves the selected mosaic configuration and redirects to payment
+     *
+     * @return void
+     */
     public function save() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['choice'], $_POST['image_id'])) {
             $choice = $_POST['choice'];

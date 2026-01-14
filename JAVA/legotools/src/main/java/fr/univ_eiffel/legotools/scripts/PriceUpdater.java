@@ -7,12 +7,39 @@ import fr.univ_eiffel.legotools.factory.StockManager;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Script de synchronisation des prix catalogue.
+ * <p>
+ * Ce script interroge l'API de l'usine pour mettre à jour les coûts dans la base de données locale.
+ * Il implémente une stratégie de <b>Lissage par lot</b> pour contourner les problèmes d'arrondi de l'API.
+ * </p>
+ */
 public class PriceUpdater {
 
-    // On commande 10 pièces pour éviter les frais minimums ou les arrondis
-    // Si 1 pièce = 0.10 (minimum) et 10 pièces = 0.10, alors le vrai prix est 0.01
+    /**
+     * Taille du lot pour la demande de devis.
+     * <p>
+     * <b>Pourquoi 10 ?</b><br>
+     * L'API de l'usine arrondit souvent les prix au centime le plus proche.
+     * Pour une pièce coûtant 0.005 crédits :
+     * Cela permet d'obtenir une précision "sous-centime".
+     * </p>
+     */
     private static final int BATCH_SIZE = 10;
 
+    /**
+     * Constructeur privé.
+     */
+    private PriceUpdater() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    /**
+     * Exécute la mise à jour globale des prix.
+     * @param url L'adresse de l'usine.
+     * @param email Identifiant API.
+     * @param key Clé secrète API.
+     */
     public static void run(String url, String email, String key) {
         System.out.println("--- DÉMARRAGE DE LA MISE À JOUR DES PRIX (LISSAGE PAR " + BATCH_SIZE + ") ---");
 
@@ -29,24 +56,23 @@ public class PriceUpdater {
             String ref = entry.getValue();
 
             try {
-                // On crée un panier avec 10 briques au lieu d'une seule
+                // Création d'un panier "Batch"
                 Map<String, Integer> cart = new HashMap<>();
                 cart.put(ref, BATCH_SIZE);
 
-                // On demande le devis
+                // Demande de devis à l'usine
                 LegoFactory.Quote quote = factory.requestQuote(cart);
                 
-                // Calcul du prix unitaire : Prix Total / 10
+                // Extraction du prix unitaire réel
                 double totalPrice = quote.price();
                 double unitPrice = totalPrice / BATCH_SIZE;
 
-                // 3. Mise à jour en BDD
+                // Persistance du nouveau prix en BDD
                 stockManager.updateItemPrice(id, unitPrice);
                 
                 System.out.printf("[%d/%d] %s : Total %.2f pour %d => Unité %.3f €%n", 
                         ++count, allItems.size(), ref, totalPrice, BATCH_SIZE, unitPrice);
 
-                // Petite pause
                 Thread.sleep(100); 
 
             } catch (Exception e) {

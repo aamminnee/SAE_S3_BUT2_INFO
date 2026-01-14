@@ -1,12 +1,21 @@
 <?php
+/**
+ * Admin Header Partial View
+ *
+ * The top navigation bar specific to the Administration panel.
+ * Features:
+ * - Admin-specific logo.
+ * - Navigation links to Stats, Supplier, Inventory, and Settings.
+ * - Logout button.
+ *
+ * @var array $t            Associative array of translations
+ */
 
 $baseUrl = $_ENV['BASE_URL'] ?? dirname($_SERVER['SCRIPT_NAME']);
 $baseUrl = rtrim($baseUrl, '/\\');
 
 $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 ?>
-
-<link rel="stylesheet" href="<?= $baseUrl ?>/CSS/header.css">
 
 <header class="header header-admin">
     <div class="header-container">
@@ -31,7 +40,7 @@ $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
                     <?= $t['header_admin_settings'] ?? 'Paramètres' ?>
                 </a>
 
-                <a href="<?= $baseUrl ?>/user/logout" class="btn-header-base btn-outline" style="margin-left: 15px;">
+                <a href="<?= $baseUrl ?>/user/logout" class="btn-header-base btn-outline">
                     <?= $t['header_admin_logout'] ?? 'Déconnexion' ?>
                 </a>
 

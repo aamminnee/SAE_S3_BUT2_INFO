@@ -6,14 +6,22 @@ use App\Models\TranslationModel;
 use App\Models\ImagesModel;
 
 /**
- * CartController
- * * Manages the shopping cart stored in the user's Session.
- * * Handles adding, removing, and clearing items.
+ * Class CartController
+ * 
+ ** Manages the shopping cart stored in the user's session
+ ** Handles adding, removing, and clearing items before checkout
+ * 
+ * @package App\Controllers
  */
 class CartController extends Controller {
-    
+
+    /** @var array Key/Value pair of translations. */
     private $translations;
 
+    /**
+     * Constructor.
+     * initializes the controller and ensures the cart session structure exists
+     */
     public function __construct() {
         $lang = $_SESSION['lang'] ?? 'fr';
         $translation_model = new TranslationModel();
@@ -24,6 +32,11 @@ class CartController extends Controller {
         }
     }
 
+    /**
+     * Displays the cart contents and calculates totals
+     *
+     * @return void
+     */
     public function index() {
         if (!isset($_SESSION['user_id'])) { header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login"); exit; }
 
@@ -46,6 +59,11 @@ class CartController extends Controller {
         ]);
     }
 
+    /**
+     * Adds a specific mosaic configuration to the cart
+     *
+     * @return void
+     */
     public function add() {
         if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
             header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/images");
@@ -86,6 +104,11 @@ class CartController extends Controller {
         exit;
     }
 
+    /**
+     * Removes a single item from the cart based on its unique id
+     *
+     * @return void
+     */
     public function remove() {
         if (isset($_POST['cart_id'])) {
             $idToDelete = $_POST['cart_id'];
@@ -102,6 +125,11 @@ class CartController extends Controller {
         exit;
     }
     
+    /**
+     * Removes all items from the shopping cart
+     *
+     * @return void
+     */
     public function clear() {
         $_SESSION['cart'] = [];
         header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/cart");

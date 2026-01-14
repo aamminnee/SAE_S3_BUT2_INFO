@@ -2,11 +2,36 @@ package fr.univ_eiffel.legotools.image;
 
 import java.awt.image.BufferedImage;
 
+/**
+ * Stratégie de redimensionnement utilisant le filtre de Lanczos (Lanczos-3).
+ * <p>
+ * <b>Pourquoi utiliser cette stratégie ?</b><br>
+ * C'est l'algorithme qui offre théoriquement la <b>meilleure qualité possible</b> pour la préservation des détails.
+ * Il est basé sur une fonction mathématique (Sinc) qui simule la reconstruction parfaite d'un signal analogique.
+ * </p>
+ * <p>
+ * <b>Contrepartie :</b> C'est l'algorithme le plus lent du projet. Il effectue une convolution sur une zone
+ * de 6x6 pixels (36 opérations par pixel cible), contre 16 pour le bicubique et 4 pour le bilinéaire.
+ * </p>
+ */
 public class LanczosStrategy implements ResolutionStrategy {
 	
-	// définit la taille de la fenêtre pour le filtre lanczos
+	// Définit la "fenêtre" du filtre. A=3 signifie "Lanczos-3".
+    // L'algorithme regarde 3 pixels de chaque côté du centre (soit une fenêtre de 6 pixels de large).
 	private static final int A = 3;
+
+    /**
+     * Constructeur par défaut.
+     */
+    public LanczosStrategy() {}
 	
+    /**
+     * Redimensionne l'image avec un filtre de convolution Lanczos.
+     * @param source L'image d'origine.
+     * @param targetWidth La largeur cible.
+     * @param targetHeight La hauteur cible.
+     * @return L'image traitée, très nette mais coûteuse à calculer.
+     */
 	@Override
     public BufferedImage resize(BufferedImage source, int targetWidth, int targetHeight) {
 
@@ -68,7 +93,10 @@ public class LanczosStrategy implements ResolutionStrategy {
         return destination;
     }
 	
-	// calcule le poids lanczos pour une distance donnée
+	/**
+     * Calcule le poids du filtre Lanczos L(x).
+     * Formule : L(x) = sinc(x) * sinc(x/a) si |x| < a, sinon 0.
+     */
 	private double lanczosWeight(double x) {
 		x = Math.abs(x);
 		
@@ -81,7 +109,10 @@ public class LanczosStrategy implements ResolutionStrategy {
 		return sinc(x) * sinc(x / A);
 	}
 	
-	// implémente la fonction mathématique sinc normalisée
+	/**
+     * Fonction mathématique Sinus Cardinal (sinc).
+     * sinc(x) = sin(πx) / (πx)
+     */
 	private double sinc(double x) {
 		if (Math.abs(x) < 1e-5) {
 			return 1.0;
@@ -89,7 +120,7 @@ public class LanczosStrategy implements ResolutionStrategy {
 		return Math.sin(Math.PI * x) / (Math.PI * x);
 	}
 	
-	// maintient une valeur entière dans un intervalle défini
+	// Sécurité pour rester dans les bornes de l'image (coordonnées)
 	private int clamp(int v, int min, int max) {
 		return Math.max(min, Math.min(max, v));
 	}

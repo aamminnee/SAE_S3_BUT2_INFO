@@ -12,40 +12,56 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Script d'exportation des données de stock vers le module C.
+ * <p>
+ * Ce programme autonome (Main) sert de passerelle entre la Base de Données SQL et l'Algorithme C.
+ * Il génère le fichier "briques.txt" qui sert de catalogue de référence pour le pavage.
+ * </p>
+ */
 public class GenerationItem {
 
     private static final Map<String, String> ENV = new HashMap<>();
 
+    /**
+     * Constructeur par défaut.
+     */
+    public GenerationItem() {
+        // Constructeur vide explicite pour la Javadoc
+    }
+
+    /**
+     * Point d'entrée principal du script.
+     * @param args Arguments de la ligne de commande.
+     */
     public static void main(String[] args) {
 
         // chargement des variables de configuration depuis le fichier .env
         loadEnv(".env");
 
-        // récupération des paramètres de connexion à la base de données
         String host = ENV.get("DB_HOST");
         String dbName = ENV.get("DB_NAME");
         String user = ENV.get("DB_USER");
         String password = ENV.get("DB_PASSWORD");
 
-        // vérification de la présence des informations de l'hôte
+        // Validation stricte des paramètres avant de tenter la connexion
         if (host == null) {
             System.err.println("Erreur : DB_HOST manquant dans le fichier .env");
             return;
         }
-        // vérification de la présence du nom de la base de données
+
         if (dbName == null) {
             System.err.println("Erreur : DB_NAME manquant dans le fichier .env");
             return;
         }
-        // vérification de la présence de l'utilisateur
+
         if (user == null) {
             System.err.println("Erreur : DB_USER manquant dans le fichier .env");
             return;
         }
-        // gestion du mot de passe vide par défaut
+
         if (password == null) password = "";
 
-        // construction de la chaîne de connexion jdbc
         String url = "jdbc:mysql://" + host + ":3306/" + dbName;
         
         System.out.println("Connexion à la BDD : " + url + " (User: " + user + ")");
@@ -58,10 +74,10 @@ public class GenerationItem {
 
         List<String> piecesLines = new ArrayList<>();
 
-        // connexion et extraction des données via les procédures stockées
+        // Connexion et extraction des données via les procédures stockées
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             
-            // récupération et indexation des formes de briques
+            // Récupération et indexation des formes de briques
             try (CallableStatement csShapes = conn.prepareCall("{call get_export_shapes()}");
                  ResultSet rsShapes = csShapes.executeQuery()) {
                 
@@ -72,7 +88,7 @@ public class GenerationItem {
                 }
             }
             
-            // récupération et indexation des couleurs disponibles
+            // Récupération et indexation des couleurs disponibles
             try (CallableStatement csColors = conn.prepareCall("{call get_export_colors()}");
                  ResultSet rsColors = csColors.executeQuery()) {
                 
@@ -83,7 +99,7 @@ public class GenerationItem {
                 }
             }
 
-            // extraction des items en stock avec leurs prix
+            // Extraction des items en stock avec leurs prix
             try (CallableStatement csItems = conn.prepareCall("{call get_export_items_stock()}");
                  ResultSet rsItems = csItems.executeQuery()) {
                 
@@ -103,7 +119,7 @@ public class GenerationItem {
                 }
             }
 
-            // génération du fichier briques.txt pour le module de pavage en c
+            // Génération du fichier briques.txt pour le module de pavage en c
             try (BufferedWriter writer = new BufferedWriter(new FileWriter("C/input/briques.txt"))) {
                 writer.write(shapesList.size() + " " + colorsList.size() + " " + piecesLines.size());
                 writer.newLine();
@@ -131,13 +147,15 @@ public class GenerationItem {
         }
     }
 
-    // lit le fichier .env et remplit la map de configuration
+    /**
+     * Chargeur manuel de fichier .env.
+     * Permet de lire les configurations locales sans dépendre d'une librairie externe lourde.
+     */
     private static void loadEnv(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                // ignore les lignes vides ou les commentaires
                 if (line.isEmpty() || line.startsWith("#")) continue;
                 
                 String[] parts = line.split("=", 2);

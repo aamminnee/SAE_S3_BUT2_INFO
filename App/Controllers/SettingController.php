@@ -5,17 +5,32 @@ use App\Core\Controller;
 use App\Models\TranslationModel;
 
 /**
- * SettingController
- * * Manages user preferences such as Language and Security settings.
+ * Class SettingController
+ * 
+ ** Manages user preferences including language selection,
+ ** Visual theme toggling, and displaying the settings interface
+ * 
+ * @package App\Controllers
  */
 class SettingController extends Controller {
+
+    /** @var array Key/Value pair of translations. */
     private $translation_model;
 
+    /**
+     * Constructor.
+     * Initializes the controller with translation capabilities
+     */
     public function __construct() {
         parent::__construct();
         $this->translation_model = new TranslationModel();
     }
 
+    /**
+     * Displays the settings page and handles theme switching logic
+     *
+     * @return void
+     */
     public function index() {
         if (isset($_GET['action']) && $_GET['action'] === 'setTheme' && isset($_GET['theme'])) {
             $_SESSION['theme'] = $_GET['theme'];
@@ -37,6 +52,11 @@ class SettingController extends Controller {
         unset($_SESSION['success'], $_SESSION['error']);
     }
 
+    /**
+     * Updates the session language and redirects user back to previous page
+     *
+     * @return void
+     */
     public function setLanguage() {
         if (isset($_GET['lang'])) {
             $lang = $_GET['lang'];

@@ -1,6 +1,17 @@
-<head>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-</head>
+<?php
+/**
+ * Style Selection View (Review)
+ *
+ * Displays the generated preview of the uploaded image in 4 different algorithmic styles.
+ * Allows the user to compare price, piece count, and visual result before adding to cart.
+ *
+ * @var array $image        Original uploaded image data
+ * @var array $previews     Associative array of base64 preview images (key = style)
+ * @var array $prices       Associative array of calculated prices (key = style)
+ * @var array $counts       Associative array of piece counts (key = style)
+ * @var array $t            Associative array of translations
+ */
+?>
 
 <div class="review-wrapper">
     <div class="review-container">

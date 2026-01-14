@@ -6,32 +6,70 @@ import io.github.cdimascio.dotenv.Dotenv;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * Gestionnaire de persistance (DAO) pour le stock de briques.
+ * <p>
+ * Cette classe fait le lien entre l'application Java et la base de données MySQL.
+ * Elle est responsable de :
+ * </p>
+ * <ul>
+ * <li>Suivre l'état du stock en temps réel (Entrées - Sorties).</li>
+ * <li>Enregistrer les commandes passées à l'usine.</li>
+ * <li>Stocker les preuves d'authenticité (certificats) des briques reçues.</li>
+ * </ul>
+ */
 public class StockManager {
 
-    // // configuration de la connexion bdd
+    // Configuration de la connexion bdd
     private final String url;
     private final String user;
     private final String password;
 
+    /**
+     * Initialise la connexion en chargeant les identifiants depuis le fichier .env.
+     */
     public StockManager() {
-        // // chargement des variables d'environnement
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        
-        // // récupération des infos de connexion ou valeurs par défaut
-        String host = dotenv.get("DB_HOST", "localhost");
-        String port = dotenv.get("DB_PORT", "3306");
-        String dbName = dotenv.get("DB_NAME", "SAE_S3_BUT2_INFO");
-        
+
+        // 1. Récupération des variables
+        String host = dotenv.get("DB_HOST");
+        String port = dotenv.get("DB_PORT");
+        String dbName = dotenv.get("DB_NAME");
+        String u = dotenv.get("DB_USER");
+        String p = dotenv.get("DB_PASS");
+
+        // 2. Vérification
+        if (host == null || host.isEmpty()) {
+            throw new RuntimeException("Erreur: DB_HOST est vide ou manquant dans le fichier .env");
+        }
+        if (port == null || port.isEmpty()) {
+            port = "3306"; 
+        }
+        if (dbName == null || dbName.isEmpty()) {
+            throw new RuntimeException("Erreur: DB_NAME est manquant dans le fichier .env");
+        }
+        if (u == null || u.isEmpty()) {
+            throw new RuntimeException("Erreur: DB_USER est manquant dans le fichier .env");
+        }
+        if (p == null) {
+            p = ""; 
+        }
+
+        // 3. Construction de l'URL JDBC
         this.url = "jdbc:mysql://" + host + ":" + port + "/" + dbName;
-        this.user = dotenv.get("DB_USER", "root");
-        this.password = dotenv.get("DB_PASSWORD", "Vh-23f538");
+        this.user = u;
+        this.password = p;
         
-        // initialisation de la table spécifique au composant java
+        System.out.println("// Connexion BDD initiee sur " + host + ":" + port);
+
         initTables();
     }
 
+    /**
+     * Crée les tables spécifiques au module Java si elles n'existent pas.
+     */
     private void initTables() {
-        // // création de la table pour stocker les détails techniques des briques (serial, certificat)
+        // Table stockant les numéros de série uniques et certificats cryptographiques
         String sql = """
             CREATE TABLE IF NOT EXISTS FactoryBrick (
                 serial VARCHAR(32) PRIMARY KEY,
@@ -52,7 +90,10 @@ public class StockManager {
         return DriverManager.getConnection(url, user, password);
     }
 
-    // // récupère l'état du stock (entrées - sorties) pour chaque type de brique
+    /**
+     * Calcule le stock courant pour chaque référence.
+     * @return Une Map associant "Reference" (ex: "2-2/red") à la quantité disponible.
+     */
     public Map<String, Integer> getStockCounts() {
         Map<String, Integer> counts = new HashMap<>();
         
@@ -82,6 +123,10 @@ public class StockManager {
         return counts;
     }
 
+    /**
+     * Interroge une Vue SQL pour identifier les produits en rupture ou stock critique.
+     * @return Une map associant la référence de la brique à son niveau de stock actuel.
+     */
     public Map<String, Integer> getLowStockItems() {
         Map<String, Integer> alerts = new HashMap<>();
         
@@ -102,12 +147,19 @@ public class StockManager {
         return alerts;
     }
 
-    // // ajoute les briques reçues de l'usine dans la bdd
+    /**
+     * Enregistre un lot de nouvelles briques reçues de l'usine.
+     * <p>
+     * Soit toutes les briques sont ajoutées (Stock + Métadonnées), soit aucune (Rollback).
+     * Cela garantit qu'on ne perd jamais la traçabilité d'une brique (Serial) si le stock plante.
+     * </p>
+     * @param bricks La liste des objets briques validés.
+     */
     public void addBricks(List<FactoryBrick> bricks) {
         if (bricks.isEmpty()) return;
 
         String insertBrick = "INSERT IGNORE INTO FactoryBrick (serial, certificate, shape_id, color_id) VALUES (?, ?, ?, ?)";
-        // // on ajoute une entrée dans stockentry pour rendre la brique disponible à la vente
+        // Ajout dans StockEntry pour incrémenter le stock physique disponible à la vente
         String insertStock = "INSERT INTO StockEntry (id_Item, quantity, date_import) VALUES (?, 1, NOW())";
         
         try (Connection conn = getConnection()) {
@@ -118,7 +170,7 @@ public class StockManager {
                 int count = 0;
                 for (FactoryBrick b : bricks) {
                     
-                    // // plus de conversion ici, on utilise directement le nom de l'api qui correspond maintenant à la bdd
+                    // Traduction Forme/Couleur (API) -> IDs (BDD)
                     int[] ids = findItemIds(conn, b.shapeName(), b.color());
                     
                     if (ids == null) {
@@ -126,14 +178,14 @@ public class StockManager {
                         continue; 
                     }
 
-                    // // 1. sauvegarde des métadonnées usine
+                    // Sauvegarde des métadonnées usine
                     psBrick.setString(1, b.serial());
                     psBrick.setString(2, b.certificate());
                     psBrick.setInt(3, ids[1]); // shape_id
                     psBrick.setInt(4, ids[2]); // color_id
                     psBrick.executeUpdate();
 
-                    // // 2. mise à jour du stock quantité
+                    // Mise à jour du stock quantité
                     psStock.setInt(1, ids[0]); // id_item
                     psStock.executeUpdate();
                     
@@ -150,7 +202,7 @@ public class StockManager {
         }
     }
 
-    // // utilitaire pour trouver id_item, shape_id, color_id à partir du nom et couleur
+    // Utilitaire pour normaliser les données API (String) vers les clés étrangères BDD (Int)
     private int[] findItemIds(Connection conn, String shapeName, String hexColor) throws SQLException {
         // // on cherche la brique correspondante
         String sql = """
@@ -162,7 +214,7 @@ public class StockManager {
         """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, shapeName); 
-            // // gestion de la casse et du # pour la couleur
+            // Gestion de la tolérance aux formats de couleur (#ABC vs abc)
             ps.setString(2, hexColor.replace("#", "").toUpperCase());
             ps.setString(3, hexColor.replace("#", "").toLowerCase());
             
@@ -175,7 +227,11 @@ public class StockManager {
         return null;
     }
     
-    // // récupère les items les plus vendus pour la stratégie proactive
+    /**
+     * Analyse les commandes passées pour déterminer les tendances d'achat.
+     * @param limit Le nombre maximum d'articles à retourner.
+     * @return Une Map associant l'article (Forme/Couleur) au volume total des ventes.
+     */
     public Map<String, Integer> getPopularItems(int limit) {
         Map<String, Integer> popular = new HashMap<>();
         String sql = """
@@ -201,6 +257,9 @@ public class StockManager {
         return popular;
     }
     
+    /**
+     * Affiche l'état actuel du stock dans la console.
+     */
     public void showStock() {
         Map<String, Integer> stock = getStockCounts();
         System.out.println("\n--- ÉTAT DU STOCK (SQL) ---");
@@ -212,33 +271,38 @@ public class StockManager {
         System.out.println("---------------------------");
     }
 
-    // // NOUVELLE MÉTHODE : Enregistre la commande avec structure En-tête / Détails
+    /**
+     * Archive une commande fournisseur (achat usine) en base de données.
+     * @param quoteId Identifiant unique du devis.
+     * @param totalPrice Prix total de la commande.
+     * @param items Map des articles commandés (Référence -> Quantité).
+     */
     public void recordFactoryOrder(String quoteId, float totalPrice, Map<String, Integer> items) {
         if (items.isEmpty()) return;
 
-        // // 1. Insertion de l'en-tête de commande (Prix total connu ici)
+        // Insertion de l'en-tête de commande (Prix total connu ici)
         String sqlHeader = "INSERT INTO FactoryOrder (id_FactoryOrder, total_price, order_date) VALUES (?, ?, CURDATE())";
         
-        // // 2. Insertion des détails (Quantités uniquement, pas de prix unitaire)
+        // Insertion des détails (Quantités uniquement, pas de prix unitaire)
         String sqlDetail = "INSERT INTO FactoryOrderDetails (id_FactoryOrder, id_Item, quantity) VALUES (?, ?, ?)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
             try {
-                // // Etape A : Enregistrer la commande globale
+                // Enregistrer la commande globale
                 try (PreparedStatement psHead = conn.prepareStatement(sqlHeader)) {
                     psHead.setString(1, quoteId);
                     psHead.setFloat(2, totalPrice);
                     psHead.executeUpdate();
                 }
 
-                // // Etape B : Enregistrer chaque ligne d'article
+                // Enregistrer chaque ligne d'article
                 try (PreparedStatement psDet = conn.prepareStatement(sqlDetail)) {
                     for (Map.Entry<String, Integer> entry : items.entrySet()) {
                         String key = entry.getKey();
                         int quantity = entry.getValue();
 
-                        // // Récupération des IDs (Item/Forme/Couleur)
+                        // Récupération des IDs (Item/Forme/Couleur)
                         String shape = key.contains("/") ? key.substring(0, key.lastIndexOf('/')) : key;
                         String color = key.contains("/") ? key.substring(key.lastIndexOf('/') + 1) : "000000";
 
@@ -248,10 +312,10 @@ public class StockManager {
                             continue;
                         }
 
-                        psDet.setString(1, quoteId); // Lien vers la commande parente
-                        psDet.setInt(2, ids[0]);     // id_Item
+                        psDet.setString(1, quoteId); // Lien FK
+                        psDet.setInt(2, ids[0]);     // Id_Item
                         psDet.setInt(3, quantity);   // Quantité
-                        psDet.addBatch();            // Ajout au batch pour performance
+                        psDet.addBatch();            // Mise en file d'attente
                     }
                     psDet.executeBatch();
                 }
@@ -269,7 +333,10 @@ public class StockManager {
         }
     }
 
-    // récupère la liste de toutes les briques référencées en base, même si le stock est vide
+    /**
+     * Récupère la liste de tous les types de briques référencés.
+     * @return Liste de chaînes formatées "Forme/Couleur".
+     */
     public List<String> getAllBrickTypes() {
         List<String> types = new ArrayList<>();
         String sql = """
@@ -295,10 +362,12 @@ public class StockManager {
         return types;
     }
 
-    // 1. Récupère tous les articles avec leur ID et la référence API (Forme/Couleur)
+    /**
+     * Récupère le mapping complet ID &lt;-&gt; Référence pour tous les items.
+     * @return Map liant l'ID BDD (Integer) à la référence API (String).
+     */
     public Map<Integer, String> getAllItemsRef() {
         Map<Integer, String> items = new HashMap<>();
-        // On concatène comme l'attend l'API : "Forme/CouleurHex"
         String sql = "SELECT i.id_Item, CONCAT(s.name, '/', LOWER(c.hex_color)) AS ref " +
                      "FROM Item i " +
                      "JOIN Shapes s ON i.shape_id = s.id_shape " +
@@ -316,7 +385,11 @@ public class StockManager {
         return items;
     }
 
-    // 2. Met à jour le prix d'un article spécifique
+    /**
+     * Met à jour le prix unitaire d'un item.
+     * @param idItem L'ID de l'item en base.
+     * @param price Le nouveau prix.
+     */
     public void updateItemPrice(int idItem, double price) {
         String sql = "UPDATE Item SET price = ? WHERE id_Item = ?";
         try (Connection conn = getConnection();

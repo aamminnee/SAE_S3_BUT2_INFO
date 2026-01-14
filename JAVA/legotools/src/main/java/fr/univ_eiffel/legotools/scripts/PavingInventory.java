@@ -4,8 +4,22 @@ import java.io.*;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Script utilitaire générant une "Liste de courses".
+ */
 public class PavingInventory {
 
+    /**
+     * Constructeur privé.
+     */
+    private PavingInventory() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    /**
+     * Point d'entrée.
+     * @param args Arguments CLI (0: fichier entrée).
+     */
     public static void main(String[] args) {
         String inputPath = (args.length > 0) ? args[0] : "C/output/pavage_v4_stock.txt";
         String outputPath = "inventory.txt";
@@ -19,15 +33,20 @@ public class PavingInventory {
     }
 
     /**
-     * Génère un fichier d'inventaire à partir d'un fichier de pavage et retourne le nombre total de briques.
+     * Génère un fichier d'inventaire.
+     * @param inputPath Le fichier de pavage brut.
+     * @param outputPath Le fichier de destination.
+     * @return Le nombre total de briques.
+     * @throws IOException Si les fichiers ne sont pas accessibles.
      */
     public static int createInventory(String inputPath, String outputPath) throws IOException {
         System.out.println("Génération inventaire : " + inputPath + " -> " + outputPath);
 
+        // Utilisation d'un TreeMap pour trier automatiquement les briques par nom
         Map<String, Integer> inventory = new TreeMap<>();
         int totalBricks = 0;
 
-        // 1. Lecture
+        // Phase de Lecture et d'Agrégation
         try (BufferedReader br = new BufferedReader(new FileReader(inputPath))) {
             String line = br.readLine();
             
@@ -45,7 +64,7 @@ public class PavingInventory {
             }
         }
 
-        // 2. Écriture
+        // Phase d'Écriture du Rapport
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
             writer.write(String.format("%-15s | %-10s | %s", "Dimension", "Couleur", "Quantité"));
             writer.newLine();

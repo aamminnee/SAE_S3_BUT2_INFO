@@ -103,14 +103,39 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'success') {
-                    window.location.href = "cropImages";
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Image envoyée !',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = data.redirect || "cropImages";
+                    });
+
                 } else {
-                    alert("erreur: " + data.message);
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Oups...',
+                        text: data.message,
+                        confirmButtonText: 'Compris',
+                        confirmButtonColor: '#3085d6',
+                        footer: data.redirect ? '<a href="' + data.redirect + '">Se connecter maintenant</a>' : null
+                    }).then((result) => {
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                        }
+                    });
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert("erreur technique lors de l'envoi.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur technique',
+                    text: "Impossible de contacter le serveur."
+                });
             })
             .finally(() => {
                 btn.innerText = oldText;

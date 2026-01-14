@@ -1,4 +1,20 @@
 <?php
+/**
+ * Order Detail View
+ *
+ * Displays the complete details of a specific order.
+ * Features:
+ * - Shipping progress tracker based on order date.
+ * - List of purchased items (mosaics) with download links (Plan, CSV, Image).
+ * - Detailed inventory table of bricks required.
+ * - Shipping and Billing summary.
+ *
+ * @var object $commande    The order object containing details (id, date, amount, address, etc.)
+ * @var array $items        List of items in the order
+ * @var array $briques      Aggregated list of bricks for the order
+ * @var string $visuel      Fallback visual image URL
+ * @var array $t            Associative array of translations
+ */
 
 $dateCommande = new DateTime($commande->order_date);
 $maintenant = new DateTime();
@@ -34,10 +50,6 @@ if (!isset($items) || empty($items)) {
     ];
 }
 ?>
-
-<head>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-</head>
 
 <div class="detail-wrapper">
     <div class="detail-container">
@@ -192,7 +204,7 @@ if (!isset($items) || empty($items)) {
 
                 <div class="help-box">
                     <p><?= $t['order_help_text'] ?? 'Un problème avec cette commande ?' ?></p>
-                    <a href="mailto:support@legofactory.com"><?= $t['order_help_link'] ?? 'Contacter le support' ?></a>
+                    <a href="mailto:amine.mourali77@gmail"><?= $t['order_help_link'] ?? 'Contacter le support' ?></a>
                 </div>
 
             </div>

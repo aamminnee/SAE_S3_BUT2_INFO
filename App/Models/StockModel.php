@@ -6,20 +6,33 @@ use App\Core\Db;
 use PDO;
 
 /**
- * StockModel
- * * Manages the inventory of LEGO parts.
- * * Uses ONLY StockEntry to calculate levels (Sum of imports and sales).
+ * Class StockModel
+ * 
+ ** Manages the inventory of lego parts
+ ** Uses only stockentry to calculate levels (sum of imports and sales)
+ *
+ * @package App\Models
  */
 class StockModel extends Model {
+
+    /** @var string The database table associated with the model. */
     protected $table = 'Item';
 
-    // Récupération paginée avec filtres
+    /**
+     * Retrieves a paginated list of stock items with optional filters
+     *
+     * @param int $limit number of items per page
+     * @param int $page current page number
+     * @param string|null $shapeFilter filter by shape name
+     * @param string|null $colorFilter filter by color name
+     * @param string $statusFilter filter by stock level ('all', 'low', 'critical')
+     * @return array list of items
+     */
     public function getPaginatedStock($limit, $page, $shapeFilter = null, $colorFilter = null, $statusFilter = 'all') {
         $offset = ($page - 1) * $limit;
         $params = [];
         $whereClause = "";
 
-        // Filtres Forme et Couleur
         if (!empty($shapeFilter)) {
             $whereClause .= " AND s.name = :shape";
             $params[':shape'] = $shapeFilter;
@@ -29,14 +42,12 @@ class StockModel extends Model {
             $params[':color'] = $colorFilter;
         }
 
-        // Filtre par statut (basé uniquement sur la somme de StockEntry)
         if ($statusFilter === 'low') {
             $whereClause .= " AND IFNULL(e.current_stock, 0) < 50";
         } elseif ($statusFilter === 'critical') {
             $whereClause .= " AND IFNULL(e.current_stock, 0) < 0";
         }
 
-        // Requête simplifiée : On ne joint plus OrderItem
         $sql = "SELECT 
                     i.id_Item, 
                     s.name AS shape_name, 
@@ -70,7 +81,14 @@ class StockModel extends Model {
         return $stmt->fetchAll();
     }
 
-    // Comptage pour la pagination (adapté sans OrderItem)
+    /**
+     * Counts total items matching the current filters for pagination
+     *
+     * @param string|null $shapeFilter
+     * @param string|null $colorFilter
+     * @param string $statusFilter
+     * @return int total count
+     */
     public function countStockItems($shapeFilter = null, $colorFilter = null, $statusFilter = 'all') {
         $params = [];
         $whereClause = "";
@@ -105,9 +123,12 @@ class StockModel extends Model {
         return $res->total;
     }
 
-    // Recherche (Inchangé)
-    public function getAllItemsForSearch()
-    {
+    /**
+     * Retrieves all items formatted for a search dropdown
+     *
+     * @return array
+     */
+    public function getAllItemsForSearch() {
         $sql = "SELECT 
                     i.id_Item, 
                     CONCAT(s.name, ' - ', c.name) AS label 
@@ -119,22 +140,42 @@ class StockModel extends Model {
         return Db::getInstance()->query($sql)->fetchAll();
     }
 
-    // Listes déroulantes (Inchangé)
+    /**
+     * Fetches distinct shapes for filter dropdowns
+     *
+     * @return array
+     */
     public function getAllShapes() {
         return Db::getInstance()->query("SELECT DISTINCT name FROM Shapes ORDER BY name")->fetchAll();
     }
 
+    /**
+     * Fetches distinct colors for filter dropdowns
+     *
+     * @return array
+     */
     public function getAllColors() {
         return Db::getInstance()->query("SELECT DISTINCT name FROM Colors ORDER BY name")->fetchAll();
     }
 
-    // Mise à jour manuelle (Inchangé)
+    /**
+     * Records a manual stock adjustment (positive or negative)
+     *
+     * @param int $itemId
+     * @param int $quantity
+     * @return mixed
+     */
     public function updateStock($itemId, $quantity){
         $sql = "INSERT INTO StockEntry (id_Item, quantity) VALUES (?, ?)";
         return $this->requete($sql, [$itemId, $quantity]);
     }
 
-    // Widget Dashboard (Adapté sans OrderItem)
+    /**
+     * Counts items below a certain stock threshold for dashboard alerts
+     *
+     * @param int $threshold default 50
+     * @return int
+     */
     public function countLowStockItems($threshold = 50) {
         $sql = "SELECT COUNT(*) as total FROM (
                     SELECT 
@@ -154,7 +195,11 @@ class StockModel extends Model {
         return $res->total ?? 0;
     }
 
-    // Export complet (Adapté sans OrderItem)
+    /**
+     * Exports full inventory details for external processing or reporting
+     *
+     * @return array
+     */
     public function getFullStockDetails() {
         $sql = "SELECT 
                     s.width, 
@@ -174,5 +219,26 @@ class StockModel extends Model {
                 ) e ON i.id_Item = e.id_Item";
         
         return \App\Core\Db::getInstance()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retrieves the text reference (Shape/Color) expected by Java for a given ID.
+     * @param int $idItem
+     * @return string|null Format "ShapeName/HexColor" (ex: "2-2/c9cae2")
+     */
+    public function getItemReferenceById($idItem) {
+        $sql = "SELECT s.name, c.hex_color 
+                FROM Item i
+                JOIN Shapes s ON i.shape_id = s.id_shape
+                JOIN Colors c ON i.color_id = c.id_color
+                WHERE i.id_Item = ?";
+        
+        $row = $this->requete($sql, [$idItem])->fetch();
+        
+        if ($row) {
+            $colorClean = strtolower(str_replace('#', '', $row->hex_color));
+            return $row->name . '/' . $colorClean;
+        }
+        return null;
     }
 }

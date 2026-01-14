@@ -5,9 +5,26 @@ use App\Core\Model;
 use App\Core\Db;
 use PDO;
 
+/**
+ * Class CommandeModel
+ * 
+ ** Manages order data and status updates
+ ** Handles retrieval of order details, history, and invoice information
+ * 
+ * @package App\Models
+ */
 class CommandeModel extends Model {
+
+    /** @var string The database table associated with the model. */
     protected $table = 'CustomerOrder';
 
+    /**
+     * Updates the status of a specific order
+     *
+     * @param int $id order identifier
+     * @param string $status new status string
+     * @return bool true on success
+     */
     public function updateStatus($id, $status) {
         $db = Db::getInstance();
         $sql = "UPDATE " . $this->table . " SET status = ? WHERE id_Order = ?";
@@ -15,6 +32,12 @@ class CommandeModel extends Model {
         return $stmt->execute([$status, $id]);
     }
     
+    /**
+     * Retrieves comprehensive order details including invoice and customer info
+     *
+     * @param int $orderId
+     * @return array|false associative array of order details
+     */
     public function getOrderDetails($orderId) {
         $db = Db::getInstance();
         $sql = "SELECT 
@@ -38,6 +61,12 @@ class CommandeModel extends Model {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Fetches the order history for a logged-in user
+     *
+     * @param int $userId
+     * @return array list of order objects
+     */
     public function getCommandeByUserId($userId) {
         $db = Db::getInstance();
         
@@ -57,6 +86,12 @@ class CommandeModel extends Model {
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
+    /**
+     * Retrieves a single order by its identifier
+     *
+     * @param int $id
+     * @return object|false
+     */
     public function getCommandeById($id) {
         $db = Db::getInstance();
         $sql = "SELECT co.*, co.id_Image as id_images, i.adress 
@@ -68,6 +103,12 @@ class CommandeModel extends Model {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
+    /**
+     * Fetches the current status of an order
+     *
+     * @param int $id
+     * @return string status or 'inconnu'
+     */
     public function getCommandeStatusById($id) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT status FROM CustomerOrder WHERE id_Order = ?");

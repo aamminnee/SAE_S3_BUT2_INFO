@@ -7,12 +7,28 @@ use PDO;
 use PDOException;
 
 /**
- * ImagesModel
- * * Manages user-uploaded images stored as BLOBs in the database.
+ * Class ImagesModel
+ * 
+ ** Manages user-uploaded images stored as blobs in the database
+ ** Handles the separation between metadata (image table) and binary data (customerimage table)
+ * 
+ * @package App\Models
  */
 class ImagesModel extends Model {
+
+    /** @var string The database table associated with the model. */
     protected $table = 'Image';
 
+    /**
+     * Saves a new image by creating linked records in both image tables
+     *
+     * @param int $idCustomer owner identifier
+     * @param string $imgData binary content of the file
+     * @param string $fileName original name of the file
+     * @param string $mimeType mime type (e.g. image/png)
+     * @return int the new image identifier
+     * @throws PDOException if the transaction fails
+     */
     public function saveCustomerImage($idCustomer, $imgData, $fileName, $mimeType) {
         $db = Db::getInstance();
 
@@ -46,6 +62,14 @@ class ImagesModel extends Model {
         }
     }
 
+    /**
+     * Updates the binary content of an existing image (e.g. after cropping)
+     *
+     * @param int $idImage
+     * @param int $idCustomer used for ownership verification
+     * @param string $newData new binary data
+     * @return bool success status
+     */
     public function updateCustomerImageBlob($idImage, $idCustomer, $newData) {
         $db = Db::getInstance();
         
@@ -62,6 +86,13 @@ class ImagesModel extends Model {
         return $stmt->execute();
     }
 
+    /**
+     * Retrieves image data and metadata by id
+     *
+     * @param int $id image identifier
+     * @param int|null $userId optional user id for strict ownership check
+     * @return mixed image object or false
+     */
     public function getImageById($id, $userId = null) {
         $sql = "SELECT i.id_Image, i.filename, i.id_Customer, c.file, c.file_type 
                 FROM Image i
@@ -78,6 +109,12 @@ class ImagesModel extends Model {
         return $this->requete($sql, $params)->fetch();
     }
 
+    /**
+     * Fetches the most recently uploaded image for a specific user
+     *
+     * @param int $userId
+     * @return mixed image object or false
+     */
     public function getLastImageByUserId($userId) {
         $sql = "SELECT i.id_Image, i.filename, i.id_Customer, c.file, c.file_type 
                 FROM Image i

@@ -1,4 +1,17 @@
 <?php 
+/**
+ * Landing Page & Image Upload View
+ *
+ * The main entry point for the "Mosaic Creator" feature.
+ * Features:
+ * - Hero section with value proposition and "Before/After" visual.
+ * - Drag & Drop upload form.
+ * - "How it works" 3-step guide.
+ *
+ * @var array $t            Associative array of translations
+ * @var string $baseUrl     Base URL environment variable
+ */
+
 $baseUrl = $_ENV['BASE_URL'] ?? ''; 
 ?>
 
@@ -107,5 +120,7 @@ $baseUrl = $_ENV['BASE_URL'] ?? '';
     </section>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script src="<?= $baseUrl ?>/JS/drag_drop.js?v=<?= time() ?>"></script>

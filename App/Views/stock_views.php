@@ -1,6 +1,47 @@
+<?php
+/**
+ * Inventory Management View (Admin)
+ *
+ * Dashboard for managing stock levels.
+ * Features:
+ * - Quick stock update form (Search + Add/Remove quantity).
+ * - Filterable inventory list (by shape, color, status).
+ * - Pagination logic.
+ *
+ * @var array $stocks       List of stock items
+ * @var array $allItems     List of all available items for search
+ * @var array $shapesList   Available shapes for filter
+ * @var array $colorsList   Available colors for filter
+ * @var int $totalPages     Total pages for pagination
+ * @var string|null $error  Error message
+ * @var string|null $success Success message
+ * @var array $t            Translations
+ */
+?>
+
 <div class="admin-container">
     <div class="admin-header">
         <h1><?= $t['stock_title'] ?? 'Gestion de l\'Inventaire' ?></h1>
+    </div>
+
+    <div class="container" style="margin-top: 20px;">
+        <?php if (!empty($error)): ?>
+            <div style="background-color: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; border: 1px solid #ef9a9a; margin-bottom: 15px;">
+                <strong>Erreur :</strong> <?= $error ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($success)): ?>
+            <div style="background-color: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 5px; border: 1px solid #a5d6a7; margin-bottom: 15px;">
+                <strong>Succès :</strong> <?= $success ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($debugMessage)): ?>
+            <div style="background-color: #e3f2fd; color: #0d47a1; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 0.9em; margin-bottom: 15px;">
+                <strong>Debug :</strong> <?= htmlspecialchars($debugMessage) ?>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="admin-content">

@@ -1,6 +1,20 @@
-<head>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-</head>
+<?php
+/**
+ * Shopping Cart View
+ *
+ * Displays the user's current selection of mosaics.
+ * Features:
+ * - List of items with visual preview and specifications (size, pieces).
+ * - Price calculation per item.
+ * - Option to remove items.
+ * - Order summary (Subtotal, Shipping, Total) and Checkout button.
+ *
+ * @var array $items       List of cart items (mixed array/object depending on source)
+ * @var float $subTotal    Sum of item prices before shipping
+ * @var float $total       Grand total including shipping
+ * @var array $t           Associative array of translations
+ */
+?>
 
 <div class="cart-wrapper">
     <div class="cart-container">
@@ -29,7 +43,7 @@
                 </div>
                 <h3><?= $t['cart_empty_block_title'] ?? "C'est bien vide ici !" ?></h3>
                 <p><?= $t['cart_empty_block_text'] ?? 'Commencez par créer votre première mosaïque personnalisée.' ?></p>
-                <a href="<?= $_ENV['BASE_URL'] ?>/images" class="btn-create">
+                <a href="<?= $_ENV['BASE_URL'] ?>/index.php" class="btn-create">
                     <span class="icon">+</span> <?= $t['cart_btn_create'] ?? 'Créer une Mosaïque' ?>
                 </a>
             </div>

@@ -9,6 +9,7 @@
 #include "dependance/solution.h"
 #include "dependance/solution_libre.h"
 
+// Seuil d'erreur moyen par pixel au-delà duquel on rejette une grosse brique
 #define TOLERANCE_LIBRE 700 
 
 /**

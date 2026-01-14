@@ -10,16 +10,31 @@ use PHPMailer\PHPMailer\Exception;
 use Dotenv\Dotenv;
 
 /**
- * UserController
- * * Manages user authentication and account security.
- * Handles Login, Registration, Password Reset, and Two-Factor Authentication (2FA).
+ * Class UserController
+ * 
+ ** Manages user authentication lifecycle including login, registration,
+ ** Password recovery and security settings like 2fa
+ * 
+ * @package App\Controllers
  */
 class UserController extends Controller {
+
+    /** @var UsersModel Handles user database operations. */
     private $user_model;
+
+    /** @var TokensModel Handles token generation and verification. */
     private $token_model;
+
+    /** @var PHPMailer Instance of the mailer service. */
     private $mail;
+
+    /** @var array Key/Value pair of translations. */
     private $translations;
 
+    /**
+     * Constructor.
+     * Initializes models and mailer configuration
+     */
     public function __construct() {
         parent::__construct();
         
@@ -33,10 +48,22 @@ class UserController extends Controller {
         $this->translations = $this->trans;
     }
 
+    /**
+     * Retrieves a translation for a given key
+     *
+     * @param string $key the translation key
+     * @param string $default default text if key is missing
+     * @return string translated text
+     */
     private function t($key, $default = '') {
         return $this->translations[$key] ?? $default;
     }
 
+    /**
+     * Handles user login process with captcha and 2fa support
+     *
+     * @return void
+     */
     public function login() {
         $baseUrl = $_ENV['BASE_URL'] ?? '';
 
@@ -105,6 +132,11 @@ class UserController extends Controller {
         }
     }
 
+    /**
+     * Redirects authorized users to the admin dashboard
+     *
+     * @return void
+     */
     public function admin() {
         $baseUrl = $_ENV['BASE_URL'] ?? '';
         
@@ -117,6 +149,11 @@ class UserController extends Controller {
         exit;
     }
 
+    /**
+     * Handles new user registration and validation email sending
+     *
+     * @return void
+     */
     public function register() {
         $baseUrl = $_ENV['BASE_URL'];
 
@@ -124,23 +161,26 @@ class UserController extends Controller {
             $email = trim($_POST['email']);
             $username = trim($_POST['username']);
             $password = $_POST['password'];
-            $lastname = $_POST['lastname'];
+            $confirm_password = $_POST['confirm_password'] ?? '';
+            $lastname = $_POST['lastname'] ?? '';
             
-            $passwordPattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/';
-            if (!preg_match($passwordPattern, $password)) {
-                $message = $this->t('password_invalid', 
-                    "Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule, un chiffre et un caractère spécial."
-                );
+            if ($password !== $confirm_password) {
                 $this->render('register_views', [
-                    'message' => $message,
+                    'error' => "Les mots de passe ne correspondent pas.",
                     'css' => 'register_views.css'
                 ]);
                 return;
             }
 
-            if (empty($lastname)) {
-                $error = "Le nom de famille est obligatoire.";
-                require '../App/Views/register_views.php'; // // note : à terme utiliser render() ici aussi
+            $passwordPattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/';
+            if (!preg_match($passwordPattern, $password)) {
+                $msg = $this->t('password_invalid', 
+                    "Le mot de passe doit contenir 8 caractères min, avec majuscule, minuscule, chiffre et spécial."
+                );
+                $this->render('register_views', [
+                    'error' => $msg,
+                    'css' => 'register_views.css'
+                ]);
                 return;
             }
 
@@ -148,29 +188,45 @@ class UserController extends Controller {
             
             if ($result === true) {
                 $user = $this->user_model->getUserByUsername($username);
-                $userId = is_object($user) ? $user->id_user : $user['id_user'];
+                $userId = is_object($user) ? $user->id_user : ($user['id_user'] ?? null);
                 
-                $token = $this->token_model->generateToken($userId, "validation");
-                $this->sendVerificationEmail($email, $token);
-                
-                header("Location: $baseUrl/user/verify");
-                exit;
+                if ($userId) {
+                    $token = $this->token_model->generateToken($userId, "validation");
+                    $this->sendVerificationEmail($email, $token);
+                    header("Location: $baseUrl/user/verify");
+                    exit;
+                }
             } elseif ($result === "duplicate") {
-                $_SESSION['register_message'] = $this->t('username_exists', "Ce nom d'utilisateur ou l'adresse email existe déjà.");
-                header("Location: $baseUrl/user/register");
+                $msg = $this->t('username_exists', "Ce nom d'utilisateur ou cet email est déjà pris.");
+                $this->render('register_views', [
+                    'error' => $msg,
+                    'css' => 'register_views.css'
+                ]);
                 exit;
             } else {
-                 $_SESSION['register_message'] = $this->t('register_error', "L'inscription a échoué, veuillez réessayer.");
-                 header("Location: $baseUrl/user/register");
+                 $msg = $this->t('register_error', "L'inscription a échoué, veuillez réessayer.");
+                 $this->render('register_views', [
+                    'error' => $msg,
+                    'css' => 'register_views.css'
+                ]);
                 exit;
             }
         } else {
+            $error = $_SESSION['register_message'] ?? null;
+            unset($_SESSION['register_message']);
+
             $this->render('register_views', [
+                'error' => $error,
                 'css' => 'register_views.css'
             ]);
         }
     }
 
+    /**
+     * Processes the final password update after validation
+     *
+     * @return void
+     */
     public function resetPasswordForm() {
         if (isset($_POST['reset_password'])) {
             $password = $_POST['password'];
@@ -209,6 +265,11 @@ class UserController extends Controller {
         }
     }
 
+    /**
+     * Initiates the password reset flow by sending an email link
+     *
+     * @return void
+     */
     public function resetPassword() {
         $baseUrl = $_ENV['BASE_URL'] ?? '';
 
@@ -249,6 +310,11 @@ class UserController extends Controller {
         }
     }
 
+    /**
+     * Verifies tokens for account activation, password reset, or 2fa
+     *
+     * @return void
+     */
     public function verify() {
         $baseUrl = $_ENV['BASE_URL'] ?? '';
 
@@ -329,6 +395,13 @@ class UserController extends Controller {
         }
     }
 
+    /**
+     * Sends an email using smtp with mailjet configuration
+     *
+     * @param string $email recipient address
+     * @param string $token verification code to embed
+     * @return void
+     */
     private function sendVerificationEmail($email, $token) {
         try {
             $this->mail->isSMTP();
@@ -356,6 +429,11 @@ class UserController extends Controller {
         }
     }
 
+    /**
+     * Enables or disables 2fa for the current user
+     *
+     * @return void
+     */
     public function toggle2FA() {
         $baseUrl = $_ENV['BASE_URL'];
 
@@ -386,6 +464,11 @@ class UserController extends Controller {
         ]);
     }
 
+    /**
+     * Destroys user session and redirects to login
+     *
+     * @return void
+     */
     public function logout() {
         $baseUrl = $_ENV['BASE_URL'];
         session_unset();

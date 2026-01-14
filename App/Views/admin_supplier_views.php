@@ -1,44 +1,62 @@
-<<div class="admin-container">
+<?php
+/**
+ * Admin Supplier View
+ *
+ * Displays the interface for interacting with the external Factory system.
+ * Features include:
+ * - Viewing output from the Java factory tool (mining/restocking results).
+ * - Displaying the current virtual credit balance.
+ * - Action buttons to trigger mining or auto-restock processes.
+ * - A history list of orders placed to the factory.
+ *
+ * @var array $orders                     List of grouped factory orders (containing 'info' object and 'items' array)
+ * @var array $t                          Associative array of translations
+ * @var string|null $_SESSION['factory_output']       Flash message containing the Java tool output
+ * @var int|null $_SESSION['last_factory_balance']    Cached balance from the last factory operation
+ */
+?>
+<div class="admin-container">
     <h1><?= $t['supplier_title'] ?? 'Espace Fournisseur & Approvisionnement' ?></h1>
 
     <?php if (isset($_SESSION['factory_output'])): ?>
-        <div class="admin-card" style="background: #1e1e1e; color: #00ff00; font-family: monospace; padding: 15px; margin-bottom: 20px; border-left: 5px solid #00ff00;">
-            <h3 style="margin-top:0; color:#fff;">Résultat Opération :</h3>
-            <pre style="white-space: pre-wrap; margin: 0;"><?= htmlspecialchars($_SESSION['factory_output'], ENT_QUOTES, 'UTF-8') ?></pre>
+        <div class="admin-card factory-terminal">
+            <h3>Résultat Opération :</h3>
+            <pre><?= htmlspecialchars($_SESSION['factory_output'], ENT_QUOTES, 'UTF-8') ?></pre>
         </div>
         <?php unset($_SESSION['factory_output']); ?>
     <?php endif; ?>
 
-    <div class="admin-card" style="margin-bottom: 30px; background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);">
+    <div class="admin-card factory-wallet-card">
         
-        <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-            <h2 style="margin: 0; color: #2c3e50;">Portefeuille MyBrickFactory</h2>
-            <p style="margin: 5px 0 0 0; color: #7f8c8d;">
+        <div class="wallet-header">
+            <h2>Portefeuille MyBrickFactory</h2>
+            <p>
                 Solde actuel estimé : 
-                <strong style="color: #f1c40f; font-size: 1.4em;">
+                <strong class="wallet-balance">
                     <?= isset($_SESSION['last_factory_balance']) ? number_format($_SESSION['last_factory_balance']) : '?' ?> Crédits
                 </strong>
             </p>
         </div>
 
-        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div class="factory-actions">
             
             <form action="<?= ($_ENV['BASE_URL'] ?? '') ?>/admin/runFactory" method="POST">
                 <input type="hidden" name="action" value="refill">
-                <button type="submit" class="btn-primary" style="background-color: #f1c40f; color: #333; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                <button type="submit" class="btn-primary btn-mine">
                     Minage (+ Crédits)
                 </button>
             </form>
+
             <form action="<?= ($_ENV['BASE_URL'] ?? '') ?>/admin/runFactory" method="POST">
                 <input type="hidden" name="action" value="proactive">
-                <button type="submit" class="btn-primary" style="background-color: #9b59b6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                <button type="submit" class="btn-primary btn-proactive">
                     Auto-Réapprovisionnement (Proactive)
                 </button>
             </form>
         </div>
     </div>
 
-    <h1><?= $t['supplier_title'] ?? 'Espace Fournisseur - Historique des Commandes Usine' ?></h1>
+    <h1><?= $t['supplier_history_title'] ?? 'Espace Fournisseur - Historique des Commandes Usine' ?></h1>
 
     <?php 
     if (isset($orders) && !empty($orders)): 

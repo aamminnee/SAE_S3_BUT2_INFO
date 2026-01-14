@@ -1,3 +1,18 @@
+<?php
+/**
+ * 2FA / Email Verification View
+ *
+ * Displays a form to enter the 6-digit security code sent via email.
+ * Features:
+ * - Centered numeric input optimized for codes.
+ * - Error message display.
+ * - Navigation back to login.
+ *
+ * @var string|null $error      Error message passed from controller
+ * @var array $t                Associative array of translations
+ */
+?>
+
 <div class="verify-wrapper">
     
     <div class="verify-container">

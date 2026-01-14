@@ -1,11 +1,23 @@
+<?php
+/**
+ * Orders History View
+ *
+ * Displays a list of past orders for the logged-in user.
+ * Features:
+ * - List of orders with visual previews.
+ * - Status badges (Paid, Shipped, etc.).
+ * - Links to details and invoices.
+ *
+ * @var array $commandes    List of order objects (id_commande, date_commande, montant, status, visuel)
+ * @var array $t            Associative array of translations
+ */
+?>
 <div class="orders-container">
-    
     <a href="<?= $_ENV['BASE_URL'] ?>/index.php" class="btn-home-back">
         <?= $t['orders_back'] ?? '&larr; Retour à l\'accueil' ?>
     </a>
     <br>
     <h1 class="page-title"><?= $t['orders_title'] ?? 'Mes Commandes' ?></h1>
-
     <?php if (empty($commandes)): ?>
         <div class="empty-state">
             <p><?= $t['orders_empty'] ?? 'Vous n\'avez pas encore passé de commande.' ?></p>

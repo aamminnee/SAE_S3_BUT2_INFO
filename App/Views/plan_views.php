@@ -1,4 +1,18 @@
 <?php
+/**
+ * Printable Assembly Plan View
+ *
+ * Generates a clean, printable HTML page for the user to assemble their mosaic.
+ * Features:
+ * - Interactive visual grid of the mosaic (optimized for print).
+ * - Inventory legend mapping symbols to colors.
+ * - Print-specific CSS adjustments (page breaks, hiding buttons).
+ *
+ * @var array $plan         Array containing grid dimensions, bricks matrix, and legend
+ * @var int|string $id      The mosaic ID
+ * @var array $t            Associative array of translations
+ */
+
 if (!isset($t) || empty($t)) {
     $lang = $_SESSION['lang'] ?? 'fr';
     if (class_exists('\\App\\Models\\TranslationModel')) {
@@ -72,7 +86,6 @@ if (!isset($t) || empty($t)) {
         .legend-item { display: flex; align-items: center; gap: 8px; padding: 5px; background: #fff; border-radius: 5px; border: 1px solid #ddd; }
         .swatch { width: 25px; height: 25px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; border: 1px solid #000; }
 
-        /* --- STYLES IMPRESSION --- */
         @media print {
             @page { margin: 0; size: auto; }
             .print-btn { display: none; }

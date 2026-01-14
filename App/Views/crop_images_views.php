@@ -1,8 +1,20 @@
 <?php
+/**
+ * Image Cropping View
+ *
+ * Interface to resize and crop the uploaded image before processing.
+ * Features:
+ * - JavaScript-based image cropper (Cropper.js).
+ * - Configuration sidebar for Size and Aspect Ratio.
+ *
+ * @var array|null $image   The uploaded image data (id, file, file_type, filename)
+ * @var array $t            Associative array of translations
+ * @var string $baseUrl     Base URL environment variable
+ */
+
 $baseUrl = $_ENV['BASE_URL'] ?? '';
 ?>
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 </head>
 

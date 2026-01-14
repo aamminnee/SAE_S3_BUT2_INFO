@@ -8,22 +8,33 @@ use App\Models\MosaicModel;
 use App\Models\TranslationModel;
 
 /**
- * CommandeController
- * * Manages the user's order history and downloads.
- * * Allows users to view past orders, download assembly plans, and parts lists.
+ * Class CommandeController
+ * 
+ ** Manages the user's order history and downloads
+ ** Allows users to view past orders, download assembly plans, and parts lists
+ * 
+ * @package App\Controllers
  */
 class CommandeController extends Controller {
     
+    /** @var array Key/Value pair of translations. */
     private $translations;
 
+    /**
+     * Initializes the controller and loads translation strings
+     */
     public function __construct() {
         $lang = $_SESSION['lang'] ?? 'fr';
         $translation_model = new TranslationModel();
         $this->translations = $translation_model->getTranslations($lang);
     }
 
-    public function index()
-    {
+    /**
+     * Displays a list of past orders for the authenticated user
+     *
+     * @return void
+     */
+    public function index() {
         if (!isset($_SESSION['user_id'])) {
             header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login");
             exit;
@@ -50,6 +61,13 @@ class CommandeController extends Controller {
         ]);
     }
 
+    /**
+     * Displays the detailed view of a specific order.
+     * Aggregates the list of Lego bricks required for the entire order.
+     *
+     * @param int $id The unique identifier of the order.
+     * @return void
+     */
     public function detail($id) {
         if (!isset($_SESSION['user_id'])) {
             header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login");
@@ -103,6 +121,12 @@ class CommandeController extends Controller {
         ]);
     }
 
+    /**
+     * Generates and forces download of a csv file containing the parts list
+     *
+     * @param int $id mosaic identifier
+     * @return void
+     */
     public function downloadCsv($id) {
         $this->checkAuth();
         $mosaicModel = new MosaicModel();
@@ -131,6 +155,12 @@ class CommandeController extends Controller {
         exit;
     }
 
+    /**
+     * Converts the stored base64 string into a downloadable png image
+     *
+     * @param int $idMosaic mosaic identifier
+     * @return void
+     */
     public function downloadImage($idMosaic) {
         $mosaicModel = new \App\Models\MosaicModel();
         
@@ -153,6 +183,12 @@ class CommandeController extends Controller {
         }
     }
 
+    /**
+     * Renders the printable assembly plan for a specific mosaic
+     *
+     * @param int $id mosaic identifier
+     * @return void
+     */
     public function downloadPlan($id) {
         if (!isset($_SESSION['user_id'])) { header("Location: /user/login"); exit; }
 
@@ -170,6 +206,11 @@ class CommandeController extends Controller {
         ], 'empty'); 
     }
 
+    /**
+     * Helper to enforce authentication requirements
+     *
+     * @return void
+     */
     private function checkAuth() {
         if (!isset($_SESSION['user_id'])) {
             header("Location: " . ($_ENV['BASE_URL'] ?? '') . "/user/login");

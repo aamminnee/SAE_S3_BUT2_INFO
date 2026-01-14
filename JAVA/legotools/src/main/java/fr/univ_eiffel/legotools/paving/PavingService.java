@@ -11,20 +11,43 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.imageio.ImageIO;
 
+/**
+ * Service assurant l'interopérabilité avec le module C.
+ * <p>
+ * Cette classe agit comme une passerelle (Bridge) :
+ * 1. Elle traduit les données Java (BufferedImage) en format texte brut compréhensible par le C.
+ * 2. Elle lance l'exécutable C dans un processus séparé.
+ * 3. Elle récupère les résultats (fichiers texte) et les reconvertit en objets Java (LegoBrick) pour l'affichage.
+ * </p>
+ */
 public class PavingService {
 
     private final String pathToCExecutable;
+
+    // Structure de dossiers fixe requise par l'architecture du projet C
     private final File saeDir = new File("C");
     private final File inputDir = new File(saeDir, "input");
     private final File outputDir = new File(saeDir, "output");
 
+    /**
+     * Initialise le service de pavage.
+     * @param pathToCExecutable Chemin relatif ou absolu vers l'exécutable C.
+     */
     public PavingService(String pathToCExecutable) {
         this.pathToCExecutable = pathToCExecutable;
         if (!inputDir.exists()) inputDir.mkdirs();
         if (!outputDir.exists()) outputDir.mkdirs();
     }
 
-    // lance le programme c pour générer un pavage et retourne l'image résultante
+    /**
+     * Orchestre le pipeline complet de génération d'un pavage.
+     * @param sourceImage L'image pixelisée à traiter.
+     * @param algoName Le nom de l'algo C à utiliser.
+     * @param destTxtFile Fichier où sauvegarder une copie des instructions textuelles.
+     * @return Une image générée représentant le résultat final (vue "Lego").
+     * @throws IOException En cas d'erreur E/S.
+     * @throws InterruptedException Si le processus est interrompu.
+     */
     public BufferedImage generatePaving(BufferedImage sourceImage, String algoName, File destTxtFile) throws IOException, InterruptedException {
         writeImageTxt(sourceImage);
 
@@ -64,7 +87,6 @@ public class PavingService {
              throw new IOException("Résultat introuvable : " + resultFile.getAbsolutePath());
         }
 
-        // copie le fichier de données vers la destination spécifiée
         if (destTxtFile != null) {
             Files.copy(resultFile.toPath(), destTxtFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
@@ -73,7 +95,12 @@ public class PavingService {
         return renderPreview(sourceImage.getWidth(), sourceImage.getHeight(), bricks);
     }
 
-    // crée une visualisation png à partir d'un fichier de pavage existant
+    /**
+     * Génère uniquement l'image de visualisation.
+     * @param inputTxt Fichier texte contenant le pavage.
+     * @param outputPng Fichier image de sortie.
+     * @throws IOException En cas d'erreur fichier.
+     */
     public void createVisualization(File inputTxt, File outputPng) throws IOException {
         List<LegoBrick> bricks = parsePavingFile(inputTxt);
         
@@ -93,7 +120,9 @@ public class PavingService {
         ImageIO.write(image, "png", outputPng);
     }
 
-    // convertit l'image en un fichier texte lisible par le programme c
+    /**
+     * Sérialise l'image en un format texte brut très simple.
+     */
     private void writeImageTxt(BufferedImage img) throws IOException {
         File file = new File(inputDir, "image.txt");
         try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
@@ -110,7 +139,10 @@ public class PavingService {
         }
     }
 
-    // analyse le fichier de sortie du programme c pour extraire la liste des briques
+    /**
+     * Parseur du fichier de résultat généré par le C.
+     * Lit les lignes au format : "2x4/FF0000 X Y ROTATION"
+     */
     private List<LegoBrick> parsePavingFile(File file) throws IOException {
         List<LegoBrick> bricks = new ArrayList<>();
 
@@ -153,7 +185,10 @@ public class PavingService {
         return bricks;
     }
 
-    // dessine une image de prévisualisation à partir de la liste des briques
+    /**
+     * Dessine le rendu final des briques.
+     * Applique un zoom automatique pour que les pavages de petite taille restent visibles.
+     */
     private BufferedImage renderPreview(int width, int height, List<LegoBrick> bricks) {
         int scale = 20;
         if (width > 200) scale = 5;

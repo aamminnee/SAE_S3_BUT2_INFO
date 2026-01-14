@@ -24,18 +24,99 @@ main {
     display: inline-block;
 }
 
-.factory-orders-list {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
-
 .admin-card {
     background: white;
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     border: 1px solid #e2e8f0;
+    margin-bottom: 25px;
+}
+
+.factory-terminal {
+    background: #1e1e1e !important;
+    color: #00ff00;
+    font-family: monospace;
+    padding: 15px;
+    border-left: 5px solid #00ff00;
+}
+
+.factory-terminal h3 {
+    margin-top: 0;
+    color: #fff;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.factory-terminal pre {
+    white-space: pre-wrap;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.factory-wallet-card {
+    background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);
+}
+
+.wallet-header {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.wallet-header h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.wallet-header p {
+    margin: 10px 0 0 0;
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+.wallet-balance {
+    color: #f1c40f;
+    font-size: 1.4em;
+    font-weight: 800;
+}
+
+.factory-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-mine, .btn-proactive {
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-mine {
+    background-color: #f1c40f;
+    color: #333;
+}
+
+.btn-proactive {
+    background-color: #9b59b6;
+    color: white;
+}
+
+.btn-mine:hover, .btn-proactive:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.factory-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
 }
 
 .order-header {
@@ -91,4 +172,5 @@ main {
     border-radius: 20px;
     font-weight: bold;
     color: #2d3748;
+    font-size: 0.9em;
 }

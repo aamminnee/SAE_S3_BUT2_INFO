@@ -71,6 +71,7 @@ body {
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
+    border-left: 4px solid #f1c40f;
 }
 
 .stat-card:hover {
@@ -103,6 +104,10 @@ body {
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--secondary);
+}
+
+.credit {
+    font-size: 0.5rem;
 }
 
 .separator {
@@ -144,6 +149,14 @@ body {
     font-weight: 700;
     color: var(--text-main);
     margin: 0;
+}
+
+.nb {
+    font-weight:bold;
+}
+
+.no-order {
+    text-align:center;
 }
 
 .btn-secondary {

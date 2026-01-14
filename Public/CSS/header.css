@@ -255,16 +255,77 @@ header {
     font-size: 0.8rem;
 }
 
-@media (max-width: 768px) {
-    .lang-switch-container {
-        justify-content: center;
-        margin: 10px 0;
+@media (max-width: 900px) {
+    header {
+        height: 70px;
+    }
+
+    .header-container {
+        padding: 0 15px;
+    }
+
+    .logo img {
+        height: 45px; 
+    }
+
+    .main-nav ul {
+        gap: 15px;
+    }
+
+    .btn-header {
+        padding: 8px 16px;
+        font-size: 0.9rem;
     }
 }
 
 @media (max-width: 768px) {
-    .header-container { padding: 0 15px; }
-    .logo img { height: 45px; }
-    .profile-trigger span { display: none; }
-    .btn-header { padding: 8px 12px; }
+    .profile-trigger span {
+        display: none;
+    }
+    
+    .profile-trigger {
+        padding: 0;
+        border: none;
+    }
+    
+    .profile-menu {
+        margin-left: 5px;
+    }
+
+    .nav-link {
+        font-size: 0.9rem;
+    }
+    
+    .btn-header {
+        padding: 6px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .lang-switch-container {
+        margin-left: 10px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo img {
+        height: 35px; 
+    }
+
+    .main-nav ul {
+        gap: 8px;
+    }
+
+    .main-nav a.nav-link {
+        display: none;
+    }
+
+    .btn-header {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .lang-switch-container {
+        margin-left: 5px;
+    }
 }

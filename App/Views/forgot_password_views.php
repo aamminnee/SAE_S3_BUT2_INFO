@@ -1,4 +1,18 @@
-<main class="main-content">
+<?php
+/**
+ * Forgot Password View
+ *
+ * Displays the form to request a password reset code via email.
+ * Features:
+ * - Email input field.
+ * - Error message display.
+ * - Navigation back to login.
+ *
+ * @var string|null $message    Feedback message (error or success)
+ * @var array $t                Associative array of translations
+ */
+?>
+<div class="main-content">
     <div class="login-container"> 
         <h2><?= $t['forgot_title'] ?? 'Réinitialisation' ?></h2>
         
@@ -19,4 +33,4 @@
             <p><a href="<?= $_ENV['BASE_URL'] ?>/user/login"><?= $t['forgot_link_login'] ?? 'Retour à la connexion' ?></a></p>
         </div>
     </div>
-</main>
+</div>

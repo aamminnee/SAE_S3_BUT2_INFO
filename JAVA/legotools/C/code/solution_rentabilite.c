@@ -10,8 +10,8 @@
 #include "dependance/solution_rentabilite.h"
 
 // Seuils pour équilibrer qualité et économie
-#define TOLERANCE_FAMILLE 2000
-#define TOLERANCE_HOMOGENEITE 1500
+#define TOLERANCE_FAMILLE 2000      // Erreur max tolérée pour considérer qu'une couleur est "proche"
+#define TOLERANCE_HOMOGENEITE 1500  // Erreur max pour la zone entière
 #define MAX_FLOAT 9999999.0f
 
 /**

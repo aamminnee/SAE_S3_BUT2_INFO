@@ -1,3 +1,20 @@
+<?php
+/**
+ * Admin Dashboard View
+ *
+ * Displays the main administration dashboard with Key Performance Indicators (KPIs).
+ * Features:
+ * - Global statistics (Revenue, Order count, User count, Stock alerts).
+ * - Factory/Supplier balance overview.
+ * - Recent orders table.
+ * - Quick action buttons for common tasks.
+ *
+ * @var array $stats            Associative array of KPIs (revenue, orders_count, users_count, low_stock)
+ * @var array $lastOrders       List of recent orders (id, user, date, amount, status)
+ * @var array $t                Translation array
+ * @var int|null $_SESSION['last_factory_balance']  Cached balance from the factory system
+ */
+?>
 <div class="admin-container">
     <div class="admin-header">
         <h1><?= $t['dashboard_title'] ?? 'Tableau de bord' ?></h1>
@@ -10,7 +27,7 @@
             <div class="stat-card">
                 <span class="stat-label"><?= $t['dashboard_revenue'] ?? 'Chiffre d\'Affaires' ?></span>
                 <span class="stat-value"><?= number_format($stats['revenue'], 2) ?> €</span>
-                <span class="stat-desc" style="color: var(--success);"><?= $t['dashboard_revenue_trend'] ?? '+12% ce mois-ci' ?></span>
+                <span class="stat-desc"><?= $t['dashboard_revenue_trend'] ?? '+12% ce mois-ci' ?></span>
             </div>
 
             <div class="stat-card">
@@ -25,11 +42,11 @@
                 <span class="stat-desc"><?= $t['dashboard_users_desc'] ?? 'Utilisateurs actifs' ?></span>
             </div>
 
-            <div class="stat-card" style="border-left: 4px solid #f1c40f;">
+            <div class="stat-card">
                 <span class="stat-label"><?= $t['dashboard_factory_balance'] ?? 'Solde Actuel' ?></span>
                 <span class="stat-value">
                     <?= isset($_SESSION['last_factory_balance']) ? number_format($_SESSION['last_factory_balance']) : '---' ?> 
-                    <small style="font-size: 0.5em;">Crédits</small>
+                    <small class="credit">Crédits</small>
                 </span>
                 <span class="stat-desc">Compte B2B Fournisseur</span>
             </div>
@@ -41,7 +58,7 @@
             </div>
         </div>
 
-        <hr class="separator" style="margin: 40px 0;">
+        <hr class="separator">
 
         <div class="dashboard-grid">
             
@@ -68,7 +85,7 @@
                                         <td>#<?= $order['id'] ?></td>
                                         <td><strong><?= htmlspecialchars($order['user']) ?></strong></td>
                                         <td><?= date('d/m/Y', strtotime($order['date'])) ?></td>
-                                        <td style="font-weight:bold;"><?= number_format($order['amount'], 2) ?> €</td>
+                                        <td class="nb"><?= number_format($order['amount'], 2) ?> €</td>
                                         <td>
                                             <span class="badge <?= $order['status'] === 'Payée' ? 'badge-success' : 'badge-warning' ?>">
                                                 <?= $order['status'] ?>
@@ -77,7 +94,7 @@
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr><td colspan="5" style="text-align:center;"><?= $t['dashboard_no_orders'] ?? 'Aucune commande récente.' ?></td></tr>
+                                <tr><td colspan="5" class="no-order"><?= $t['dashboard_no_orders'] ?? 'Aucune commande récente.' ?></td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>

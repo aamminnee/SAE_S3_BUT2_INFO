@@ -8,21 +8,30 @@ use App\Models\FinancialModel;
 use App\Models\StockModel;
 
 /**
- * AdminController
- * * Manages the back-office (administration panel) of the application.
- * It handles the main dashboard, global statistics, and supplier/factory order management.
- * * Access to this controller is strictly restricted to users with the 'admin' role.
+ * Class AdminController
+ * 
+ ** manages the back-office (administration panel) of the application
+ ** handles the main dashboard, global statistics, and supplier/factory order management
+ ** access to this controller is strictly restricted to users with the 'admin' role
+ * 
+ * @package App\Controllers
  */
 class AdminController extends Controller {
+
+    /** @var AdminModel Handles admin-specific database queries. */
     private $admin_model;
+
+    /** @var UsersModel Handles user management data. */
     private $user_model;
+
+    /** @var FinancialModel Handles financial statistics (revenue, orders). */
     private $financial_model;
+
+    /** @var StockModel Handles inventory data. */
     private $stock_model;
 
     /**
-     * Constructor
-     * * Initializes the parent controller (session, translations) and loads necessary models.
-     * Performs a security check: redirects non-admin users to the homepage immediately.
+     * initializes models and enforces security protocols
      */
     public function __construct() {
         parent::__construct();
@@ -40,13 +49,9 @@ class AdminController extends Controller {
     }
 
     /**
-     * Dashboard (Index)
-     * * Gathers Key Performance Indicators (KPIs) for the admin dashboard:
-     * - Total revenue
-     * - Number of orders
-     * - Number of registered users
-     * - Low stock alerts
-     * * It also fetches the latest 5 orders for a quick overview.
+     * displays the dashboard with key performance indicators (kpis)
+     *
+     * @return void
      */
     public function index() {
 
@@ -69,6 +74,11 @@ class AdminController extends Controller {
         ]);
     }
 
+    /**
+     * renders the detailed statistics page
+     *
+     * @return void
+     */
     public function stats() {
         $this->render('admin_stats_views', [
             'css' => 'admin_stats_views.css'
@@ -76,10 +86,9 @@ class AdminController extends Controller {
     }
 
     /**
-     * Supplier Orders Management
-     * * Retrieves the list of orders sent to the factory (suppliers).
-     * Since the database returns flat rows (one row per item), this method
-     * groups items by 'id_FactoryOrder' to display structured orders in the view.
+     * retrieves and structures supplier orders for display
+     *
+     * @return void
      */
     public function supplier() {
         $rawOrders = $this->admin_model->getFactoryOrdersWithDetails();
@@ -105,11 +114,11 @@ class AdminController extends Controller {
     }
 
     /**
-     * Exécute les commandes de l'usine (Java)
-     * Route: POST /admin/runFactory
+     * executes factory operations via the external java application
+     *
+     * @return void
      */
     public function runFactory() {
-        // Sécurité admin
         if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
             header('Location: ' . ($_ENV['BASE_URL'] ?? '') . '/index.php');
             exit;
@@ -117,47 +126,34 @@ class AdminController extends Controller {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = $_POST['action'] ?? '';
-            
-            // 1. LISTE BLANCHE : On sécurise les actions autorisées
             $allowedActions = ['refill', 'order', 'proactive', 'restock'];
             
             if (in_array($action, $allowedActions)) {
                 
-                // 2. CHEMINS (Votre configuration validée)
                 $projectRoot = realpath(__DIR__ . '/../../'); 
-                $legoToolsDir = $projectRoot . '/JAVA/legotools'; // Le chemin qui fonctionne !
+                $legoToolsDir = $projectRoot . '/JAVA/legotools'; 
                 $jarPath = $legoToolsDir . '/target/legotools-1.0-SNAPSHOT.jar';
 
-                // 3. TROUVER JAVA
                 $javaBin = trim(shell_exec("which java"));
-                if (empty($javaBin)) $javaBin = '/usr/bin/java'; // Fallback
+                if (empty($javaBin)) $javaBin = '/usr/bin/java';
 
-                // 4. CONSTRUCTION DE LA COMMANDE
-                // On passe l'action dynamiquement ($action vaut 'refill', 'order', etc.)
                 $cmd = "cd " . escapeshellarg($legoToolsDir) . " && " . $javaBin . " -Dfile.encoding=UTF-8 -jar " . escapeshellarg($jarPath) . " " . escapeshellarg($action) . " 2>&1";
                 
-                // 5. EXÉCUTION
                 $output = [];
                 $returnCode = 0;
                 exec($cmd, $output, $returnCode);
 
-                // 6. TRAITEMENT DU RÉSULTAT
                 $resultText = implode("\n", $output);
                 $_SESSION['factory_output'] = $resultText;
 
-                // Mise à jour du solde si détecté dans la réponse
                 if (preg_match('/Nouveau solde : (\d+)/', $resultText, $matches)) {
                     $_SESSION['last_factory_balance'] = $matches[1];
                 } elseif (preg_match('/Solde : (\d+)/', $resultText, $matches)) {
                     $_SESSION['last_factory_balance'] = $matches[1];
                 }
-
-                // On reste sur la page fournisseur pour voir le résultat
                 header('Location: ' . ($_ENV['BASE_URL'] ?? '') . '/admin/supplier');
                 exit;
             }
-            
-            // Si action inconnue ou autre erreur
             header('Location: ' . ($_ENV['BASE_URL'] ?? '') . '/admin/index');
             exit;
         }

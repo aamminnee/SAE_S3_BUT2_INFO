@@ -5,18 +5,28 @@ use PDO;
 use PDOException;
 
 /**
- * Database Connection Class
- * * Implements the Singleton Pattern to ensure a single database connection.
- * * Extends PDO for direct database manipulation.
+ * Class Db
+ *
+ ** Database Connection Wrapper.
+ ** Implements the Singleton Pattern to ensure a single active database connection per request.
+ ** Extends PDO to provide direct access to database methods.
+ *
+ * @package App\Core
  */
 class Db extends PDO {
+
+    /** @var Db|null The single instance of the class. */
     private static $instance;
 
+    /**
+     * Private constructor to prevent direct instantiation.
+     * Establishes the PDO connection using environment variables.
+     */
     private function __construct() {
-        $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
-        $dbName = $_ENV['DB_NAME'] ?? 'SAE_S3_BUT2_INFO';
-        $dbUser = $_ENV['DB_USER'] ?? 'admin';
-        $dbPass = $_ENV['DB_PASS'] ?? 'Pokemon.v.5';
+        $dbHost = $_ENV['DB_HOST'];
+        $dbName = $_ENV['DB_NAME'];
+        $dbUser = $_ENV['DB_USER'];
+        $dbPass = $_ENV['DB_PASS'];
 
         $_dsn = 'mysql:dbname=' . $dbName . ';host=' . $dbHost;
 
@@ -30,6 +40,11 @@ class Db extends PDO {
         }
     }
 
+    /**
+     * Returns the single instance of the Database connection.
+     *
+     * @return self
+     */
     public static function getInstance(): self {
         if (self::$instance === null) {
             self::$instance = new self();

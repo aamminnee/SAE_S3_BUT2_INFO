@@ -1,4 +1,17 @@
 <?php
+/**
+ * Main Header View
+ *
+ * Displays the top navigation bar for the public site.
+ * Features:
+ * - Logo.
+ * - Dynamic navigation based on login status.
+ * - Cart icon with item count.
+ * - Profile dropdown menu.
+ * - Language switcher.
+ *
+ * @var array $t            Associative array of translations
+ */
 
 $isLoggedIn = isset($_SESSION['user_id']);
 $baseUrl = $_ENV['BASE_URL'] ?? '';
@@ -34,7 +47,7 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                     <li class="profile-menu">
                         <div class="profile-trigger">
                             <span><?= htmlspecialchars($_SESSION['user_name'] ?? ($t['nav_account'] ?? 'Mon Compte')) ?></span>
-                            <img src="<?= $baseUrl ?>/Public/img/default_avatar.png" alt="Avatar" class="avatar-mini" 
+                            <img src="<?= $baseUrl ?>/img/avatar.png" alt="Avatar" class="avatar-mini" 
                                  onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['user_name'] ?? 'User') ?>&background=random'">
                         </div>
                         

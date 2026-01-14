@@ -1,3 +1,18 @@
+<?php
+/**
+ * Reset Password Form View
+ *
+ * Displays the form to define a new password after clicking the email link.
+ * Features:
+ * - Double password entry for confirmation.
+ * - Password visibility toggle.
+ * - Error message display.
+ *
+ * @var string|null $message    Feedback message (error or success)
+ * @var array $t                Associative array of translations
+ */
+?>
+
 <div class="reset-wrapper">
 
     <div class="reset-container">

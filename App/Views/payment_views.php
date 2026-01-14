@@ -1,10 +1,21 @@
 <?php 
+/**
+ * Payment Checkout View
+ *
+ * Displays the final checkout step: shipping information form and order summary.
+ * Features:
+ * - Shipping details form (Address, Phone).
+ * - Visual summary of cart items.
+ * - Total calculation.
+ * - Action to trigger payment process (PayPal redirect).
+ *
+ * @var array $cart         List of items in the cart
+ * @var float $total        Total amount to pay
+ * @var array $t            Associative array of translations
+ */
+
 $items = isset($cart) ? (array)$cart : [];
 ?>
-
-<head>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-</head>
 
 <div class="payment-wrapper">
     <div class="payment-layout">
@@ -17,46 +28,23 @@ $items = isset($cart) ? (array)$cart : [];
                 <div class="form-group">
                     <label for="phone"><?= $t['payment_label_phone'] ?? 'Téléphone' ?></label>
                     <input type="tel" id="phone" name="phone" required 
-                           placeholder="<?= $t['payment_placeholder_phone'] ?? 'ex: 06 12 34 56 78' ?>" 
-                           value="07 77 77 77 77">
+                        placeholder="<?= $t['payment_placeholder_phone'] ?? 'ex: 06 12 34 56 78' ?>" 
+                        value="07 77 77 77 77">
                 </div>
 
                 <div class="form-group">
-                    <label for="adress"><?= $t['payment_label_address'] ?? 'Adresse complète' ?></label>
+                    <label for="adress"><?= $t['payment_label_address'] ?? 'Adresse complète de livraison' ?></label>
                     <input type="text" id="adress" name="adress" required 
-                           placeholder="<?= $t['payment_placeholder_address'] ?? 'ex: 12 Rue de la Paix, 75000 Paris' ?>" 
-                           value="12 Rue de la Paix, 75002 Paris">
+                        placeholder="<?= $t['payment_placeholder_address'] ?? 'ex: 12 Rue de la Paix, 75000 Paris' ?>" 
+                        value="12 Rue de la Paix, 75002 Paris">
                 </div>
-
-                <div class="form-group">
-                    <label for="card_number"><?= $t['payment_label_card'] ?? 'Numéro de carte' ?></label>
-                    <div class="input-icon">
-                        <span class="icon">💳</span>
-                        <input type="text" id="card_number" name="card_number" required 
-                               placeholder="0000 0000 0000 0000" maxlength="19" 
-                               value="4242 4242 4242 4242">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="card_expiry"><?= $t['payment_label_expiry'] ?? 'Expiration' ?></label>
-                        <input type="month" id="card_expiry" name="card_expiry" required 
-                               value="2025-12">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="card_cvv"><?= $t['payment_label_cvv'] ?? 'CVV' ?></label>
-                        <div class="input-icon">
-                            <input type="text" id="card_cvv" name="card_cvv" required 
-                                   placeholder="123" maxlength="3" 
-                                   value="123">
-                        </div>
-                    </div>
+                
+                <div style="margin: 20px 0;">
+                    <p>Redirection sécurisée vers PayPal Sandbox.</p>
                 </div>
 
                 <button type="submit" class="btn-pay">
-                    <?= sprintf($t['payment_btn_pay'] ?? 'Payer %s €', number_format($total, 2, ',', ' ')) ?>
+                    Payer avec PayPal (<?= number_format($total, 2, ',', ' ') ?> €)
                 </button>
             </form>
         </div>

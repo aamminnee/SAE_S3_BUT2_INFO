@@ -7,16 +7,37 @@ use PDO;
 use Exception;
 
 /**
- * MosaicModel
- * * Handles the core business logic for Mosaics.
+ * Class MosaicModel
+ * 
+ ** Handles the core business logic for mosaics
+ ** Manages temporary generation, persistence, cost calculation, and visualization of lego patterns
+ *
+ * @package App\Models
  */
 class MosaicModel extends Model {
+
+    /** @var string The database table associated with the model. */
     protected $table = 'Mosaic';
 
+    /** @var int Coefficient applied to the raw cost to determine the selling price. */
     public const MARGIN_COEFF = 2;
+
+    /** @var float Fixed fee for order preparation and handling. */
     public const HANDLING_FEE = 5.99;
+
+    /** @var float Standard shipping cost. */
     public const DELIVERY_FEE = 4.99;
 
+    /**
+     * Generates multiple mosaic variations (e.g., standard, optimized, stock-based)
+     * using the external java engine
+     *
+     * @param int $idImage the image identifier
+     * @param string $blobData binary image content
+     * @param string $extension image file extension
+     * @return array resulting mosaic data (previews, costs, piece counts)
+     * @throws Exception on file permission or locking issues
+     */
     public function generateTemporaryMosaics($idImage, $blobData, $extension) {
         $projectRoot = dirname(__DIR__, 2); 
         $workDir = $projectRoot . '/JAVA/legotools';
@@ -111,6 +132,14 @@ class MosaicModel extends Model {
         return $results;
     }
 
+    /**
+     * Persists a selected mosaic configuration to the database
+     *
+     * @param int $idImage
+     * @param string $content layout instructions
+     * @param string $type generation strategy used
+     * @return int|false the new mosaic id or false on failure
+     */
     public function saveSelectedMosaic($idImage, $content, $type) {
         $db = Db::getInstance();
         $sql = "INSERT INTO Mosaic (pavage, id_Image, generation_date) VALUES (?, ?, NOW())";
@@ -124,6 +153,12 @@ class MosaicModel extends Model {
         return false;
     }
 
+    /**
+     * Generates a visual representation (png) of a stored mosaic
+     *
+     * @param int $idMosaic
+     * @return string|null base64 encoded image or null
+     */
     public function getMosaicVisual($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -183,6 +218,12 @@ class MosaicModel extends Model {
         return $base64Image;
     }
 
+    /**
+     * Parses mosaic content to produce a list of required bricks
+     *
+     * @param int $idMosaic
+     * @return array sorted list of bricks (size, color, count)
+     */
     public function getBricksList($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -229,6 +270,12 @@ class MosaicModel extends Model {
         return $finalList;
     }
 
+    /**
+     * Converts the brick list into database records for order processing
+     *
+     * @param int $idMosaic
+     * @return bool
+     */
     public function saveMosaicComposition($idMosaic) {
         $bricks = $this->getBricksList($idMosaic);
         if (empty($bricks)) return false;
@@ -246,6 +293,13 @@ class MosaicModel extends Model {
         return true;
     }
 
+    /**
+     * Resolves specific item id based on brick characteristics
+     *
+     * @param string $size e.g., "2x4"
+     * @param string $hexColor
+     * @return int|false
+     */
     private function findItemId($size, $hexColor) {
         $db = Db::getInstance();
 
@@ -273,6 +327,12 @@ class MosaicModel extends Model {
         return $stmt->fetchColumn(); 
     }
     
+    /**
+     * Checks if the composition (recipe) for a mosaic has already been saved
+     *
+     * @param int $idMosaic
+     * @return bool
+     */
     public function hasComposition($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT 1 FROM MosaicComposition WHERE id_Mosaic = ? LIMIT 1");
@@ -280,6 +340,12 @@ class MosaicModel extends Model {
         return (bool)$stmt->fetch();
     }
 
+    /**
+     * Calculates the price of a stored mosaic based on its raw cost metadata
+     *
+     * @param int $idMosaic
+     * @return float
+     */
     public function getMosaicPrice($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -309,6 +375,12 @@ class MosaicModel extends Model {
         return floor($finalPrice) + 0.99;
     }
 
+    /**
+     * Calculates price directly from raw content string without db lookup
+     *
+     * @param string $pavageContent
+     * @return float
+     */
     public function calculatePriceFromContent($pavageContent) {
         if (empty($pavageContent)) return 0.00;
 
@@ -324,6 +396,12 @@ class MosaicModel extends Model {
         return floor($finalPrice) + 0.99;
     }
 
+    /**
+     * Counts total bricks required based on raw content
+     *
+     * @param string $pavageContent
+     * @return int
+     */
     public function countPiecesFromContent($pavageContent) {
         if (empty($pavageContent)) {
             return 0;
@@ -342,6 +420,12 @@ class MosaicModel extends Model {
         return $count;
     }
 
+    /**
+     * Retrieves all mosaics associated with a specific order
+     *
+     * @param int $orderId
+     * @return array
+     */
     public function getMosaicsByOrderId($orderId) {
         $sql = "SELECT m.id_Mosaic, m.pavage, i.file, i.file_type 
                 FROM Mosaic m
@@ -363,6 +447,12 @@ class MosaicModel extends Model {
         return $results;
     }
 
+    /**
+     * Generates html for a grid representation (used for quick preview)
+     *
+     * @param int $idMosaic
+     * @return array|string html string and legend array
+     */
     public function getMosaicGridHtml($idMosaic) {
         $db = \App\Core\Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -437,6 +527,12 @@ class MosaicModel extends Model {
         return ['html' => $html, 'legend' => $colorToSymbol];
     }
 
+    /**
+     * Extracts detailed plan data for generating printable instructions
+     *
+     * @param int $idMosaic
+     * @return array|null plan details
+     */
     public function getMosaicPlanData($idMosaic) {
         $db = Db::getInstance();
         $stmt = $db->prepare("SELECT pavage FROM Mosaic WHERE id_Mosaic = ?");
@@ -502,6 +598,12 @@ class MosaicModel extends Model {
         ];
     }
 
+    /**
+     * Updates the temporary input file with current stock levels for java processing
+     *
+     * @param string $filePath
+     * @return void
+     */
     private function updateBriquesFile($filePath) {
         $stockModel = new StockModel();
         $items = $stockModel->getFullStockDetails(); 
@@ -560,6 +662,12 @@ class MosaicModel extends Model {
         file_put_contents($filePath, $content);
     }
 
+    /**
+     * Reduces inventory count when a mosaic is finalized
+     *
+     * @param int $idMosaic
+     * @return void
+     */
     public function deductStockFromMosaic($idMosaic) {
         $stockModel = new StockModel();
 
